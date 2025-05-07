@@ -25,6 +25,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.carlosalcina.drivelist.R
+import com.carlosalcina.drivelist.ui.view.components.ButtonAuth
+import com.carlosalcina.drivelist.ui.view.components.GoogleSignInButton
 import com.carlosalcina.drivelist.ui.viewmodel.LoginViewModel
 
 @Composable
@@ -70,10 +72,9 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        Button(
+        ButtonAuth(
             onClick = { viewModel.iniciarSesion(onLoginExitoso) },
-            enabled = !cargando,
-            modifier = Modifier.fillMaxWidth()
+            enabled = !cargando
         ) {
             if (cargando) {
                 CircularProgressIndicator(
@@ -88,21 +89,7 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        Button(
-            onClick = onGoogleSignIn,
-            colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-            border = BorderStroke(1.dp, Color.Gray),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Icon(
-                painter = painterResource(id = R.drawable.ic_google_logo),
-                contentDescription = null,
-                tint = Color.Unspecified,
-                modifier = Modifier.size(20.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("Continuar con Google", color = Color.Black)
-        }
+        GoogleSignInButton(onClick = onGoogleSignIn)
 
         Spacer(modifier = Modifier.height(12.dp))
 

@@ -16,7 +16,7 @@ class MainActivity : ComponentActivity() {
         FirebaseApp.initializeApp(this)
         setContent {
             val navController = rememberNavController()
-            DriveListTheme {
+            DriveListTheme(dynamicColor = false) {
                 AppNavigation(navController)
             }
         }

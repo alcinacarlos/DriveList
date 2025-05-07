@@ -1,6 +1,5 @@
 package com.carlosalcina.drivelist.ui.view.screens
 
-//import coil.compose.rememberAsyncImagePainter // Removed Coil import
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer

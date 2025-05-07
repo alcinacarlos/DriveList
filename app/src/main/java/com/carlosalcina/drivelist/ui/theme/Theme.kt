@@ -8,29 +8,35 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    primary = Primary,
+    secondary = Secondary,
+    background = Color(0xFF0F172A),
+    surface = Color(0xFF1F2937),
+    onPrimary = Color.White,
+    onSecondary = OnSecondary,
+    onBackground = Color.White,
+    onSurface = Color.White,
+    error = Error,
+    primaryContainer = Color(0xFF1B2537)
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
+    primary = Primary,
+    secondary = Secondary,
+    background = Background,
+    surface = Surface,
     onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    onSecondary = OnSecondary,
+    onBackground = OnBackground,
+    onSurface = OnSurface,
+    error = Error,
+    primaryContainer = Color.White
 )
+
 
 @Composable
 fun DriveListTheme(
@@ -51,7 +57,7 @@ fun DriveListTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = typographyCustom(),
         content = content
     )
 }

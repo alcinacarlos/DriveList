@@ -1,0 +1,57 @@
+
+           var fotoUrl = viewModel.fotoUrl
+
+       val launcher =
+           rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+               uri?.let {
+                   viewModel.fotoUrl = uri.toString()
+               }
+           }
+
+   Column(
+        modifier = Modifier.weight(1f).padding(end = 30.dp),
+        horizontalAlignment = Alignment.End
+    ) {
+        Box(
+            modifier = Modifier
+                .size(110.dp),
+            contentAlignment = Alignment.BottomEnd
+        ) {
+            if (fotoUrl.isNotBlank()) {
+                AsyncImage(
+                    model = fotoUrl,
+                    contentDescription = "Foto seleccionada",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(110.dp)
+                        .clip(CircleShape)
+                        .clickable { launcher.launch("image/*") }
+                )
+            } else {
+                Image(
+                    painter = painterResource(id = R.drawable.ic_avatar_placeholder),
+                    contentDescription = "Avatar por defecto",
+                    modifier = Modifier
+                        .size(110.dp)
+                        .clip(CircleShape)
+                        .clickable { launcher.launch("image/*") }
+                )
+            }
+
+            IconButton(
+                onClick = { launcher.launch("image/*") },
+                modifier = Modifier
+                    .size(22.dp)
+                    .offset(x = (-3).dp, y = (-3).dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary)
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Edit,
+                    contentDescription = "Editar foto",
+                    tint = Color.White,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+        }
+    }
