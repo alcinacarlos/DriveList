@@ -9,9 +9,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.*
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,29 +24,21 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.input.*
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.carlosalcina.drivelist.R
 import com.carlosalcina.drivelist.ui.viewmodel.RegisterViewModel
+import com.carlosalcina.drivelist.utils.Utils
 
 @Composable
 fun RegisterScreen(
     viewModel: RegisterViewModel,
     onRegister: () -> Unit
 ) {
-    val email = viewModel.email
-    val password = viewModel.password
-    val nombre = viewModel.nombre
-    val fotoUrl = viewModel.fotoUrl
-    val estadoMensaje = viewModel.estadoMensaje
-    val cargando = viewModel.cargando
-
-    val emailError = viewModel.emailError
-    val passwordError = viewModel.passwordError
-    val nombreError = viewModel.nombreError
-
-    var passwordVisible by remember { mutableStateOf(false) }
+    var fotoUrl = viewModel.fotoUrl
+    var cargando = viewModel.cargando
 
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let {
@@ -50,11 +46,27 @@ fun RegisterScreen(
         }
     }
 
-    LaunchedEffect(estadoMensaje) {
-        if (estadoMensaje == "Registro exitoso") {
+    var showPassword by remember { mutableStateOf(false) }
+
+    LaunchedEffect(viewModel.estadoMensaje) {
+        if (viewModel.estadoMensaje == "Registro exitoso") {
             onRegister()
         }
     }
+
+    val hayErrores = listOf(
+        viewModel.emailError,
+        viewModel.passwordError,
+        viewModel.nombreError
+    ).any { it != null }
+
+    val camposVacios = listOf(
+        viewModel.email,
+        viewModel.password,
+        viewModel.nombre
+    ).any { it.isBlank() }
+
+    val puedeRegistrarse = !viewModel.cargando && !hayErrores && !camposVacios
 
     Column(
         modifier = Modifier
@@ -74,11 +86,9 @@ fun RegisterScreen(
             ) {
                 Text("Registro", style = MaterialTheme.typography.headlineMedium)
                 Spacer(modifier = Modifier.height(16.dp))
-
-                // Avatar + botón editar
                 Box(
                     modifier = Modifier
-                        .size(100.dp),
+                        .size(110.dp),
                     contentAlignment = Alignment.BottomEnd
                 ) {
                     if (fotoUrl.isNotBlank()) {
@@ -87,7 +97,7 @@ fun RegisterScreen(
                             contentDescription = "Foto seleccionada",
                             contentScale = ContentScale.Crop,
                             modifier = Modifier
-                                .size(100.dp)
+                                .size(110.dp)
                                 .clip(CircleShape)
                                 .clickable { launcher.launch("image/*") }
                         )
@@ -96,7 +106,7 @@ fun RegisterScreen(
                             painter = painterResource(id = R.drawable.ic_avatar_placeholder),
                             contentDescription = "Avatar por defecto",
                             modifier = Modifier
-                                .size(100.dp)
+                                .size(110.dp)
                                 .clip(CircleShape)
                                 .clickable { launcher.launch("image/*") }
                         )
@@ -105,8 +115,8 @@ fun RegisterScreen(
                     IconButton(
                         onClick = { launcher.launch("image/*") },
                         modifier = Modifier
-                            .size(28.dp)
-                            .offset(x = (-4).dp, y = (-4).dp)
+                            .size(22.dp)
+                            .offset(x = (-3).dp, y = (-3).dp)
                             .clip(CircleShape)
                             .background(MaterialTheme.colorScheme.primary)
                     ) {
@@ -114,7 +124,7 @@ fun RegisterScreen(
                             imageVector = Icons.Outlined.Edit,
                             contentDescription = "Editar foto",
                             tint = Color.White,
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(22.dp)
                         )
                     }
                 }
@@ -122,54 +132,64 @@ fun RegisterScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 OutlinedTextField(
-                    value = nombre,
-                    onValueChange = { if (!it.contains("\n")) viewModel.nombre = it },
+                    value = viewModel.nombre,
+                    onValueChange = {
+                        viewModel.nombre = it
+                        viewModel.nombreError = Utils.validarNombre(it)
+                    },
                     label = { Text("Nombre completo") },
-                    leadingIcon = { Icon(Icons.Outlined.Person, contentDescription = null) },
-                    isError = nombreError != null,
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
-                nombreError?.let {
-                    Text(it, color = Color.Red, style = MaterialTheme.typography.bodySmall)
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                OutlinedTextField(
-                    value = email,
-                    onValueChange = { if (!it.contains("\n")) viewModel.email = it },
-                    label = { Text("Correo electrónico") },
-                    leadingIcon = { Icon(Icons.Outlined.Email, contentDescription = null) },
-                    isError = emailError != null,
-                    modifier = Modifier.fillMaxWidth(),
+                    leadingIcon = { Icon(Icons.Filled.Person, contentDescription = null) },
+                    isError = viewModel.nombreError != null,
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Email)
+                    modifier = Modifier.fillMaxWidth()
                 )
-                emailError?.let {
-                    Text(it, color = Color.Red, style = MaterialTheme.typography.bodySmall)
+                viewModel.nombreError?.let {
+                    Text(text = it, color = Color.Red)
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
                 OutlinedTextField(
-                    value = password,
-                    onValueChange = { if (!it.contains("\n")) viewModel.password = it },
+                    value = viewModel.email,
+                    onValueChange = {
+                        viewModel.email = it
+                        viewModel.emailError = Utils.validarEmail(it)
+                    },
+                    label = { Text("Correo electrónico") },
+                    leadingIcon = { Icon(Icons.Filled.Email, contentDescription = null) },
+                    isError = viewModel.emailError != null,
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                viewModel.emailError?.let {
+                    Text(text = it, color = Color.Red)
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = viewModel.password,
+                    onValueChange = {
+                        viewModel.password = it
+                        viewModel.passwordError = Utils.validarPassword(it)
+                    },
                     label = { Text("Contraseña") },
-                    leadingIcon = { Icon(Icons.Outlined.Lock, contentDescription = null) },
+                    visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                    leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = null) },
                     trailingIcon = {
-                        val icon = if (passwordVisible) Icons.Outlined.Visibility else Icons.Outlined.VisibilityOff
-                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                            Icon(icon, contentDescription = null)
+                        IconButton(onClick = { showPassword = !showPassword }) {
+                            Icon(
+                                imageVector = if (showPassword) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                                contentDescription = if (showPassword) "Ocultar contraseña" else "Mostrar contraseña"
+                            )
                         }
                     },
-                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                    isError = passwordError != null,
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    isError = viewModel.passwordError != null,
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
                 )
-                passwordError?.let {
-                    Text(it, color = Color.Red, style = MaterialTheme.typography.bodySmall)
+                viewModel.passwordError?.let {
+                    Text(text = it, color = Color.Red)
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -177,9 +197,17 @@ fun RegisterScreen(
                 Button(
                     onClick = { viewModel.registrarUsuario() },
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = !cargando
+                    enabled = puedeRegistrarse && !cargando,
                 ) {
-                    Text("Registrarse")
+                    if (cargando) {
+                        CircularProgressIndicator(
+                            color = Color.White,
+                            strokeWidth = 2.dp,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    } else {
+                        Text("Registrarse")
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -200,7 +228,7 @@ fun RegisterScreen(
                     Text("Continuar con Google", color = Color.Black)
                 }
 
-                estadoMensaje?.let {
+                viewModel.estadoMensaje?.let {
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         it,

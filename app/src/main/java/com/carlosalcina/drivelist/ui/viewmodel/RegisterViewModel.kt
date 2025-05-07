@@ -40,7 +40,7 @@ class RegisterViewModel : ViewModel() {
         auth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    subirFotoYGuardarUrl(fotoUrl.toUri())
+                    subirFotoYGuardarUrl()
                     val user = auth.currentUser
                     val profileUpdates = UserProfileChangeRequest.Builder()
                         .setDisplayName(nombre)
@@ -62,9 +62,12 @@ class RegisterViewModel : ViewModel() {
             }
     }
 
-    fun subirFotoYGuardarUrl(uri: Uri) {
+    fun subirFotoYGuardarUrl() {
+        if (fotoUrl.isBlank()) return
+        val uri = fotoUrl.toUri()
+
         val uid = auth.currentUser?.uid ?: return
-        val storageRef = FirebaseStorage.getInstance().reference
+        val storageRef = FirebaseUtils.getStorage().reference
         val fileRef = storageRef.child("users/$uid/profile.jpg")
 
         cargando = true
