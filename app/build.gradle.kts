@@ -53,6 +53,7 @@ dependencies {
     implementation(libs.androidx.espresso.core)
     implementation(libs.androidx.material.icons.extended)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.googleid)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -66,11 +67,13 @@ dependencies {
     implementation(libs.converter.gson) // Convertidor JSON (usando Gson)
 
     implementation(libs.logging.interceptor)
+    implementation(libs.coil.compose)
 
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.firestore.ktx)
+    implementation(libs.firebase.storage.ktx)
     implementation(libs.firebase.auth.ktx)
-    implementation (libs.play.services.auth)
-
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
 }
