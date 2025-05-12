@@ -1,6 +1,5 @@
 package com.carlosalcina.drivelist.ui.view.screens
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -9,11 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -21,13 +16,12 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import com.carlosalcina.drivelist.R
 import com.carlosalcina.drivelist.ui.view.components.ButtonAuth
 import com.carlosalcina.drivelist.ui.view.components.GoogleSignInButton
 import com.carlosalcina.drivelist.ui.viewmodel.LoginViewModel
+import com.carlosalcina.drivelist.utils.Utils
 
 @Composable
 fun LoginScreen(
@@ -36,10 +30,22 @@ fun LoginScreen(
     onIrARegistro: () -> Unit,
     onGoogleSignIn: () -> Unit
 ) {
-    val email = viewModel.email
-    val password = viewModel.password
+
     val cargando  = viewModel.cargando
     val mensaje = viewModel.estadoMensaje
+
+    val hayErrores = listOf(
+        viewModel.emailError,
+        viewModel.passwordError
+    ).any { it != null }
+
+    val camposVacios = listOf(
+        viewModel.email,
+        viewModel.password
+    ).any { it.isBlank() }
+
+    val puedeLoguearse = !viewModel.cargando && !hayErrores && !camposVacios
+
 
     Column(
         modifier = Modifier
@@ -55,6 +61,7 @@ fun LoginScreen(
 
         OutlinedTextField(
             value = viewModel.email,
+            isError = viewModel.emailError != null,
             onValueChange = { viewModel.email = it },
             label = { Text("Correo electrónico") },
             modifier = Modifier.fillMaxWidth()
@@ -64,7 +71,11 @@ fun LoginScreen(
 
         OutlinedTextField(
             value = viewModel.password,
-            onValueChange = { viewModel.password = it },
+            isError = viewModel.passwordError != null,
+            onValueChange = {
+                viewModel.password = it
+                viewModel.passwordError = Utils.validarNombre(it)
+            },
             label = { Text("Contraseña") },
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth()

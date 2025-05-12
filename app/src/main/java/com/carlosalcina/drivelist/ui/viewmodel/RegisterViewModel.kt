@@ -11,6 +11,7 @@ import androidx.credentials.GetCredentialRequest
 import androidx.lifecycle.ViewModel
 import com.carlosalcina.drivelist.utils.FirebaseUtils
 import com.carlosalcina.drivelist.utils.Utils
+import com.carlosalcina.drivelist.utils.Utils.validarPassword
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.auth.GoogleAuthProvider
@@ -33,8 +34,45 @@ class RegisterViewModel : ViewModel() {
 
     var estadoMensaje by mutableStateOf<String?>(null)
     var cargando by mutableStateOf(false)
+    var canRegister by mutableStateOf(false)
 
     private val auth = FirebaseUtils.getInstance()
+
+    fun onPasswordChanged(newPassword:String){
+        if (newPassword.length > 20) return
+        password = newPassword.trim()
+        passwordError = validarPassword(password)
+        canRegister()
+    }
+
+    fun onNameChanged(newName:String) {
+        if (newName.length > 20) return
+        nombre = newName.trim()
+        nombreError = Utils.validarNombre(nombre)
+        canRegister()
+    }
+
+    fun onEmailChanged(newEmail: String) {
+        if (newEmail.length > 20) return
+        email = newEmail.trim()
+        emailError = Utils.validarEmail(email)
+        canRegister()
+    }
+
+
+    private fun canRegister(){
+        val hayErrores = listOf(
+            emailError,
+            passwordError
+        ).any { it != null }
+
+        val camposVacios = listOf(
+            email,
+            password
+        ).any { it.isBlank() }
+
+        canRegister = !cargando && !hayErrores && !camposVacios
+    }
 
     fun registrarUsuario() {
         // Validar campos

@@ -1,6 +1,7 @@
 package com.carlosalcina.drivelist.ui.view.components
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -20,12 +21,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.carlosalcina.drivelist.R
 
 @Composable
 fun GoogleSignInButton(
-    modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
     Button(
@@ -34,23 +35,25 @@ fun GoogleSignInButton(
             containerColor = MaterialTheme.colorScheme.primaryContainer,
             contentColor = MaterialTheme.colorScheme.onPrimary
         ),
-        modifier = modifier
+        border = BorderStroke(1.dp, Color.Gray),
+        modifier = Modifier
             .fillMaxWidth()
             .height(55.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxSize(),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxWidth()
         ) {
             Icon(
                 painter = painterResource(id = R.drawable.ic_google_logo),
-                contentDescription = null,
+                contentDescription = "Google Logo",
                 tint = Color.Unspecified,
-                modifier = Modifier.size(35.dp)
+                modifier = Modifier.size(24.dp)
             )
-            Column(modifier = Modifier.fillMaxWidth().padding(start = 30.dp)) {
-                Text("Continuar con Google")
-            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(stringResource(R.string.sign_in_google))
         }
     }
 }
+

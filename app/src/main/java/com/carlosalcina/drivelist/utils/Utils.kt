@@ -3,13 +3,11 @@ package com.carlosalcina.drivelist.utils
 import android.util.Patterns
 
 object Utils {
-     fun esEmailValido(email: String): Boolean {
-        return Patterns.EMAIL_ADDRESS.matcher(email).matches()
-    }
+
     fun validarEmail(email: String): String? {
         return if (email.isBlank()) {
             "El correo no puede estar vacío"
-        } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+        } else if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             "Formato de correo inválido"
         } else null
     }

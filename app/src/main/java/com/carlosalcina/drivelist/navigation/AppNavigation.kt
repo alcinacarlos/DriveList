@@ -10,12 +10,13 @@ import com.carlosalcina.drivelist.ui.view.screens.HomeScreen
 import com.carlosalcina.drivelist.ui.view.screens.LoginScreen
 import com.carlosalcina.drivelist.ui.view.screens.ProfileScreen
 import com.carlosalcina.drivelist.ui.view.screens.RegisterScreen
+import com.carlosalcina.drivelist.ui.view.screens.SettingsScreen
 import com.carlosalcina.drivelist.ui.viewmodel.LoginViewModel
 import com.carlosalcina.drivelist.ui.viewmodel.RegisterViewModel
 import com.carlosalcina.drivelist.utils.FirebaseUtils
 
 @Composable
-fun AppNavigation(navController: NavHostController) {
+fun AppNavigation(navController: NavHostController, onLanguageChange: (String) -> Unit) {
     val auth = FirebaseUtils.getInstance()
     val currentUser = auth.currentUser
     val startDestination = if (currentUser != null) "profile" else "register"
@@ -32,39 +33,58 @@ fun AppNavigation(navController: NavHostController) {
             LoginScreen(
                 viewModel = loginViewModel,
                 onLoginExitoso = {
-                navController.navigate("home") {
+                    navController.navigate("home") {
+                        popUpTo("login") { inclusive = true }
+                    }
+                },
+                onIrARegistro = { navController.navigate("register"){
                     popUpTo("login") { inclusive = true }
-                }
-            },
-                onIrARegistro = { navController.navigate("register") },
-                onGoogleSignIn = { loginViewModel.iniciarSesionConCredentialManager(context, scope,
-                    onSuccess = { navController.navigate("profile") {
-                        popUpTo("login") { inclusive = true }}},
-                    onError = { msg -> loginViewModel.estadoMensaje = msg })
-            })
+                } },
+                onGoogleSignIn = {
+                    loginViewModel.iniciarSesionConCredentialManager(
+                        context, scope,
+                        onSuccess = {
+                            navController.navigate("profile") {
+                                popUpTo("login") { inclusive = true }
+                            }
+                        },
+                        onError = { msg -> loginViewModel.estadoMensaje = msg })
+                })
         }
         composable("register") {
             val registerViewModel = RegisterViewModel()
             val context = LocalContext.current
             val scope = rememberCoroutineScope()
 
-            RegisterScreen(registerViewModel, onRegister = {
+            RegisterScreen(
+                registerViewModel, onRegister = {
                 navController.navigate("profile") {
                     popUpTo("register") { inclusive = true }
                 }
             }, onGoogleSignIn = {
-                registerViewModel.iniciarSesionConCredentialManager(context, scope, onSuccess = {
-                    navController.navigate("profile") {
-                        popUpTo("login") { inclusive = true }
-                    }
-                }, onError = { msg -> registerViewModel.estadoMensaje = msg })
-            })
+                registerViewModel.iniciarSesionConCredentialManager(
+                    context,
+                    scope,
+                    onSuccess = {
+                        navController.navigate("profile") {
+                            popUpTo("login") { inclusive = true }
+                        }
+                    },
+                    onError = { msg -> registerViewModel.estadoMensaje = msg })
+            },
+                onIrALogin = { navController.navigate("login"){
+                    popUpTo("register") { inclusive = true }
+                } }
+            )
         }
         composable("home") {
             HomeScreen(navController)
         }
         composable("profile") {
             ProfileScreen(auth, navController)
+        }
+        composable("settings") {
+            SettingsScreen(onLanguageChange)
         }
     }
 }

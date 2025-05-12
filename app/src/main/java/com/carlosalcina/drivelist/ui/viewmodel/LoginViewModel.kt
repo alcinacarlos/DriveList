@@ -25,19 +25,22 @@ class LoginViewModel : ViewModel() {
     var cargando by mutableStateOf(false)
 
     private val auth = FirebaseUtils.getInstance()
-    private val tag = "LoginViewModel"
+
+    var emailError by mutableStateOf<String?>(null)
+    var passwordError by mutableStateOf<String?>(null)
 
     fun iniciarSesion(onSuccess: () -> Unit) {
-        if (!Utils.esEmailValido(email)) {
-            estadoMensaje = "Correo inválido"
-            return
-        }
-        if (password.length < 6) {
-            estadoMensaje = "Contraseña demasiado corta"
+
+        emailError = Utils.validarEmail(email)
+        passwordError = Utils.validarPassword(password)
+
+        if (emailError != null || passwordError != null) {
+            estadoMensaje = "Corrige los errores antes de continuar."
             return
         }
 
         cargando = true
+
         auth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener {
                 cargando = false
@@ -45,7 +48,6 @@ class LoginViewModel : ViewModel() {
                     estadoMensaje = "Inicio exitoso"
                     onSuccess()
                 } else {
-                    Log.e(tag, "Error al iniciar sesión", it.exception)
                     estadoMensaje = it.exception?.message ?: "Error desconocido"
                 }
             }
@@ -82,7 +84,6 @@ class LoginViewModel : ViewModel() {
                     onError("Tipo de credencial inesperado")
                 }
             } catch (e: Exception) {
-                Log.e(tag, "Error con CredentialManager", e)
                 onError(e.message ?: "Error al iniciar sesión con Google")
             }
         }
@@ -102,7 +103,6 @@ class LoginViewModel : ViewModel() {
                     estadoMensaje = "Inicio con Google exitoso"
                     onSuccess()
                 } else {
-                    Log.e(tag, "Error en login con Google", it.exception)
                     estadoMensaje = it.exception?.message ?: "Error de autenticación con Google"
                     onError(estadoMensaje!!)
                 }
