@@ -1,45 +1,48 @@
 package com.carlosalcina.drivelist
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
+import com.carlosalcina.drivelist.data.preferences.LanguageRepository
+import com.carlosalcina.drivelist.localization.LocaleHelper
 import com.carlosalcina.drivelist.navigation.AppNavigation
 import com.carlosalcina.drivelist.ui.theme.DriveListTheme
 import com.google.firebase.FirebaseApp
-import kotlinx.coroutines.runBlocking
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.launch
-import androidx.compose.runtime.*
-import com.carlosalcina.drivelist.data.preferences.LanguageDataStore
-import com.carlosalcina.drivelist.localization.LocaleHelper
-import com.carlosalcina.drivelist.localization.LocalizedContext
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 class MainActivity : ComponentActivity() {
+
+    override fun attachBaseContext(newBase: Context) {
+        LanguageRepository.initialize(newBase)
+        val currentLanguage = runBlocking { LanguageRepository.language.first() }
+        super.attachBaseContext(LocaleHelper.applyOverrideConfiguration(newBase, currentLanguage))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        installSplashScreen()
+
+        LanguageRepository.initialize(this)
+
         enableEdgeToEdge()
         FirebaseApp.initializeApp(this)
-        val initialLanguage = runBlocking {
-            LanguageDataStore.getLanguage(this@MainActivity).first()
-        }
+
         setContent {
-            var language by remember { mutableStateOf(initialLanguage) }
-
-            val localizedContext = LocaleHelper.setLocale(this, language)
-
             val navController = rememberNavController()
-            CompositionLocalProvider(LocalizedContext provides localizedContext) {
-                DriveListTheme(dynamicColor = false) {
-                    AppNavigation(navController, onLanguageChange = { newLang ->
-                        language = newLang
-                        lifecycleScope.launch {
-                            LanguageDataStore.saveLanguage(this@MainActivity, newLang)
-                        }
-                    })
-                }
+            DriveListTheme(dynamicColor = false) {
+                AppNavigation(navController, onLanguageChange = { newLang ->
+                    lifecycleScope.launch {
+                        LanguageRepository.saveLanguage(newLang)
+                        recreate()
+                    }
+                })
             }
         }
     }

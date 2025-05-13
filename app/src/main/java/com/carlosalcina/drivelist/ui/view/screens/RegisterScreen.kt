@@ -231,7 +231,7 @@ fun RegisterScreen(
             enabled = !uiState.isLoading,
         ) {
             Text("¿Ya tienes cuenta?")
-            Spacer(modifier = Modifier.width(4.dp))
+            Spacer(modifier = Modifier.width(5.dp))
             Text("Inicia Sesión", color = MaterialTheme.colorScheme.primary)
         }
     }

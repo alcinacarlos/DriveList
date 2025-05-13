@@ -2,18 +2,18 @@ package com.carlosalcina.drivelist.localization
 
 import android.content.Context
 import android.content.res.Configuration
+import com.carlosalcina.drivelist.data.preferences.LanguageRepository
 import java.util.Locale
 
 object LocaleHelper {
-
-    fun setLocale(context: Context, language: String): Context {
-        val locale = Locale(language)
+    fun applyOverrideConfiguration(context: Context, languageCode: String?): Context {
+        val lang = languageCode ?: LanguageRepository.DEFAULT_LANGUAGE
+        val locale = Locale(lang)
         Locale.setDefault(locale)
 
-        val config = Configuration(context.resources.configuration)
-        config.setLocale(locale)
-        config.setLayoutDirection(locale)
+        val newConfig = Configuration(context.resources.configuration)
+        newConfig.setLocale(locale)
 
-        return context.createConfigurationContext(config)
+        return context.createConfigurationContext(newConfig)
     }
 }

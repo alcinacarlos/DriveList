@@ -3,6 +3,7 @@ package com.carlosalcina.drivelist.ui.viewmodel
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.carlosalcina.drivelist.BuildConfig
 import com.carlosalcina.drivelist.domain.model.AuthError
 import com.carlosalcina.drivelist.domain.model.GoogleSignInError
 import com.carlosalcina.drivelist.domain.repository.AuthRepository
@@ -23,7 +24,7 @@ class RegisterViewModel(
     private val _uiState = MutableStateFlow(RegisterUiState())
     val uiState = _uiState.asStateFlow()
 
-    private val googleServerClientId = "1063637134638-v816om6gg24utetk2dspjth8bhrk62b1.apps.googleusercontent.com" // Mover a constantes o buildConfig
+    private val googleServerClientId = BuildConfig.GOOGLE_SERVER_CLIENT_ID
 
     fun onEmailChanged(newEmail: String) {
         val trimmedEmail = newEmail.take(30).trim()

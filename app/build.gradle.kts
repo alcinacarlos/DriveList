@@ -12,7 +12,7 @@ android {
     buildFeatures {
         buildConfig = true
     }
-    
+
     defaultConfig {
         applicationId = "com.carlosalcina.drivelist"
         minSdk = 24
@@ -83,4 +83,6 @@ dependencies {
     implementation(libs.androidx.credentials)
     implementation(libs.androidx.credentials.play.services.auth)
     implementation(libs.androidx.datastore.preferences)
+
+    implementation(libs.androidx.core.splashscreen)
 }

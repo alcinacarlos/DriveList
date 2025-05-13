@@ -201,7 +201,7 @@ fun LoginScreen(
             enabled = !uiState.isLoading,
         ) {
             Text("¿No tienes cuenta?")
-            Spacer(modifier = Modifier.width(4.dp))
+            Spacer(modifier = Modifier.width(5.dp))
             Text("Regístrate", color = MaterialTheme.colorScheme.primary)
         }
     }

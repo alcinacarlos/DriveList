@@ -1,5 +1,9 @@
 <resources>
     <string name="app_name">DriveList</string>
     <string name="sign_in_google">Continuar con Google</string>
-    <string name="default_web_client_id">1063637134638-v816om6gg24utetk2dspjth8bhrk62b1.apps.googleusercontent.com</string>
+    <string name="language_display_en">Inglés</string>
+    <string name="language_display_es">Español</string>
+    <string name="settings_title">Configuración</string>
+    <string name="settings_language_label">Idioma</string>
+    <string name="settings_select_language">Seleciona un idioma</string>
 </resources>
