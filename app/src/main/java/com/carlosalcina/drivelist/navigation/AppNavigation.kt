@@ -6,6 +6,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.carlosalcina.drivelist.data.repository.CredentialManagerGoogleSignInHandler
+import com.carlosalcina.drivelist.data.repository.FirebaseAuthRepository
+import com.carlosalcina.drivelist.domain.repository.GoogleSignInHandler
 import com.carlosalcina.drivelist.ui.view.screens.HomeScreen
 import com.carlosalcina.drivelist.ui.view.screens.LoginScreen
 import com.carlosalcina.drivelist.ui.view.screens.ProfileScreen
@@ -18,6 +21,9 @@ import com.carlosalcina.drivelist.utils.FirebaseUtils
 @Composable
 fun AppNavigation(navController: NavHostController, onLanguageChange: (String) -> Unit) {
     val auth = FirebaseUtils.getInstance()
+    val authRepository = FirebaseAuthRepository(auth)
+    val googleSignInHandler = CredentialManagerGoogleSignInHandler()
+
     val currentUser = auth.currentUser
     val startDestination = if (currentUser != null) "profile" else "register"
 
@@ -26,55 +32,35 @@ fun AppNavigation(navController: NavHostController, onLanguageChange: (String) -
             //WelcomeScreen(navController)
         }
         composable("login") {
-            val context = LocalContext.current
-            val scope = rememberCoroutineScope()
-            val loginViewModel = LoginViewModel()
+            val loginViewModel = LoginViewModel(authRepository, googleSignInHandler)
 
             LoginScreen(
                 viewModel = loginViewModel,
-                onLoginExitoso = {
+                onNavigateToHome = {
                     navController.navigate("home") {
                         popUpTo("login") { inclusive = true }
                     }
                 },
-                onIrARegistro = { navController.navigate("register"){
-                    popUpTo("login") { inclusive = true }
-                } },
-                onGoogleSignIn = {
-                    loginViewModel.iniciarSesionConCredentialManager(
-                        context, scope,
-                        onSuccess = {
-                            navController.navigate("profile") {
-                                popUpTo("login") { inclusive = true }
-                            }
-                        },
-                        onError = { msg -> loginViewModel.estadoMensaje = msg })
-                })
+                onNavigateToRegister = {
+                    navController.navigate("register") {
+                        popUpTo("login") { inclusive = true }
+                    }
+                }
+            )
         }
         composable("register") {
-            val registerViewModel = RegisterViewModel()
-            val context = LocalContext.current
-            val scope = rememberCoroutineScope()
+            val registerViewModel = RegisterViewModel(authRepository, googleSignInHandler)
 
             RegisterScreen(
-                registerViewModel, onRegister = {
-                navController.navigate("profile") {
-                    popUpTo("register") { inclusive = true }
+                registerViewModel, onNavigateOnSuccess = {
+                    navController.navigate("profile") {
+                        popUpTo("register") { inclusive = true }
+                    }
+                }, onNavigateToLogin = {
+                    navController.navigate("login") {
+                        popUpTo("register") { inclusive = true }
+                    }
                 }
-            }, onGoogleSignIn = {
-                registerViewModel.iniciarSesionConCredentialManager(
-                    context,
-                    scope,
-                    onSuccess = {
-                        navController.navigate("profile") {
-                            popUpTo("login") { inclusive = true }
-                        }
-                    },
-                    onError = { msg -> registerViewModel.estadoMensaje = msg })
-            },
-                onIrALogin = { navController.navigate("login"){
-                    popUpTo("register") { inclusive = true }
-                } }
             )
         }
         composable("home") {

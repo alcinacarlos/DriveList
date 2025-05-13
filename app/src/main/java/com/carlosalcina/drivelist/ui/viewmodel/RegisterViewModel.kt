@@ -1,192 +1,183 @@
 package com.carlosalcina.drivelist.ui.viewmodel
 
 import android.content.Context
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.core.net.toUri
-import androidx.credentials.CredentialManager
-import androidx.credentials.CustomCredential
-import androidx.credentials.GetCredentialRequest
 import androidx.lifecycle.ViewModel
-import com.carlosalcina.drivelist.utils.FirebaseUtils
+import androidx.lifecycle.viewModelScope
+import com.carlosalcina.drivelist.domain.model.AuthError
+import com.carlosalcina.drivelist.domain.model.GoogleSignInError
+import com.carlosalcina.drivelist.domain.repository.AuthRepository
+import com.carlosalcina.drivelist.domain.repository.GoogleSignInHandler
+import com.carlosalcina.drivelist.ui.view.states.RegisterUiState
+import com.carlosalcina.drivelist.utils.Result
 import com.carlosalcina.drivelist.utils.Utils
-import com.carlosalcina.drivelist.utils.Utils.validarPassword
-import com.google.android.libraries.identity.googleid.GetGoogleIdOption
-import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
-import com.google.firebase.auth.GoogleAuthProvider
-import com.google.firebase.auth.UserProfileChangeRequest
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
-class RegisterViewModel : ViewModel() {
+class RegisterViewModel(
+    private val authRepository: AuthRepository,
+    private val googleSignInHandler: GoogleSignInHandler
+) : ViewModel() {
 
-    var email by mutableStateOf("")
-    var password by mutableStateOf("")
-    var nombre by mutableStateOf("")
-    var fotoUrl by mutableStateOf("")
+    private val _uiState = MutableStateFlow(RegisterUiState())
+    val uiState = _uiState.asStateFlow()
 
-    var emailError by mutableStateOf<String?>(null)
-    var passwordError by mutableStateOf<String?>(null)
-    var nombreError by mutableStateOf<String?>(null)
-
-    var estadoMensaje by mutableStateOf<String?>(null)
-    var cargando by mutableStateOf(false)
-    var canRegister by mutableStateOf(false)
-
-    private val auth = FirebaseUtils.getInstance()
-
-    fun onPasswordChanged(newPassword:String){
-        if (newPassword.length > 20) return
-        password = newPassword.trim()
-        passwordError = validarPassword(password)
-        canRegister()
-    }
-
-    fun onNameChanged(newName:String) {
-        if (newName.length > 20) return
-        nombre = newName.trim()
-        nombreError = Utils.validarNombre(nombre)
-        canRegister()
-    }
+    private val googleServerClientId = "1063637134638-v816om6gg24utetk2dspjth8bhrk62b1.apps.googleusercontent.com" // Mover a constantes o buildConfig
 
     fun onEmailChanged(newEmail: String) {
-        if (newEmail.length > 20) return
-        email = newEmail.trim()
-        emailError = Utils.validarEmail(email)
-        canRegister()
+        val trimmedEmail = newEmail.take(30).trim()
+        _uiState.update { currentState ->
+            currentState.copy(
+                email = trimmedEmail,
+                emailError = Utils.validarEmail(trimmedEmail)
+            )
+        }
+        updateCanRegisterState()
     }
 
-
-    private fun canRegister(){
-        val hayErrores = listOf(
-            emailError,
-            passwordError
-        ).any { it != null }
-
-        val camposVacios = listOf(
-            email,
-            password
-        ).any { it.isBlank() }
-
-        canRegister = !cargando && !hayErrores && !camposVacios
+    fun onPasswordChanged(newPassword: String) {
+        val trimmedPassword = newPassword.take(20).trim()
+        _uiState.update { currentState ->
+            currentState.copy(
+                password = trimmedPassword,
+                passwordError = Utils.validarPassword(trimmedPassword)
+            )
+        }
+        updateCanRegisterState()
     }
 
-    fun registrarUsuario() {
-        // Validar campos
-        emailError = Utils.validarEmail(email)
-        passwordError = Utils.validarPassword(password)
-        nombreError = Utils.validarNombre(nombre)
+    fun onNameChanged(newName: String) {
+        val trimmedName = newName.take(30).trim() // Limitar longitud y quitar espacios
+        _uiState.update { currentState ->
+            currentState.copy(
+                nombre = trimmedName,
+                nombreError = Utils.validarNombre(trimmedName)
+            )
+        }
+        updateCanRegisterState()
+    }
 
-        if (emailError != null || passwordError != null || nombreError != null) {
-            estadoMensaje = "Corrige los errores antes de continuar."
+    private fun updateCanRegisterState() {
+        _uiState.update { currentState ->
+            val hayErrores = listOfNotNull( // listOfNotNull para ignorar nulos
+                currentState.emailError,
+                currentState.passwordError,
+                currentState.nombreError
+            ).any() // .any() es suficiente si los errores son strings no vacíos
+
+            val camposVacios = listOf(
+                currentState.email,
+                currentState.password,
+                currentState.nombre
+            ).any { it.isBlank() }
+
+            currentState.copy(
+                canRegister = !currentState.isLoading && !hayErrores && !camposVacios
+            )
+        }
+    }
+
+    fun registrarConEmailPassword() {
+        val currentState = _uiState.value
+        if (!currentState.canRegister) {
+            _uiState.update { it.copy(generalMessage = "Corrige los errores antes de continuar.") }
             return
         }
 
-        cargando = true
-        auth.createUserWithEmailAndPassword(email, password)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    subirFotoYGuardarUrl()
-                    val user = auth.currentUser
-                    val profileUpdates = UserProfileChangeRequest.Builder()
-                        .setDisplayName(nombre)
-                        .apply {
-                            if (fotoUrl.isNotBlank()) {
-                                photoUri = fotoUrl.toUri()
-                            }
-                        }
-                        .build()
+        _uiState.update { it.copy(isLoading = true, generalMessage = null, registrationSuccess = false) }
 
-                    user?.updateProfile(profileUpdates)
-                        ?.addOnCompleteListener {
-                            estadoMensaje = "Registro exitoso"
-                        }
-                } else {
-                    estadoMensaje = task.exception?.message ?: "Error desconocido"
+        viewModelScope.launch {
+            when (val result = authRepository.createUserWithEmailAndPassword(
+                currentState.email,
+                currentState.password,
+                currentState.nombre
+            )) {
+                is Result.Success -> {
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            generalMessage = "Registro exitoso. Bienvenido ${result.data.displayName ?: currentState.nombre}!",
+                            registrationSuccess = true
+                        )
+                    }
                 }
-                cargando = false
-            }
-    }
-
-    fun subirFotoYGuardarUrl() {
-        if (fotoUrl.isBlank()) return
-        val uri = fotoUrl.toUri()
-
-        val uid = auth.currentUser?.uid ?: return
-        val storageRef = FirebaseUtils.getStorage().reference
-        val fileRef = storageRef.child("users/$uid/profile.jpg")
-
-        cargando = true
-        fileRef.putFile(uri)
-            .addOnSuccessListener {
-                fileRef.downloadUrl.addOnSuccessListener { url ->
-                    fotoUrl = url.toString()
-                    estadoMensaje = "Foto subida correctamente"
-                    cargando = false
+                is Result.Error -> {
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            generalMessage = mapAuthErrorToMessage(result.error)
+                        )
+                    }
                 }
-            }
-            .addOnFailureListener {
-                estadoMensaje = "Error al subir la foto: ${it.message}"
-                cargando = false
-            }
-    }
-
-    fun iniciarSesionConCredentialManager(
-        context: Context,
-        scope: CoroutineScope,
-        onSuccess: () -> Unit,
-        onError: (String) -> Unit
-    ) {
-        scope.launch {
-            val credentialManager = CredentialManager.create(context)
-            val googleIdOption = GetGoogleIdOption.Builder()
-                .setFilterByAuthorizedAccounts(false)
-                .setServerClientId("1063637134638-v816om6gg24utetk2dspjth8bhrk62b1.apps.googleusercontent.com")
-                .build()
-
-            val request = GetCredentialRequest.Builder()
-                .addCredentialOption(googleIdOption)
-                .build()
-
-            try {
-                val result = withContext(Dispatchers.IO) {
-                    credentialManager.getCredential(context, request)
-                }
-
-                val credential = result.credential
-                if (credential is CustomCredential && credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
-                    val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
-                    val idToken = googleIdTokenCredential.idToken
-                    autenticarConGoogle(idToken, onSuccess, onError)
-                } else {
-                    onError("Tipo de credencial inesperado")
-                }
-            } catch (e: Exception) {
-                onError(e.message ?: "Error al iniciar sesión con Google")
             }
         }
     }
 
-    private fun autenticarConGoogle(
-        idToken: String,
-        onSuccess: () -> Unit,
-        onError: (String) -> Unit
-    ) {
-        cargando = true
-        val credential = GoogleAuthProvider.getCredential(idToken, null)
-        auth.signInWithCredential(credential)
-            .addOnCompleteListener {
-                cargando = false
-                if (it.isSuccessful) {
-                    estadoMensaje = "Inicio con Google exitoso"
-                    onSuccess()
-                } else {
-                    estadoMensaje = it.exception?.message ?: "Error de autenticación con Google"
-                    onError(estadoMensaje!!)
+    // Para Google, el registro y login son el mismo flujo en Firebase si el usuario no existe.
+    // El nombre se tomará del perfil de Google.
+    fun registrarOIniciarSesionConGoogle(context: Context) {
+        _uiState.update { it.copy(isLoading = true, generalMessage = null, registrationSuccess = false) }
+
+        viewModelScope.launch {
+            when (val tokenResult = googleSignInHandler.getGoogleIdToken(context, googleServerClientId)) {
+                is Result.Success -> {
+                    val idToken = tokenResult.data
+                    when (val authResult = authRepository.signInWithGoogleToken(idToken)) {
+                        is Result.Success -> {
+                            _uiState.update {
+                                it.copy(
+                                    isLoading = false,
+                                    // El mensaje podría indicar si es nuevo usuario o no, si authResult lo proveyera
+                                    generalMessage = "Inicio/Registro con Google exitoso. Bienvenido ${authResult.data.displayName ?: ""}!",
+                                    registrationSuccess = true // Usamos el mismo flag de éxito
+                                )
+                            }
+                        }
+                        is Result.Error -> {
+                            _uiState.update {
+                                it.copy(
+                                    isLoading = false,
+                                    generalMessage = mapAuthErrorToMessage(authResult.error)
+                                )
+                            }
+                        }
+                    }
+                }
+                is Result.Error -> {
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            generalMessage = mapGoogleSignInErrorToMessage(tokenResult.error)
+                        )
+                    }
                 }
             }
+        }
+    }
+
+    fun onRegistrationSuccessEventConsumed() {
+        _uiState.update { it.copy(registrationSuccess = false, generalMessage = null) }
+    }
+
+    private fun mapAuthErrorToMessage(error: AuthError): String {
+        return when (error) {
+            is AuthError.EmailAlreadyInUse -> error.message ?: "El correo ya está registrado."
+            is AuthError.WeakPassword -> error.message ?: "La contraseña es muy débil."
+            is AuthError.InvalidCredentials -> error.message ?: "Credenciales inválidas." // Aunque no aplica tanto a registro
+            is AuthError.NetworkError -> error.message ?: "Error de red."
+            is AuthError.UserNotFoundError -> error.message ?: "Usuario no encontrado." // No aplica a registro
+            is AuthError.UnknownError -> error.message ?: "Error desconocido."
+        }
+    }
+
+    private fun mapGoogleSignInErrorToMessage(error: GoogleSignInError): String {
+        return when (error) {
+            is GoogleSignInError.ApiError -> error.message ?: "Error con la API de Google."
+            is GoogleSignInError.NoCredentialFound -> error.message ?: "No se encontraron credenciales de Google."
+            is GoogleSignInError.UnexpectedCredentialType -> error.message ?: "Tipo de credencial de Google inesperado."
+            GoogleSignInError.UserCancelled -> "Registro/Inicio con Google cancelado."
+            is GoogleSignInError.UnknownError -> error.message ?: "Error desconocido con Google Sign-In."
+        }
     }
 }

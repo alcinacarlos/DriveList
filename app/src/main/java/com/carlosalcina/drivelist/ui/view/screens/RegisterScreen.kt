@@ -12,7 +12,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
@@ -29,13 +31,14 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
@@ -43,30 +46,21 @@ import com.carlosalcina.drivelist.ui.view.components.ButtonAuth
 import com.carlosalcina.drivelist.ui.view.components.GoogleSignInButton
 import com.carlosalcina.drivelist.ui.viewmodel.RegisterViewModel
 
+
 @Composable
 fun RegisterScreen(
     viewModel: RegisterViewModel,
-    onRegister: () -> Unit,
-    onGoogleSignIn: () -> Unit,
-    onIrALogin: () -> Unit,
+    onNavigateOnSuccess: () -> Unit,
+    onNavigateToLogin: () -> Unit
 ) {
-    val passwordError = viewModel.passwordError
-    val password = viewModel.password
-
-    val name = viewModel.nombre
-    val nameError = viewModel.nombreError
-
-    val email = viewModel.email
-    val emailError= viewModel.emailError
-
-    var cargando = viewModel.cargando
-
-    val messageStatus = viewModel.estadoMensaje
+    val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
     var showPassword by remember { mutableStateOf(false) }
 
-    LaunchedEffect(messageStatus) {
-        if (messageStatus == "Registro exitoso") {
-            onRegister()
+    LaunchedEffect(uiState.registrationSuccess) {
+        if (uiState.registrationSuccess) {
+            onNavigateOnSuccess()
+            viewModel.onRegistrationSuccessEventConsumed() // Limpia el evento
         }
     }
 
@@ -79,7 +73,8 @@ fun RegisterScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(30.dp),
+                .padding(horizontal = 30.dp, vertical = 20.dp) // Ajuste de padding vertical
+                .verticalScroll(rememberScrollState()), // Para que sea scrollable si el contenido es mucho
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -92,15 +87,22 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(40.dp))
 
+            // Campo Nombre
             OutlinedTextField(
                 shape = RoundedCornerShape(16.dp),
-                value = name,
-                onValueChange = {
-                    viewModel.onNameChanged(it)
-                },
+                value = uiState.nombre,
+                onValueChange = { viewModel.onNameChanged(it) },
                 label = { Text("Nombre completo") },
                 leadingIcon = { Icon(Icons.Filled.Person, contentDescription = null) },
-                isError = nameError != null,
+                isError = uiState.nombreError != null,
+                supportingText = {
+                    uiState.nombreError?.let {
+                        Text(
+                            text = it,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                },
                 singleLine = true,
                 colors = TextFieldDefaults.colors(
                     focusedTextColor = MaterialTheme.colorScheme.onSurface,
@@ -108,44 +110,44 @@ fun RegisterScreen(
                     focusedContainerColor = MaterialTheme.colorScheme.primaryContainer,
                     unfocusedContainerColor = MaterialTheme.colorScheme.primaryContainer
                 ),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().height(90.dp)
             )
-            nameError?.let {
-                Text(text = it, color = Color.Red)
-            }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
+            // Campo Email
             OutlinedTextField(
                 shape = RoundedCornerShape(16.dp),
-                value = email,
-                onValueChange = {
-                    viewModel.onEmailChanged(it)
-                },
+                value = uiState.email,
+                onValueChange = { viewModel.onEmailChanged(it) },
                 label = { Text("Correo electrónico") },
                 leadingIcon = { Icon(Icons.Filled.Email, contentDescription = null) },
-                isError = emailError != null,
+                isError = uiState.emailError != null,
+                supportingText = {
+                    uiState.emailError?.let {
+                        Text(
+                            text = it,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
                 colors = TextFieldDefaults.colors(
                     focusedTextColor = MaterialTheme.colorScheme.onSurface,
                     unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
                     focusedContainerColor = MaterialTheme.colorScheme.primaryContainer,
                     unfocusedContainerColor = MaterialTheme.colorScheme.primaryContainer
-                )
+                ),
+                modifier = Modifier.fillMaxWidth().height(90.dp)
             )
-            emailError?.let {
-                Text(text = it, color = Color.Red)
-            }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
+            // Campo Contraseña
             OutlinedTextField(
-                value = password,
+                value = uiState.password,
                 shape = RoundedCornerShape(16.dp),
-                onValueChange = {
-                    viewModel.onPasswordChanged(it)
-                },
+                onValueChange = { viewModel.onPasswordChanged(it) },
                 label = { Text("Contraseña") },
                 visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
                 leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = null) },
@@ -157,61 +159,80 @@ fun RegisterScreen(
                         )
                     }
                 },
-                isError = passwordError != null,
+                isError = uiState.passwordError != null,
+                supportingText = {
+                    uiState.passwordError?.let {
+                        Text(
+                            text = it,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
                 colors = TextFieldDefaults.colors(
                     focusedTextColor = MaterialTheme.colorScheme.onSurface,
                     unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
                     focusedContainerColor = MaterialTheme.colorScheme.primaryContainer,
                     unfocusedContainerColor = MaterialTheme.colorScheme.primaryContainer
-                )
+                ),
+                modifier = Modifier.fillMaxWidth().height(90.dp)
             )
-            passwordError?.let {
-                Text(text = it, color = Color.Red)
-            }
 
-            Spacer(modifier = Modifier.height(35.dp))
+            Spacer(modifier = Modifier.height(40.dp))
 
+            // Botón Registrarse
             ButtonAuth(
-                onClick = { viewModel.registrarUsuario() },
-                enabled = viewModel.canRegister
+                onClick = { viewModel.registrarConEmailPassword() },
+                enabled = uiState.canRegister // canRegister ya considera isLoading
             ) {
-                if (cargando) {
+                if (uiState.isLoading) { // Mostrar indicador si está cargando por esta acción
                     CircularProgressIndicator(
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onPrimary, // Color para contraste sobre primario
                         strokeWidth = 2.dp,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(24.dp)
                     )
                 } else {
                     Text("Registrarse")
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(25.dp))
 
-            GoogleSignInButton(onClick = onGoogleSignIn)
+            // Botón Google Sign In
+            GoogleSignInButton(
+                onClick = { viewModel.registrarOIniciarSesionConGoogle(context) },
+                enabled = !uiState.isLoading // Deshabilitar si cualquier carga está en progreso
+            )
 
-            messageStatus?.let {
+            // Mensaje General (éxito/error)
+            uiState.generalMessage?.let { message ->
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    it,
-                    color = if ("exitoso" in it.lowercase()) Color.Green else Color.Red
+                    text = message,
+                    color = if (uiState.registrationSuccess && message.contains(
+                            "exitoso",
+                            ignoreCase = true
+                        )
+                    ) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
                 )
             }
         }
     }
+    // Botón para ir a Iniciar Sesión
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(bottom = 20.dp),
+            .padding(bottom = 30.dp),
         contentAlignment = Alignment.BottomCenter
+
     ) {
-        TextButton(onClick = onIrALogin) {
+        TextButton(
+            onClick = onNavigateToLogin,
+            enabled = !uiState.isLoading,
+        ) {
             Text("¿Ya tienes cuenta?")
             Spacer(modifier = Modifier.width(4.dp))
             Text("Inicia Sesión", color = MaterialTheme.colorScheme.primary)
         }
     }
-
 }

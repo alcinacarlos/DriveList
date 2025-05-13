@@ -9,6 +9,10 @@ android {
     namespace = "com.carlosalcina.drivelist"
     compileSdk = 35
 
+    buildFeatures {
+        buildConfig = true
+    }
+    
     defaultConfig {
         applicationId = "com.carlosalcina.drivelist"
         minSdk = 24
@@ -17,6 +21,8 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "GOOGLE_SERVER_CLIENT_ID", "\"1063637134638-v816om6gg24utetk2dspjth8bhrk62b1.apps.googleusercontent.com\"")
     }
 
     buildTypes {

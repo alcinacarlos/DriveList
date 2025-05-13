@@ -27,7 +27,8 @@ import com.carlosalcina.drivelist.R
 
 @Composable
 fun GoogleSignInButton(
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    enabled: Boolean = true
 ) {
     Button(
         onClick = onClick,
@@ -35,6 +36,7 @@ fun GoogleSignInButton(
             containerColor = MaterialTheme.colorScheme.primaryContainer,
             contentColor = MaterialTheme.colorScheme.onPrimary
         ),
+        enabled = enabled,
         border = BorderStroke(1.dp, Color.Gray),
         modifier = Modifier
             .fillMaxWidth()
