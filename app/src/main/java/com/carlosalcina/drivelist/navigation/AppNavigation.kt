@@ -10,6 +10,7 @@ import com.carlosalcina.drivelist.ui.view.screens.LoginScreen
 import com.carlosalcina.drivelist.ui.view.screens.ProfileScreen
 import com.carlosalcina.drivelist.ui.view.screens.RegisterScreen
 import com.carlosalcina.drivelist.ui.view.screens.SettingsScreen
+import com.carlosalcina.drivelist.ui.view.screens.UploadCarScreen
 import com.google.firebase.auth.FirebaseAuth
 
 
@@ -17,7 +18,7 @@ import com.google.firebase.auth.FirebaseAuth
 fun AppNavigation(navController: NavHostController, onLanguageChange: (String) -> Unit) {
     val firebaseAuth = FirebaseAuth.getInstance()
     val currentUser = firebaseAuth.currentUser
-    val startDestination = if (currentUser != null) "profile" else "register"
+    val startDestination = if (currentUser != null) "upload_car" else "register"
 
     NavHost(navController = navController, startDestination = startDestination) {
 
@@ -62,6 +63,11 @@ fun AppNavigation(navController: NavHostController, onLanguageChange: (String) -
         }
         composable("settings") {
             SettingsScreen(onLanguageChange)
+        }
+        composable("upload_car") {
+            UploadCarScreen(
+                viewModel = hiltViewModel()
+            )
         }
     }
 }

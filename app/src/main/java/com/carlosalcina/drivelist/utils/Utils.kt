@@ -53,4 +53,13 @@ object Utils {
             is GoogleSignInError.UnknownError -> error.message ?: "Error desconocido con Google Sign-In."
         }
     }
+
+    fun parseFuel(fuel: String): String{
+        return when(fuel){
+            "Diésel" -> "Disel"
+            "Híbrido" -> "Hbrido"
+            "Híbrido enchufable" -> "Hbridoenchufable"
+            else -> {"Gasolina"}
+        }
+    }
 }
