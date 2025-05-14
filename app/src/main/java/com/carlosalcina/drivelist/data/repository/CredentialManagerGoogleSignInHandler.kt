@@ -11,11 +11,12 @@ import com.carlosalcina.drivelist.domain.repository.GoogleSignInHandler
 import com.carlosalcina.drivelist.utils.Result
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 
-class CredentialManagerGoogleSignInHandler : GoogleSignInHandler {
+class CredentialManagerGoogleSignInHandler @Inject constructor() : GoogleSignInHandler {
     override suspend fun getGoogleIdToken(context: Context, serverClientId: String): Result<String, GoogleSignInError> {
         val credentialManager = CredentialManager.create(context)
         val googleIdOption = GetGoogleIdOption.Builder()

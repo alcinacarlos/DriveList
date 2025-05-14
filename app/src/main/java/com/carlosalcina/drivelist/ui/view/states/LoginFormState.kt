@@ -8,5 +8,9 @@ data class LoginUiState(
     val isLoading: Boolean = false,
     val generalMessage: String? = null,
     val canLogin: Boolean = false,
-    val loginSuccess: Boolean = false // Para manejar la navegación/evento de éxito
+    val loginSuccess: Boolean = false,
+    val showForgotPasswordDialog: Boolean = false,
+    val forgotPasswordEmailInput: String = "", // Email ingresado en el diálogo
+    val isSendingPasswordReset: Boolean = false, // Estado de carga para el envío del correo
+    val passwordResetFeedbackMessage: String? = null
 )

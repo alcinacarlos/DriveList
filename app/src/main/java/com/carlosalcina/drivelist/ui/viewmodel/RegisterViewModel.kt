@@ -4,19 +4,20 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.carlosalcina.drivelist.BuildConfig
-import com.carlosalcina.drivelist.domain.model.AuthError
-import com.carlosalcina.drivelist.domain.model.GoogleSignInError
 import com.carlosalcina.drivelist.domain.repository.AuthRepository
 import com.carlosalcina.drivelist.domain.repository.GoogleSignInHandler
 import com.carlosalcina.drivelist.ui.view.states.RegisterUiState
 import com.carlosalcina.drivelist.utils.Result
 import com.carlosalcina.drivelist.utils.Utils
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class RegisterViewModel(
+@HiltViewModel
+class RegisterViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val googleSignInHandler: GoogleSignInHandler
 ) : ViewModel() {
@@ -107,7 +108,7 @@ class RegisterViewModel(
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            generalMessage = mapAuthErrorToMessage(result.error)
+                            generalMessage = Utils.mapAuthErrorToMessage(result.error)
                         )
                     }
                 }
@@ -139,7 +140,7 @@ class RegisterViewModel(
                             _uiState.update {
                                 it.copy(
                                     isLoading = false,
-                                    generalMessage = mapAuthErrorToMessage(authResult.error)
+                                    generalMessage = Utils.mapAuthErrorToMessage(authResult.error)
                                 )
                             }
                         }
@@ -149,7 +150,7 @@ class RegisterViewModel(
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            generalMessage = mapGoogleSignInErrorToMessage(tokenResult.error)
+                            generalMessage = Utils.mapGoogleSignInErrorToMessage(tokenResult.error)
                         )
                     }
                 }
@@ -159,26 +160,5 @@ class RegisterViewModel(
 
     fun onRegistrationSuccessEventConsumed() {
         _uiState.update { it.copy(registrationSuccess = false, generalMessage = null) }
-    }
-
-    private fun mapAuthErrorToMessage(error: AuthError): String {
-        return when (error) {
-            is AuthError.EmailAlreadyInUse -> error.message ?: "El correo ya está registrado."
-            is AuthError.WeakPassword -> error.message ?: "La contraseña es muy débil."
-            is AuthError.InvalidCredentials -> error.message ?: "Credenciales inválidas." // Aunque no aplica tanto a registro
-            is AuthError.NetworkError -> error.message ?: "Error de red."
-            is AuthError.UserNotFoundError -> error.message ?: "Usuario no encontrado." // No aplica a registro
-            is AuthError.UnknownError -> error.message ?: "Error desconocido."
-        }
-    }
-
-    private fun mapGoogleSignInErrorToMessage(error: GoogleSignInError): String {
-        return when (error) {
-            is GoogleSignInError.ApiError -> error.message ?: "Error con la API de Google."
-            is GoogleSignInError.NoCredentialFound -> error.message ?: "No se encontraron credenciales de Google."
-            is GoogleSignInError.UnexpectedCredentialType -> error.message ?: "Tipo de credencial de Google inesperado."
-            GoogleSignInError.UserCancelled -> "Registro/Inicio con Google cancelado."
-            is GoogleSignInError.UnknownError -> error.message ?: "Error desconocido con Google Sign-In."
-        }
     }
 }

@@ -42,6 +42,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.carlosalcina.drivelist.ui.view.components.ButtonAuth
+import com.carlosalcina.drivelist.ui.view.components.ForgotPasswordDialog
 import com.carlosalcina.drivelist.ui.view.components.GoogleSignInButton
 import com.carlosalcina.drivelist.ui.viewmodel.LoginViewModel
 
@@ -93,7 +94,6 @@ fun LoginScreen(
                 onValueChange = { viewModel.onEmailChanged(it) },
                 label = { Text("Correo electrónico") },
                 leadingIcon = { Icon(Icons.Filled.Email, contentDescription = null) },
-                isError = uiState.emailError != null,
                 supportingText = {
                     uiState.emailError?.let {
                         Text(
@@ -130,7 +130,6 @@ fun LoginScreen(
                         )
                     }
                 },
-                isError = uiState.passwordError != null,
                 supportingText = {
                     uiState.passwordError?.let {
                         Text(
@@ -146,8 +145,32 @@ fun LoginScreen(
                     focusedContainerColor = MaterialTheme.colorScheme.primaryContainer,
                     unfocusedContainerColor = MaterialTheme.colorScheme.primaryContainer
                 ),
-                modifier = Modifier.fillMaxWidth().height(90.dp) // Aplicando altura fija
+                modifier = Modifier.fillMaxWidth().height(90.dp)
             )
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                horizontalArrangement = Arrangement.Start
+            ) {
+                TextButton(
+                    onClick = { viewModel.onOpenForgotPasswordDialog() },
+                    enabled = !uiState.isLoading
+                ) {
+                    Text("¿Has olvidado tu contraseña?")
+                    Spacer(modifier = Modifier.width(5.dp))
+                    Text("Reseteala", color = MaterialTheme.colorScheme.primary)
+                }
+            }
+
+            if (uiState.showForgotPasswordDialog) {
+                ForgotPasswordDialog(
+                    emailInput = uiState.forgotPasswordEmailInput,
+                    onEmailChange = { viewModel.onForgotPasswordDialogEmailChanged(it) },
+                    onSendClick = { viewModel.sendPasswordResetEmailFromDialog() },
+                    onDismissRequest = { viewModel.onCloseForgotPasswordDialog() },
+                    isLoading = uiState.isSendingPasswordReset,
+                    feedbackMessage = uiState.passwordResetFeedbackMessage
+                )
+            }
 
             Spacer(modifier = Modifier.height(40.dp)) // Espacio similar al de RegisterScreen
 

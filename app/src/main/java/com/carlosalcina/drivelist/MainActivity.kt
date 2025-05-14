@@ -13,14 +13,15 @@ import com.carlosalcina.drivelist.localization.LocaleHelper
 import com.carlosalcina.drivelist.navigation.AppNavigation
 import com.carlosalcina.drivelist.ui.theme.DriveListTheme
 import com.google.firebase.FirebaseApp
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     override fun attachBaseContext(newBase: Context) {
-        LanguageRepository.initialize(newBase)
         val currentLanguage = runBlocking { LanguageRepository.language.first() }
         super.attachBaseContext(LocaleHelper.applyOverrideConfiguration(newBase, currentLanguage))
     }
@@ -28,11 +29,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         installSplashScreen()
-
-        LanguageRepository.initialize(this)
-
         enableEdgeToEdge()
-        FirebaseApp.initializeApp(this)
 
         setContent {
             val navController = rememberNavController()

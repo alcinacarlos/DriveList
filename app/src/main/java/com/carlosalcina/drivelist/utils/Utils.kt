@@ -1,6 +1,8 @@
 package com.carlosalcina.drivelist.utils
 
 import android.util.Patterns
+import com.carlosalcina.drivelist.domain.model.AuthError
+import com.carlosalcina.drivelist.domain.model.GoogleSignInError
 
 object Utils {
 
@@ -28,5 +30,27 @@ object Utils {
         } else if (nombre.length < 3) {
             "El nombre debe tener al menos 3 letras"
         } else null
+    }
+
+    // Funciones helper para mapear errores a mensajes amigables
+    fun mapAuthErrorToMessage(error: AuthError): String {
+        return when (error) {
+            is AuthError.InvalidCredentials -> error.message ?: "Credenciales inválidas."
+            is AuthError.NetworkError -> error.message ?: "Error de red."
+            is AuthError.UserNotFoundError -> error.message ?: "Usuario no encontrado."
+            is AuthError.UnknownError -> error.message ?: "Error desconocido."
+            is AuthError.EmailAlreadyInUse -> error.message ?: "Error desconocido."
+            is AuthError.WeakPassword -> error.message ?: "Error desconocido."
+        }
+    }
+
+    fun mapGoogleSignInErrorToMessage(error: GoogleSignInError): String {
+        return when (error) {
+            is GoogleSignInError.ApiError -> error.message ?: "Error con la API de Google."
+            is GoogleSignInError.NoCredentialFound -> error.message ?: "No se encontraron credenciales de Google."
+            is GoogleSignInError.UnexpectedCredentialType -> error.message ?: "Tipo de credencial de Google inesperado."
+            GoogleSignInError.UserCancelled -> "Inicio de sesión con Google cancelado."
+            is GoogleSignInError.UnknownError -> error.message ?: "Error desconocido con Google Sign-In."
+        }
     }
 }

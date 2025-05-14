@@ -17,12 +17,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
+import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.auth
 
 @Composable
-fun ProfileScreen(auth: FirebaseAuth, navController: NavController) {
-    val currentUser = auth.currentUser
-    // Si el usuario no está autenticado, mostrar mensaje o redirigir
+fun ProfileScreen(navController: NavController) {
+    val currentUser = Firebase.auth.currentUser
     if (currentUser == null) {
         Text(text = "No user is signed in.")
         return
@@ -55,7 +56,7 @@ fun ProfileScreen(auth: FirebaseAuth, navController: NavController) {
         Text(text = "UID: ${currentUser.uid}", style = MaterialTheme.typography.bodyMedium)
     }
     Button(onClick = {
-        auth.signOut()
+        Firebase.auth.signOut()
         navController.navigate("login") {
             popUpTo("home") { inclusive = true }
         }

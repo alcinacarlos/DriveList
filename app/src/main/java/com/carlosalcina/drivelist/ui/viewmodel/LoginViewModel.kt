@@ -3,8 +3,6 @@ package com.carlosalcina.drivelist.ui.viewmodel
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.carlosalcina.drivelist.domain.model.AuthError
-import com.carlosalcina.drivelist.domain.model.GoogleSignInError
 import com.carlosalcina.drivelist.domain.repository.AuthRepository
 import com.carlosalcina.drivelist.domain.repository.GoogleSignInHandler
 import com.carlosalcina.drivelist.ui.view.states.LoginUiState
@@ -15,9 +13,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import com.carlosalcina.drivelist.BuildConfig
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
-
-class LoginViewModel(
+@HiltViewModel
+class LoginViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val googleSignInHandler: GoogleSignInHandler
 ) : ViewModel() {
@@ -28,11 +28,10 @@ class LoginViewModel(
     private val googleServerClientId = BuildConfig.GOOGLE_SERVER_CLIENT_ID
 
     fun onEmailChanged(newEmail: String) {
-        val trimmedEmail = newEmail.take(30).trim() // Limitar longitud y quitar espacios
+        val trimmedEmail = newEmail.take(30).trim()
         _uiState.update { currentState ->
             currentState.copy(
                 email = trimmedEmail,
-                emailError = Utils.validarEmail(trimmedEmail)
             )
         }
         updateCanLoginState()
@@ -43,7 +42,6 @@ class LoginViewModel(
         _uiState.update { currentState ->
             currentState.copy(
                 password = trimmedPassword,
-                passwordError = Utils.validarPassword(trimmedPassword)
             )
         }
         updateCanLoginState()
@@ -51,10 +49,6 @@ class LoginViewModel(
 
     private fun updateCanLoginState() {
         _uiState.update { currentState ->
-            val hayErrores = listOf(
-                currentState.emailError,
-                currentState.passwordError
-            ).any { it != null }
 
             val camposVacios = listOf(
                 currentState.email,
@@ -62,7 +56,7 @@ class LoginViewModel(
             ).any { it.isBlank() }
 
             currentState.copy(
-                canLogin = !currentState.isLoading && !hayErrores && !camposVacios
+                canLogin = !currentState.isLoading && !camposVacios
             )
         }
     }
@@ -91,7 +85,7 @@ class LoginViewModel(
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            generalMessage = mapAuthErrorToMessage(result.error)
+                            generalMessage = Utils.mapAuthErrorToMessage(result.error)
                         )
                     }
                 }
@@ -99,14 +93,15 @@ class LoginViewModel(
         }
     }
 
-    fun iniciarSesionConGoogle(context: Context) { // El contexto de la Activity/Composable
+    // El `Context` se pasa como parámetro desde la UI (Activity/Composable), lo cual está bien.
+    // Hilt no necesita intervenir directamente aquí si el Context no es una dependencia del constructor.
+    fun iniciarSesionConGoogle(context: Context) {
         _uiState.update { it.copy(isLoading = true, generalMessage = null, loginSuccess = false) }
 
         viewModelScope.launch {
             when (val tokenResult = googleSignInHandler.getGoogleIdToken(context, googleServerClientId)) {
                 is Result.Success -> {
                     val idToken = tokenResult.data
-                    // Ahora autenticar con Firebase usando el token
                     when (val authResult = authRepository.signInWithGoogleToken(idToken)) {
                         is Result.Success -> {
                             _uiState.update {
@@ -121,7 +116,7 @@ class LoginViewModel(
                             _uiState.update {
                                 it.copy(
                                     isLoading = false,
-                                    generalMessage = mapAuthErrorToMessage(authResult.error)
+                                    generalMessage = Utils.mapAuthErrorToMessage(authResult.error)
                                 )
                             }
                         }
@@ -131,7 +126,7 @@ class LoginViewModel(
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            generalMessage = mapGoogleSignInErrorToMessage(tokenResult.error)
+                            generalMessage = Utils.mapGoogleSignInErrorToMessage(tokenResult.error)
                         )
                     }
                 }
@@ -139,30 +134,90 @@ class LoginViewModel(
         }
     }
 
-    // Llamar a esto después de que la UI haya manejado el evento de login exitoso
     fun onLoginSuccessEventConsumed() {
         _uiState.update { it.copy(loginSuccess = false, generalMessage = null) }
     }
 
-    // Funciones helper para mapear errores a mensajes amigables
-    private fun mapAuthErrorToMessage(error: AuthError): String {
-        return when (error) {
-            is AuthError.InvalidCredentials -> error.message ?: "Credenciales inválidas."
-            is AuthError.NetworkError -> error.message ?: "Error de red."
-            is AuthError.UserNotFoundError -> error.message ?: "Usuario no encontrado."
-            is AuthError.UnknownError -> error.message ?: "Error desconocido."
-            is AuthError.EmailAlreadyInUse -> error.message ?: "Error desconocido."
-            is AuthError.WeakPassword -> error.message ?: "Error desconocido."
+    fun onOpenForgotPasswordDialog() {
+        _uiState.update {
+            it.copy(
+                showForgotPasswordDialog = true,
+                // Opcional: Pre-rellenar el email del diálogo con el email del formulario principal
+                forgotPasswordEmailInput = it.email,
+                passwordResetFeedbackMessage = null, // Limpiar mensajes antiguos
+                isSendingPasswordReset = false // Asegurar que el estado de carga esté reseteado
+            )
         }
     }
 
-    private fun mapGoogleSignInErrorToMessage(error: GoogleSignInError): String {
-        return when (error) {
-            is GoogleSignInError.ApiError -> error.message ?: "Error con la API de Google."
-            is GoogleSignInError.NoCredentialFound -> error.message ?: "No se encontraron credenciales de Google."
-            is GoogleSignInError.UnexpectedCredentialType -> error.message ?: "Tipo de credencial de Google inesperado."
-            GoogleSignInError.UserCancelled -> "Inicio de sesión con Google cancelado."
-            is GoogleSignInError.UnknownError -> error.message ?: "Error desconocido con Google Sign-In."
+    // Llamado para cerrar el diálogo
+    fun onCloseForgotPasswordDialog() {
+        _uiState.update {
+            it.copy(
+                showForgotPasswordDialog = false,
+                // Puedes decidir si limpiar forgotPasswordEmailInput y passwordResetFeedbackMessage aquí
+            )
         }
     }
+
+    // Llamado cuando cambia el texto en el campo de email del diálogo
+    fun onForgotPasswordDialogEmailChanged(newEmail: String) {
+        _uiState.update {
+            it.copy(
+                forgotPasswordEmailInput = newEmail,
+                passwordResetFeedbackMessage = null // Limpiar feedback si el usuario empieza a escribir
+            )
+        }
+    }
+
+    // Llamado cuando el usuario presiona "Enviar" en el diálogo
+    fun sendPasswordResetEmailFromDialog() {
+        val emailInDialog = _uiState.value.forgotPasswordEmailInput
+
+        if (emailInDialog.isBlank()) {
+            _uiState.update {
+                it.copy(passwordResetFeedbackMessage = "Por favor, introduce tu correo electrónico.")
+            }
+            return
+        }
+        val emailValidationError = Utils.validarEmail(emailInDialog)
+        if (emailValidationError != null) {
+            _uiState.update {
+                it.copy(passwordResetFeedbackMessage = "Por favor, introduce un correo electrónico válido.")
+            }
+            return
+        }
+
+        _uiState.update {
+            it.copy(
+                isSendingPasswordReset = true,
+                passwordResetFeedbackMessage = null // Limpiar mensaje anterior
+            )
+        }
+
+        viewModelScope.launch {
+            when (val result = authRepository.sendPasswordResetEmail(emailInDialog)) {
+                is Result.Success -> {
+                    _uiState.update {
+                        it.copy(
+                            isSendingPasswordReset = false,
+                            passwordResetFeedbackMessage = "Se ha enviado un correo a $emailInDialog. Revisa tu bandeja de entrada."
+                            // Opcional: podrías querer cerrar el diálogo aquí o después de un delay
+                            // showForgotPasswordDialog = false,
+                            // forgotPasswordEmailInput = "" // Limpiar el campo
+                        )
+                    }
+                }
+                is Result.Error -> {
+                    _uiState.update {
+                        it.copy(
+                            isSendingPasswordReset = false,
+                            passwordResetFeedbackMessage = Utils.mapAuthErrorToMessage(result.error)
+                        )
+                    }
+                }
+            }
+        }
+    }
+
 }

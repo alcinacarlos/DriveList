@@ -14,7 +14,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.carlosalcina.drivelist.utils.FirebaseUtils
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
 
 @Composable
 fun HomeScreen(navController: NavHostController) {
@@ -29,7 +30,7 @@ fun HomeScreen(navController: NavHostController) {
         Text("Bienvenido a la pantalla de inicio")
         Spacer(modifier = Modifier.height(16.dp))
         Button(onClick = {
-            FirebaseUtils.getInstance().signOut()
+            Firebase.auth.signOut()
             navController.navigate("login") {
                 popUpTo("home") { inclusive = true }
             }

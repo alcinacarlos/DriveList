@@ -11,11 +11,18 @@ import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.UserProfileChangeRequest
 import kotlinx.coroutines.tasks.await
+import javax.inject.Inject
 
-class FirebaseAuthRepository(private val firebaseAuth: FirebaseAuth) : AuthRepository { // Inyectar FirebaseAuth
-    override suspend fun signInWithEmailAndPassword(email: String, password: String): Result<AuthUser, AuthError> {
+class FirebaseAuthRepository @Inject constructor(
+    private val firebaseAuth: FirebaseAuth
+) : AuthRepository {
+    override suspend fun signInWithEmailAndPassword(
+        email: String,
+        password: String
+    ): Result<AuthUser, AuthError> {
         return try {
-            val authResult = firebaseAuth.signInWithEmailAndPassword(email, password).await() // Usar kotlinx-coroutines-play-services
+            val authResult = firebaseAuth.signInWithEmailAndPassword(email, password)
+                .await() // Usar kotlinx-coroutines-play-services
             val firebaseUser = authResult.user
             if (firebaseUser != null) {
                 Result.Success(AuthUser(firebaseUser.uid, firebaseUser.email))
@@ -27,7 +34,11 @@ class FirebaseAuthRepository(private val firebaseAuth: FirebaseAuth) : AuthRepos
         } catch (e: FirebaseAuthInvalidCredentialsException) {
             Result.Error(AuthError.InvalidCredentials(e.message))
         } catch (e: Exception) {
-            Result.Error(AuthError.UnknownError(e.message ?: "Error desconocido en login con email."))
+            Result.Error(
+                AuthError.UnknownError(
+                    e.message ?: "Error desconocido en login con email."
+                )
+            )
         }
     }
 
@@ -46,7 +57,11 @@ class FirebaseAuthRepository(private val firebaseAuth: FirebaseAuth) : AuthRepos
         }
     }
 
-    override suspend fun createUserWithEmailAndPassword(email: String, password: String, displayName: String): Result<AuthUser, AuthError> {
+    override suspend fun createUserWithEmailAndPassword(
+        email: String,
+        password: String,
+        displayName: String
+    ): Result<AuthUser, AuthError> {
         return try {
             val authResult = firebaseAuth.createUserWithEmailAndPassword(email, password).await()
             val firebaseUser = authResult.user
@@ -55,18 +70,43 @@ class FirebaseAuthRepository(private val firebaseAuth: FirebaseAuth) : AuthRepos
                 val profileUpdates = UserProfileChangeRequest.Builder()
                     .setDisplayName(displayName)
                     .build()
-                firebaseUser.updateProfile(profileUpdates).await() // Esperar a que se complete la actualización
+                firebaseUser.updateProfile(profileUpdates)
+                    .await() // Esperar a que se complete la actualización
 
-                Result.Success(AuthUser(firebaseUser.uid, firebaseUser.email, firebaseUser.displayName))
+                Result.Success(
+                    AuthUser(
+                        firebaseUser.uid,
+                        firebaseUser.email,
+                        firebaseUser.displayName
+                    )
+                )
             } else {
                 Result.Error(AuthError.UnknownError("Usuario no encontrado después del registro."))
             }
         } catch (e: FirebaseAuthUserCollisionException) {
-            Result.Error(AuthError.EmailAlreadyInUse(e.message ?: "El correo electrónico ya está en uso."))
+            Result.Error(
+                AuthError.EmailAlreadyInUse(
+                    e.message ?: "El correo electrónico ya está en uso."
+                )
+            )
         } catch (e: FirebaseAuthWeakPasswordException) {
             Result.Error(AuthError.WeakPassword(e.message ?: "La contraseña es demasiado débil."))
         } catch (e: Exception) {
-            Result.Error(AuthError.UnknownError(e.message ?: "Error desconocido durante el registro."))
+            Result.Error(
+                AuthError.UnknownError(
+                    e.message ?: "Error desconocido durante el registro."
+                )
+            )
+        }
+    }
+    override suspend fun sendPasswordResetEmail(email: String): Result<Unit, AuthError> {
+        return try {
+            firebaseAuth.sendPasswordResetEmail(email).await()
+            Result.Success(Unit)
+        } catch (e: FirebaseAuthInvalidUserException) {
+            Result.Error(AuthError.UserNotFoundError("No existe una cuenta con este correo electrónico."))
+        } catch (e: Exception) {
+            Result.Error(AuthError.UnknownError(e.message ?: "No se pudo enviar el correo de restablecimiento."))
         }
     }
 }
