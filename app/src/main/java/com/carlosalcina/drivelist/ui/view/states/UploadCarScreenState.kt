@@ -1,6 +1,7 @@
 package com.carlosalcina.drivelist.ui.view.states
 
 import android.net.Uri
+import com.carlosalcina.drivelist.domain.model.CarColor
 
 data class UploadCarScreenState(
     // Listas para los desplegables
@@ -24,7 +25,11 @@ data class UploadCarScreenState(
     val mileage: String = "",
     val description: String = "",
 
+    //Colores
+    val availableCarColors: List<CarColor> = CarColor.GAMA_COMPLETA(),
+    val selectedCarColor: CarColor? = null,
 
+    // Estado imágenes
     val selectedImageUris: List<Uri> = emptyList(),
     val isUploadingImages: Boolean = false,
     val imageUploadErrorMessage: String? = null,

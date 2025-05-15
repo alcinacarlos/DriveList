@@ -21,7 +21,10 @@ private val DarkColorScheme = darkColorScheme(
     onBackground = Color.White,
     onSurface = Color.White,
     error = Error,
-    primaryContainer = Color(0xFF1B2537)
+    primaryContainer = Color(0xFF1B2537),
+    inverseSurface = Color(0xFF112C55),
+    inverseOnSurface = Color.White,
+    inversePrimary = Color.White
 )
 
 private val LightColorScheme = lightColorScheme(
@@ -34,7 +37,10 @@ private val LightColorScheme = lightColorScheme(
     onBackground = OnBackground,
     onSurface = OnSurface,
     error = Error,
-    primaryContainer = Color.White
+    primaryContainer = Color.White,
+    inverseSurface = Primary,
+    inverseOnSurface = Color.Black,
+    inversePrimary = Color.Black
 )
 
 

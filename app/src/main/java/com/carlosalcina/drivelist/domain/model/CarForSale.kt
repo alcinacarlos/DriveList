@@ -11,6 +11,7 @@ data class CarForSale(
     val fuelType: String,
     val year: String,
     val version: String,
+    val carColor: String,
     val price: Double,
     val mileage: Int,
     val description: String,

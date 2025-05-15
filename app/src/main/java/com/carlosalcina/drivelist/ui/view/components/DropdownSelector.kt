@@ -39,7 +39,7 @@ fun DropdownSelector(
             onExpandedChange = { if (enabled && !isLoading && options.isNotEmpty()) expanded = !expanded }
         ) {
             OutlinedTextField(
-                value = selectedOption ?: if (isLoading) "Cargando..." else "Selecciona...",
+                value = selectedOption ?: if (isLoading) "Cargando..." else if (options.isEmpty()) "Sin opciones" else "Selecciona...",
                 onValueChange = {}, // No editable directamente
                 readOnly = true,
                 label = {  }, // El label ya está arriba

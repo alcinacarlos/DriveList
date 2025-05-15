@@ -6,4 +6,17 @@
     <string name="settings_title">Configuración</string>
     <string name="settings_language_label">Idioma</string>
     <string name="settings_select_language">Seleciona un idioma</string>
+    <string name="car_color_fire_red">Rojo Fuego</string>
+    <string name="car_color_ocean_blue">Azul Océano</string>
+    <string name="car_color_emerald_green">Verde Esmeralda</string>
+    <string name="car_color_midnight_black">Negro Medianoche</string>
+    <string name="car_color_snow_white">Blanco Nieve</string>
+    <string name="car_color_silver_stone">Gris Plata</string>
+    <string name="car_color_sunglow_yellow">Amarillo Solar</string>
+    <string name="car_color_vibrant_orange">Naranja Vibrante</string>
+    <string name="car_color_royal_purple">Púrpura Real</string>
+    <string name="car_color_graphite_gray">Gris Grafito</string>
+
+    <string name="label_select_a_color">Selecciona un color...</string>
+    <string name="label_car_color">Color del Vehículo</string>
 </resources>

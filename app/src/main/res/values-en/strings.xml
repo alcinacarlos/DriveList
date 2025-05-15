@@ -6,4 +6,17 @@
     <string name="settings_title">Settings</string>
     <string name="settings_language_label">Language</string>
     <string name="settings_select_language">Select Language</string>
+    <string name="car_color_fire_red">Fire Red</string>
+    <string name="car_color_ocean_blue">Ocean Blue</string>
+    <string name="car_color_emerald_green">Emerald Green</string>
+    <string name="car_color_midnight_black">Midnight Black</string>
+    <string name="car_color_snow_white">Snow White</string>
+    <string name="car_color_silver_stone">Silver Stone</string>
+    <string name="car_color_sunglow_yellow">Sunglow Yellow</string>
+    <string name="car_color_vibrant_orange">Vibrant Orange</string>
+    <string name="car_color_royal_purple">Royal Purple</string>
+    <string name="car_color_graphite_gray">Graphite Gray</string>
+
+    <string name="label_select_a_color">Select a color…</string>
+    <string name="label_car_color">Vehicle Color</string>
 </resources>

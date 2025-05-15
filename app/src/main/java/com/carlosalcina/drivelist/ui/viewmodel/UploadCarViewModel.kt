@@ -1,15 +1,19 @@
 package com.carlosalcina.drivelist.ui.viewmodel
 
+import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.carlosalcina.drivelist.data.datasource.ImageStorageDataSource
+import com.carlosalcina.drivelist.domain.model.CarColor
 import com.carlosalcina.drivelist.domain.model.CarForSale
 import com.carlosalcina.drivelist.domain.usecase.*
 import com.carlosalcina.drivelist.ui.view.states.UploadCarScreenState
+import com.carlosalcina.drivelist.utils.NetworkUtils
 import com.carlosalcina.drivelist.utils.Result
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,6 +26,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class UploadCarViewModel @Inject constructor(
+    @ApplicationContext private val applicationContext: Context,
     private val getBrandsUseCase: GetBrandsUseCase,
     private val getModelsUseCase: GetModelsUseCase,
     private val getBodyTypesUseCase: GetBodyTypesUseCase,
@@ -79,6 +84,10 @@ class UploadCarViewModel @Inject constructor(
         _uiState.update {
             it.copy(selectedImageUris = it.selectedImageUris.filterNot { it == uri })
         }
+    }
+
+    fun onCarColorSelected(colorOption: CarColor) {
+        _uiState.update { it.copy(selectedCarColor = colorOption, generalErrorMessage = null) }
     }
 
     fun onBrandSelected(brand: String) {
@@ -271,6 +280,17 @@ class UploadCarViewModel @Inject constructor(
         val state = _uiState.value
         val userId = firebaseAuth.currentUser?.uid
 
+        if (!NetworkUtils.isInternetAvailable(applicationContext)) {
+            _uiState.update {
+                it.copy(
+                    isUploadingImages = false, // Ensure these are reset
+                    formUploadInProgress = false,
+                    generalErrorMessage = "No internet connection. Please check your connection and try again."
+                )
+            }
+            return // Stop the process
+        }
+
         if (userId == null) {
             _uiState.update { it.copy(generalErrorMessage = "Error: Usuario no autenticado.") }
             return
@@ -279,6 +299,7 @@ class UploadCarViewModel @Inject constructor(
         if (state.selectedBrand == null || state.selectedModel == null ||
             state.selectedBodyType == null || state.selectedFuelType == null ||
             state.selectedYear == null || state.selectedVersion == null ||
+            state.selectedCarColor == null ||
             state.price.isBlank() || state.mileage.isBlank() || state.description.isBlank()
         ) {
             _uiState.update { it.copy(generalErrorMessage = "Por favor, completa todos los campos del formulario.") }
@@ -358,6 +379,7 @@ class UploadCarViewModel @Inject constructor(
                 fuelType = state.selectedFuelType,
                 year = state.selectedYear,
                 version = state.selectedVersion,
+                carColor = state.selectedCarColor.name,
                 price = priceDouble,
                 mileage = mileageInt,
                 description = state.description.trim(),

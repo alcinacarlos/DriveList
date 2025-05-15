@@ -1,10 +1,10 @@
 package com.carlosalcina.drivelist.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.carlosalcina.drivelist.ui.view.screens.HomeScreen
 import com.carlosalcina.drivelist.ui.view.screens.LoginScreen
 import com.carlosalcina.drivelist.ui.view.screens.ProfileScreen
@@ -66,7 +66,10 @@ fun AppNavigation(navController: NavHostController, onLanguageChange: (String) -
         }
         composable("upload_car") {
             UploadCarScreen(
-                viewModel = hiltViewModel()
+                viewModel = hiltViewModel(),
+                onBack = { navController.popBackStack() },
+                onUploadSuccess = { navController.navigate("home") },
+                onSettings = {navController.navigate("settings")}
             )
         }
     }

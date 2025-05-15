@@ -7,7 +7,18 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
@@ -15,29 +26,56 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
+import com.carlosalcina.drivelist.R
 import com.carlosalcina.drivelist.ui.view.components.DropdownSelector
 import com.carlosalcina.drivelist.ui.viewmodel.UploadCarViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UploadCarScreen(
-    viewModel: UploadCarViewModel = hiltViewModel()
+    viewModel: UploadCarViewModel = hiltViewModel(),
+    onBack: () -> Unit,
+    onUploadSuccess: () -> Unit,
+    onSettings: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val scrollState = rememberScrollState()
@@ -58,14 +96,15 @@ fun UploadCarScreen(
     }
     LaunchedEffect(uiState.formUploadSuccess) {
         if (uiState.formUploadSuccess) {
-            snackbarHostState.showSnackbar(message = "¡Coche subido con éxito!", duration = SnackbarDuration.Long)
-            // navController.popBackStack() // O navega
-            // ViewModel ya limpia el formulario y recarga marcas
+            snackbarHostState.showSnackbar(
+                message = "¡Coche subido con éxito!",
+                duration = SnackbarDuration.Long
+            )
+            onUploadSuccess
         }
     }
 
 
-    // Launcher para el selector de múltiples imágenes moderno
     val multiplePhotoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = 10),
         onResult = { uris -> viewModel.onImagesSelected(uris) }
@@ -76,8 +115,22 @@ fun UploadCarScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Subir Nuevo Coche") },
-                // Puedes añadir un botón de navegación para ir atrás si es necesario
-                // navigationIcon = { IconButton(onClick = { navController.popBackStack() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Atrás") } }
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            "Atrás"
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onSettings) {
+                        Icon(
+                            Icons.Default.Settings,
+                            "Atrás"
+                        )
+                    }
+                }
             )
         }
     ) { paddingValues ->
@@ -97,7 +150,7 @@ fun UploadCarScreen(
                 itemsIndexed(uiState.selectedImageUris) { index, uri ->
                     Box(
                         modifier = Modifier
-                            .size(100.dp)
+                            .size(200.dp)
                             .clip(MaterialTheme.shapes.small)
                             .background(MaterialTheme.colorScheme.surfaceVariant)
                     ) {
@@ -117,7 +170,12 @@ fun UploadCarScreen(
                                 .background(Color.Black.copy(alpha = 0.5f), CircleShape)
                                 .size(24.dp)
                         ) {
-                            Icon(Icons.Filled.Close, "Quitar imagen", tint = Color.White, modifier = Modifier.size(16.dp))
+                            Icon(
+                                Icons.Filled.Close,
+                                "Quitar imagen",
+                                tint = Color.White,
+                                modifier = Modifier.size(30.dp)
+                            )
                         }
                     }
                 }
@@ -126,7 +184,7 @@ fun UploadCarScreen(
                     item {
                         Box(
                             modifier = Modifier
-                                .size(100.dp)
+                                .size(200.dp)
                                 .clip(MaterialTheme.shapes.small)
                                 .border(
                                     1.dp,
@@ -144,7 +202,7 @@ fun UploadCarScreen(
                             Icon(
                                 Icons.Filled.AddPhotoAlternate,
                                 contentDescription = "Añadir imágenes",
-                                modifier = Modifier.size(40.dp),
+                                modifier = Modifier.size(80.dp),
                                 tint = MaterialTheme.colorScheme.primary
                             )
                         }
@@ -211,6 +269,89 @@ fun UploadCarScreen(
                 enabled = uiState.selectedYear != null && !uiState.formUploadInProgress
             )
 
+            var carColorMenuExpanded by remember { mutableStateOf(false) }
+
+            Column {
+                Text(
+                    "Color del Vehículo",
+                    style = MaterialTheme.typography.labelLarge,
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
+                ExposedDropdownMenuBox(
+                    expanded = carColorMenuExpanded,
+                    onExpandedChange = {
+                        if (!uiState.formUploadInProgress && !uiState.isUploadingImages) {
+                            carColorMenuExpanded = !carColorMenuExpanded
+                        }
+                    }
+                ) {
+                    OutlinedTextField(
+                        modifier = Modifier
+                            .menuAnchor()
+                            .fillMaxWidth(),
+                        readOnly = true,
+                        value = uiState.selectedCarColor?.let { stringResource(id = it.displayNameResId) }
+                            ?: stringResource(R.string.label_select_a_color),
+                        onValueChange = {},
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = carColorMenuExpanded) },
+                        leadingIcon = uiState.selectedCarColor?.let { selectedColorEnum ->
+                            {
+                                Box(
+                                    modifier = Modifier
+                                        .size(20.dp)
+                                        .background(
+                                            selectedColorEnum.colorValue,
+                                            CircleShape
+                                        ) // Usar colorValue
+                                        .border(
+                                            1.dp,
+                                            MaterialTheme.colorScheme.outlineVariant,
+                                            CircleShape
+                                        )
+                                )
+                            }
+                        },
+                        enabled = !uiState.formUploadInProgress && !uiState.isUploadingImages
+                    )
+                    ExposedDropdownMenu(
+                        expanded = carColorMenuExpanded,
+                        onDismissRequest = { carColorMenuExpanded = false }
+                    ) {
+                        uiState.availableCarColors.forEach { colorEnum ->
+                            DropdownMenuItem(
+                                text = {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(20.dp)
+                                                .background(colorEnum.colorValue, CircleShape)
+                                                .border(
+                                                    1.dp,
+                                                    MaterialTheme.colorScheme.outlineVariant,
+                                                    CircleShape
+                                                )
+                                        )
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        Text(text = stringResource(id = colorEnum.displayNameResId))
+                                    }
+                                },
+                                onClick = {
+                                    viewModel.onCarColorSelected(colorEnum)
+                                    carColorMenuExpanded = false
+                                }
+                            )
+                        }
+                        if (uiState.availableCarColors.isEmpty()) {
+                            DropdownMenuItem(
+                                text = { Text("No hay colores disponibles") },
+                                onClick = {},
+                                enabled = false
+                            )
+                        }
+                    }
+                }
+            }
+
             // Campos de texto
             OutlinedTextField(
                 value = uiState.price,
@@ -230,16 +371,17 @@ fun UploadCarScreen(
                 singleLine = true,
                 enabled = !uiState.formUploadInProgress
             )
+
             OutlinedTextField(
                 value = uiState.description,
                 onValueChange = { viewModel.onDescriptionChanged(it) },
                 label = { Text("Descripción") },
-                modifier = Modifier.fillMaxWidth().heightIn(min = 100.dp), // Para que sea un poco más alto
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 100.dp), // Para que sea un poco más alto
                 maxLines = 5,
                 enabled = !uiState.formUploadInProgress
             )
-
-            // TODO: Sección para subir imágenes
 
             Spacer(modifier = Modifier.height(8.dp))
 
