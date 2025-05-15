@@ -1,7 +1,9 @@
 package com.carlosalcina.drivelist.di
 
 import com.carlosalcina.drivelist.data.datasource.CarRemoteDataSource
+import com.carlosalcina.drivelist.data.datasource.FirebaseImageStorageDataSource
 import com.carlosalcina.drivelist.data.datasource.FirestoreCarRemoteDataSource
+import com.carlosalcina.drivelist.data.datasource.ImageStorageDataSource
 import com.carlosalcina.drivelist.data.repository.CarUploadRepositoryImpl
 import com.carlosalcina.drivelist.data.repository.FirebaseAuthRepository
 import com.carlosalcina.drivelist.data.repository.CredentialManagerGoogleSignInHandler
@@ -12,6 +14,9 @@ import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreSettings
+import com.google.firebase.firestore.PersistentCacheSettings
+import com.google.firebase.storage.FirebaseStorage
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -43,8 +48,24 @@ object AppModule {
     @Provides
     @Singleton
     fun provideFirebaseFirestore(): FirebaseFirestore {
-        return FirebaseFirestore.getInstance()
+        val firestore = FirebaseFirestore.getInstance()
+        // Configuración de la caché de Firestore
+        val newCacheSizeBytes = 500 * 1024 * 1024L //500 MB
+        // El tamaño mínimo de la caché es 1 MB (1 * 1024 * 1024L)
+        // El tamaño por defecto es 100 MB.
+        val settings = FirebaseFirestoreSettings.Builder(firestore.firestoreSettings)
+            .setLocalCacheSettings(
+                PersistentCacheSettings.newBuilder()
+                    .setSizeBytes(newCacheSizeBytes)
+                    .build()
+            )
+            .build()
+
+        firestore.firestoreSettings = settings
+
+        return firestore
     }
+
 
     @Provides
     @Singleton
@@ -60,5 +81,17 @@ object AppModule {
         remoteDataSource: CarRemoteDataSource
     ): CarUploadRepository {
         return CarUploadRepositoryImpl(remoteDataSource)
+    }
+
+    @Provides
+    @Singleton
+    fun provideFirebaseStorage(): FirebaseStorage {
+        return FirebaseStorage.getInstance()
+    }
+
+    @Provides
+    @Singleton
+    fun provideImageStorageDataSource(storage: FirebaseStorage): ImageStorageDataSource {
+        return FirebaseImageStorageDataSource(storage)
     }
 }

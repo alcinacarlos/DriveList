@@ -23,7 +23,11 @@ data class UploadCarScreenState(
     val price: String = "",
     val mileage: String = "",
     val description: String = "",
-    val imageUris: List<Uri> = emptyList(),
+
+
+    val selectedImageUris: List<Uri> = emptyList(),
+    val isUploadingImages: Boolean = false,
+    val imageUploadErrorMessage: String? = null,
 
     // Estados de carga para cada desplegable
     val isLoadingBrands: Boolean = false,
@@ -34,7 +38,7 @@ data class UploadCarScreenState(
     val isLoadingVersions: Boolean = false,
 
     // Estado de la subida del coche
-    val uploadInProgress: Boolean = false,
-    val uploadSuccess: Boolean = false,
+    val formUploadInProgress: Boolean = false,
+    val formUploadSuccess: Boolean = false,
     val generalErrorMessage: String? = null // Para errores de carga o de subida
 )
