@@ -7,7 +7,14 @@ import androidx.lifecycle.viewModelScope
 import com.carlosalcina.drivelist.data.datasource.ImageStorageDataSource
 import com.carlosalcina.drivelist.domain.model.CarColor
 import com.carlosalcina.drivelist.domain.model.CarForSale
-import com.carlosalcina.drivelist.domain.usecase.*
+import com.carlosalcina.drivelist.domain.repository.LocationRepository
+import com.carlosalcina.drivelist.domain.usecase.GetBodyTypesUseCase
+import com.carlosalcina.drivelist.domain.usecase.GetBrandsUseCase
+import com.carlosalcina.drivelist.domain.usecase.GetFuelTypesUseCase
+import com.carlosalcina.drivelist.domain.usecase.GetModelsUseCase
+import com.carlosalcina.drivelist.domain.usecase.GetVersionsUseCase
+import com.carlosalcina.drivelist.domain.usecase.GetYearsUseCase
+import com.carlosalcina.drivelist.domain.usecase.UploadCarDataUseCase
 import com.carlosalcina.drivelist.ui.view.states.UploadCarScreenState
 import com.carlosalcina.drivelist.utils.NetworkUtils
 import com.carlosalcina.drivelist.utils.Result
@@ -35,7 +42,8 @@ class UploadCarViewModel @Inject constructor(
     private val getVersionsUseCase: GetVersionsUseCase,
     private val uploadCarDataUseCase: UploadCarDataUseCase,
     private val firebaseAuth: FirebaseAuth,
-    private val imageStorageDataSource: ImageStorageDataSource
+    private val imageStorageDataSource: ImageStorageDataSource,
+    private val locationRepository: LocationRepository
 ) : ViewModel() {
 
     companion object {
@@ -276,6 +284,133 @@ class UploadCarViewModel @Inject constructor(
         _uiState.update { it.copy(description = description) }
     }
 
+    fun onManualLocationInputChanged(input: String) {
+        _uiState.update {
+            it.copy(
+                manualLocationInput = input,
+                isManualLocationValid = true, // Resetear validación al escribir
+                locationValidationMessage = null
+            )
+        }
+    }
+
+    fun triggerLocationPermissionRequest() {
+        _uiState.update { it.copy(isRequestingLocationPermission = true, locationGeneralErrorMessage = null) }
+    }
+
+    fun onLocationPermissionGranted() {
+        _uiState.update { it.copy(isRequestingLocationPermission = false) } // Resetear flag
+        fetchCurrentLocationAndPopulateInput()
+    }
+
+    fun onLocationPermissionDenied() {
+        _uiState.update {
+            it.copy(
+                isRequestingLocationPermission = false, // Resetear flag
+                locationGeneralErrorMessage = "Permiso denegado. Introduce la ubicación manualmente."
+            )
+        }
+    }
+
+    internal fun fetchCurrentLocationAndPopulateInput() {
+        _uiState.update { it.copy(isFetchingLocationDetails = true, locationGeneralErrorMessage = null, isManualLocationValid = true, locationValidationMessage = null) }
+        viewModelScope.launch {
+            when (val locationResult = locationRepository.getCurrentDeviceLocation()) {
+                is Result.Success -> {
+                    val (lat, lon) = locationResult.data
+                    when (val addressResult = locationRepository.getAddressFromCoordinates(lat, lon)) {
+                        is Result.Success -> {
+                            val address = addressResult.data
+                            _uiState.update {
+                                it.copy(
+                                    isFetchingLocationDetails = false,
+                                    finalCiudad = address.ciudad,
+                                    finalComunidadAutonoma = address.comunidadAutonoma,
+                                    finalPostalCode = address.postalCode,
+                                    // Sobreescribir el campo de input con la ciudad y comunidad (o lo que prefieras)
+                                    manualLocationInput = "${address.ciudad ?: ""}${if (address.ciudad != null && address.comunidadAutonoma != null) ", " else ""}${address.comunidadAutonoma ?: ""}".trim(',',' '),
+                                    isManualLocationValid = true,
+                                    locationValidationMessage = null
+                                )
+                            }
+                        }
+                        is Result.Error -> { // Error de Geocoding
+                            _uiState.update {
+                                it.copy(
+                                    isFetchingLocationDetails = false,
+                                    locationGeneralErrorMessage = "No se pudo obtener la dirección desde las coordenadas.",
+                                    // No invalidar el campo de input necesariamente por esto
+                                )
+                            }
+                        }
+                    }
+                }
+                is Result.Error -> { // Error al obtener lat/lon
+                    _uiState.update {
+                        it.copy(
+                            isFetchingLocationDetails = false,
+                            locationGeneralErrorMessage = "No se pudo obtener la localización actual: ${locationResult.error.message}"
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    fun searchManualLocation() {
+        val query = _uiState.value.manualLocationInput.trim()
+        if (query.isBlank()) {
+            _uiState.update { it.copy(isManualLocationValid = false, locationValidationMessage = "El campo no puede estar vacío.") }
+            return
+        }
+
+        _uiState.update { it.copy(isFetchingLocationDetails = true, locationGeneralErrorMessage = null, isManualLocationValid = true, locationValidationMessage = null) }
+        viewModelScope.launch {
+            when (val addressResult = locationRepository.getAddressFromQuery(query)) {
+                is Result.Success -> {
+                    val address = addressResult.data
+                    if (address.ciudad != null || address.comunidadAutonoma != null || address.postalCode != null) {
+                        _uiState.update {
+                            it.copy(
+                                isFetchingLocationDetails = false,
+                                finalCiudad = address.ciudad,
+                                finalComunidadAutonoma = address.comunidadAutonoma,
+                                finalPostalCode = address.postalCode,
+                                // Actualizar el input para mostrar lo encontrado de forma formateada y validada
+                                manualLocationInput = "${address.ciudad ?: ""}${if (address.ciudad != null && address.comunidadAutonoma != null) ", " else ""}${address.comunidadAutonoma ?: ""}".ifBlank { query },
+                                isManualLocationValid = true,
+                                locationValidationMessage = null
+                            )
+                        }
+                    } else { // La API devolvió éxito pero sin datos útiles (lista vacía)
+                        _uiState.update {
+                            it.copy(
+                                isFetchingLocationDetails = false,
+                                finalCiudad = null, // Limpiar datos anteriores si la búsqueda falla
+                                finalComunidadAutonoma = null,
+                                finalPostalCode = null,
+                                isManualLocationValid = false,
+                                locationValidationMessage = "Ubicación no encontrada para '$query'."
+                            )
+                        }
+                    }
+                }
+                is Result.Error -> { // Error de la API GeoNames
+                    _uiState.update {
+                        it.copy(
+                            isFetchingLocationDetails = false,
+                            finalCiudad = null,
+                            finalComunidadAutonoma = null,
+                            finalPostalCode = null,
+                            isManualLocationValid = false,
+                            locationValidationMessage = "Error al buscar '$query': Inténtalo de nuevo."
+                        )
+                    }
+                }
+            }
+        }
+    }
+
     fun prepareAndSubmitCar() {
         val state = _uiState.value
         val userId = firebaseAuth.currentUser?.uid
@@ -316,6 +451,20 @@ class UploadCarViewModel @Inject constructor(
             _uiState.update { it.copy(generalErrorMessage = "El kilometraje no es válido.") }
             return
         }
+
+        if (state.finalCiudad.isNullOrBlank() && state.finalComunidadAutonoma.isNullOrBlank()) {
+            // Si no hay datos finales Y el input manual no es válido Y no se está buscando, mostrar error.
+            if (state.manualLocationInput.isNotBlank() && !state.isManualLocationValid && !state.isFetchingLocationDetails) {
+                _uiState.update { it.copy(generalErrorMessage = "La ubicación introducida no es válida. Por favor, corrígela o usa la detección automática.") }
+                return
+            } else if (state.manualLocationInput.isBlank()) {
+                _uiState.update { it.copy(generalErrorMessage = "Por favor, proporciona una ubicación para el vehículo.") }
+                return
+            }
+            // Si el usuario escribió algo y no ha pulsado buscar, no podemos asumir que es válido aún.
+            // Quizás es mejor confiar en que 'finalCiudad' o 'finalComunidadAutonoma' tengan valor.
+        }
+
         // Fin validaciones básicas
 
         // Iniciar subida
@@ -383,7 +532,10 @@ class UploadCarViewModel @Inject constructor(
                 price = priceDouble,
                 mileage = mileageInt,
                 description = state.description.trim(),
-                imageUrls = uploadedImageUrls // Añadir las URLs obtenidas
+                imageUrls = uploadedImageUrls,
+                comunidadAutonoma = state.finalComunidadAutonoma?.takeIf { it.isNotBlank() },
+                ciudad = state.finalCiudad?.takeIf { it.isNotBlank() },
+                postalCode = state.finalPostalCode?.takeIf { it.isNotBlank() }
             )
 
             // Subir datos del coche a Firestore

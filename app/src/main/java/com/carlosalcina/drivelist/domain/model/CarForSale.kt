@@ -16,5 +16,8 @@ data class CarForSale(
     val mileage: Int,
     val description: String,
     val imageUrls: List<String> = emptyList(),
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
+    val comunidadAutonoma: String? = null,
+    val ciudad: String? = null,
+    val postalCode: String? = null
 )

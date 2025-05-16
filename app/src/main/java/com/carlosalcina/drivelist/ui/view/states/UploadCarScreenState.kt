@@ -45,5 +45,19 @@ data class UploadCarScreenState(
     // Estado de la subida del coche
     val formUploadInProgress: Boolean = false,
     val formUploadSuccess: Boolean = false,
-    val generalErrorMessage: String? = null // Para errores de carga o de subida
+    val generalErrorMessage: String? = null, // Para errores de carga o de subida
+
+    // Ubicacion
+    val manualLocationInput: String = "",
+    val isManualLocationValid: Boolean = true, // Para el borde rojo y mensaje
+    val locationValidationMessage: String? = null, // Mensaje si la validación falla
+
+    val finalComunidadAutonoma: String? = null,
+    val finalCiudad: String? = null,
+    val finalPostalCode: String? = null,
+
+    // Estados de la operación de localización
+    val isRequestingLocationPermission: Boolean = false,
+    val isFetchingLocationDetails: Boolean = false, // Para el progreso (tanto GPS como API)
+    val locationGeneralErrorMessage: String? = null
 )

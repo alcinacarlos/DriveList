@@ -1,5 +1,7 @@
 package com.carlosalcina.drivelist.ui.view.screens
 
+import android.Manifest
+import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -23,14 +25,18 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -39,6 +45,7 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
@@ -59,9 +66,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
@@ -80,7 +90,33 @@ fun UploadCarScreen(
     val uiState by viewModel.uiState.collectAsState()
     val scrollState = rememberScrollState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
 
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            if (isGranted) {
+                viewModel.onLocationPermissionGranted()
+            } else {
+                viewModel.onLocationPermissionDenied()
+            }
+        }
+    )
+
+    LaunchedEffect(uiState.isRequestingLocationPermission) {
+        if (uiState.isRequestingLocationPermission) {
+            locationPermissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
+            // El ViewModel reseteará isRequestingLocationPermission después
+        }
+    }
+
+    LaunchedEffect(uiState.locationGeneralErrorMessage) {
+        uiState.locationGeneralErrorMessage?.let {
+            snackbarHostState.showSnackbar(message = it, duration = SnackbarDuration.Short)
+            // viewModel.clearLocationError() // Necesitarías esta función en el ViewModel
+        }
+    }
     // Para mostrar mensajes de error o éxito
     LaunchedEffect(uiState.imageUploadErrorMessage) {
         uiState.imageUploadErrorMessage?.let {
@@ -371,6 +407,75 @@ fun UploadCarScreen(
                 singleLine = true,
                 enabled = !uiState.formUploadInProgress
             )
+
+            // --- Sección de Localización ---
+            Text(
+                "Ubicación del Vehículo",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+            )
+
+            OutlinedTextField(
+                value = uiState.manualLocationInput,
+                onValueChange = viewModel::onManualLocationInputChanged,
+                label = { Text("Código Postal") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                isError = !uiState.isManualLocationValid,
+                supportingText = {
+                    if (!uiState.isManualLocationValid && uiState.locationValidationMessage != null) {
+                        Text(uiState.locationValidationMessage!!, color = MaterialTheme.colorScheme.error)
+                    }
+                },
+                keyboardOptions = KeyboardOptions.Default.copy(
+                    imeAction = ImeAction.Search // Cambia el botón Enter a Lupa/Buscar
+                ),
+                keyboardActions = KeyboardActions(
+                    onSearch = {
+                        viewModel.searchManualLocation()
+                        focusManager.clearFocus() // Ocultar teclado
+                    }
+                ),
+                trailingIcon = {
+                    IconButton(
+                        onClick = {
+                            viewModel.searchManualLocation()
+                            focusManager.clearFocus()
+                        },
+                        enabled = uiState.manualLocationInput.isNotBlank() && !uiState.isFetchingLocationDetails
+                    ) {
+                        Icon(Icons.Filled.Search, contentDescription = "Buscar ubicación manual")
+                    }
+                },
+                enabled = !uiState.isFetchingLocationDetails && !uiState.formUploadInProgress && !uiState.isUploadingImages && uiState.finalPostalCode == null
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedButton(
+                onClick = {
+                    focusManager.clearFocus() // Ocultar teclado antes de pedir permiso/localización
+                    when (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION)) {
+                        PackageManager.PERMISSION_GRANTED -> viewModel.fetchCurrentLocationAndPopulateInput()
+                        else -> viewModel.triggerLocationPermissionRequest()
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !uiState.isFetchingLocationDetails && !uiState.formUploadInProgress && !uiState.isUploadingImages
+            ) {
+                if (uiState.isFetchingLocationDetails){
+                    CircularProgressIndicator(modifier = Modifier.size(ButtonDefaults.IconSize))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Buscando ubicación...")
+                }else{
+                    Icon(Icons.Filled.MyLocation, contentDescription = "Obtener ubicación actual", modifier = Modifier.size(ButtonDefaults.IconSize))
+                    Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                    Text("Usar mi ubicación actual")
+                }
+
+            }
+
+            // --- Fin Sección de Localización ---
 
             OutlinedTextField(
                 value = uiState.description,

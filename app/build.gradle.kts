@@ -23,7 +23,7 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
+        buildConfigField("String", "GEONAMES_USERNAME", "\"seta_maligna\"")
         buildConfigField("String", "GOOGLE_SERVER_CLIENT_ID", "\"1063637134638-v816om6gg24utetk2dspjth8bhrk62b1.apps.googleusercontent.com\"")
     }
 
@@ -96,5 +96,12 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
+
+    // Retrofit
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
+    implementation(libs.logging.interceptor)
+
+    implementation(libs.play.services.location) // O la última versión estable
 
 }
