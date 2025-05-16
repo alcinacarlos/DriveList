@@ -424,7 +424,10 @@ fun UploadCarScreen(
                 isError = !uiState.isManualLocationValid,
                 supportingText = {
                     if (!uiState.isManualLocationValid && uiState.locationValidationMessage != null) {
-                        Text(uiState.locationValidationMessage!!, color = MaterialTheme.colorScheme.error)
+                        Text(
+                            uiState.locationValidationMessage!!,
+                            color = MaterialTheme.colorScheme.error
+                        )
                     }
                 },
                 keyboardOptions = KeyboardOptions.Default.copy(
@@ -450,12 +453,13 @@ fun UploadCarScreen(
                 enabled = !uiState.isFetchingLocationDetails && !uiState.formUploadInProgress && !uiState.isUploadingImages && uiState.finalPostalCode == null
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
-
             OutlinedButton(
                 onClick = {
                     focusManager.clearFocus() // Ocultar teclado antes de pedir permiso/localización
-                    when (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION)) {
+                    when (ContextCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                    )) {
                         PackageManager.PERMISSION_GRANTED -> viewModel.fetchCurrentLocationAndPopulateInput()
                         else -> viewModel.triggerLocationPermissionRequest()
                     }
@@ -463,12 +467,16 @@ fun UploadCarScreen(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !uiState.isFetchingLocationDetails && !uiState.formUploadInProgress && !uiState.isUploadingImages
             ) {
-                if (uiState.isFetchingLocationDetails){
+                if (uiState.isFetchingLocationDetails) {
                     CircularProgressIndicator(modifier = Modifier.size(ButtonDefaults.IconSize))
                     Spacer(modifier = Modifier.width(6.dp))
                     Text("Buscando ubicación...")
-                }else{
-                    Icon(Icons.Filled.MyLocation, contentDescription = "Obtener ubicación actual", modifier = Modifier.size(ButtonDefaults.IconSize))
+                } else {
+                    Icon(
+                        Icons.Filled.MyLocation,
+                        contentDescription = "Obtener ubicación actual",
+                        modifier = Modifier.size(ButtonDefaults.IconSize)
+                    )
                     Spacer(Modifier.size(ButtonDefaults.IconSpacing))
                     Text("Usar mi ubicación actual")
                 }
@@ -483,7 +491,7 @@ fun UploadCarScreen(
                 label = { Text("Descripción") },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 100.dp), // Para que sea un poco más alto
+                    .heightIn(min = 100.dp),
                 maxLines = 5,
                 enabled = !uiState.formUploadInProgress
             )
@@ -492,7 +500,7 @@ fun UploadCarScreen(
 
             Button(
                 onClick = { viewModel.prepareAndSubmitCar() }, // Llama a la nueva función
-                enabled = !uiState.formUploadInProgress && !uiState.isUploadingImages && uiState.selectedVersion != null,
+                enabled = !uiState.formUploadInProgress && !uiState.isUploadingImages && uiState.selectedVersion != null && uiState.finalPostalCode != null && uiState.description.isNotBlank() && uiState.price.isNotBlank() && uiState.mileage.isNotBlank(),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 if (uiState.formUploadInProgress || uiState.isUploadingImages) { // Muestra progreso si alguna subida está activa
