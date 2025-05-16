@@ -39,7 +39,7 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object AppModule {
 
-    private const val GEONAMES_BASE_URL = "http://api.geonames.org/"
+    private const val GEONAMES_BASE_URL = "https://secure.geonames.org/"
 
 
     @Provides
