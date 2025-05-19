@@ -20,11 +20,21 @@ class CarListRepositoryImpl @Inject constructor(
 
     companion object {
         private const val CARS_COLLECTION = "coches_venta"
+        private const val SEARCHABLE_KEYWORDS_FIELD = "searchableKeywords"
+        private const val YEAR_FIELD = "year" // Nombre del campo año en Firestore
+        private const val COMUNIDAD_AUTONOMA_FIELD = "comunidadAutonoma"
+        private const val CIUDAD_FIELD = "ciudad"
+        private const val PRICE_FIELD = "price"
+        private const val BRAND_FIELD = "brand"
+        private const val MODEL_FIELD = "model"
+        private const val FUEL_TYPE_FIELD = "fuelType"
+        private const val TIMESTAMP_FIELD = "timestamp"
     }
 
     /**
      * Helper para convertir un QuerySnapshot de Firestore a List<CarForSale>,
      * incluyendo la determinación del estado 'isFavoriteByCurrentUser'.
+     * (Este helper se mantiene igual que en la versión anterior)
      */
     private suspend fun mapSnapshotToCarList(
         snapshot: QuerySnapshot,
@@ -32,12 +42,9 @@ class CarListRepositoryImpl @Inject constructor(
     ): List<CarForSale> {
         val favoriteCarIds = if (currentUserId != null) {
             when (val favResult = userFavoriteRepository.getUserFavoriteCarIds(currentUserId)) {
-                is Result.Success -> favResult.data.toSet() // Convertir a Set para búsquedas rápidas
+                is Result.Success -> favResult.data.toSet()
                 is Result.Error -> {
-                    Log.e(
-                        "CarListRepo",
-                        "Failed to fetch user favorites: ${favResult.error.message}"
-                    )
+                    Log.e("CarListRepo", "Failed to fetch user favorites: ${favResult.error.message}")
                     emptySet()
                 }
             }
@@ -46,35 +53,30 @@ class CarListRepositoryImpl @Inject constructor(
         }
 
         return snapshot.documents.mapNotNull { document ->
+            Log.d("CarListRepo_Debug", "Procesando documento ID: ${document.id}")
             try {
-                // Convertir el documento de Firestore al objeto CarForSale del dominio.
-                // Firestore necesita que el modelo tenga un constructor vacío y propiedades públicas (o getters/setters).
-                // Si tu CarForSale tiene @Transient isFavoriteByCurrentUser, toObject() lo ignorará, lo cual está bien.
+                val carData = document.data // Obtener los datos crudos como un mapa
+                Log.d("CarListRepo_Debug", "Datos del documento: $carData")
                 val car = document.toObject<CarForSale>()?.copy(
-                    // El ID del documento es el ID del coche
                     id = document.id,
-                    // Determinar si es favorito
                     isFavoriteByCurrentUser = favoriteCarIds.contains(document.id)
                 )
+                if (car == null) {
+                    Log.w("CarListRepo_Debug", "document.toObject<CarForSale>() devolvió null para ID: ${document.id}")
+                }
                 car
             } catch (e: Exception) {
-                Log.e(
-                    "CarListRepo",
-                    "Error converting Firestore document to CarForSale: ${document.id}",
-                    e
-                )
-                null // Omitir coches que no se puedan parsear
+                Log.e("CarListRepo_Debug", "Excepción al convertir documento ID: ${document.id}", e)
+                null
             }
         }
     }
 
-    override suspend fun getLatestCars(
-        limit: Int,
-        currentUserId: String?
-    ): Result<List<CarForSale>, Exception> {
+    override suspend fun getLatestCars(limit: Int, currentUserId: String?): Result<List<CarForSale>, Exception> {
+        // Esta función se mantiene igual que antes
         return try {
             val snapshot = firestore.collection(CARS_COLLECTION)
-                .orderBy("timestamp", Query.Direction.DESCENDING) // Ordenar por más recientes
+                .orderBy(TIMESTAMP_FIELD, Query.Direction.DESCENDING)
                 .limit(limit.toLong())
                 .get()
                 .await()
@@ -91,43 +93,60 @@ class CarListRepositoryImpl @Inject constructor(
         limit: Int,
         currentUserId: String?
     ): Result<List<CarForSale>, Exception> {
-        try {
+        return try {
             var query: Query = firestore.collection(CARS_COLLECTION)
 
-            // Aplicar filtros
-            filters.brand?.let { query = query.whereEqualTo("brand", it) }
-            filters.model?.let { query = query.whereEqualTo("model", it) }
-            filters.fuelType?.let { query = query.whereEqualTo("fuelType", it) }
-            filters.comunidadAutonoma?.let { query = query.whereEqualTo("comunidadAutonoma", it) }
-            filters.ciudad?.let { query = query.whereEqualTo("ciudad", it) }
+            filters.brand?.let { query = query.whereEqualTo(BRAND_FIELD, it) }
+            filters.model?.let { query = query.whereEqualTo(MODEL_FIELD, it) }
+            filters.fuelType?.let { query = query.whereEqualTo(FUEL_TYPE_FIELD, it) }
+            filters.comunidadAutonoma?.let { query = query.whereEqualTo(COMUNIDAD_AUTONOMA_FIELD, it) }
+            filters.ciudad?.let { query = query.whereEqualTo(CIUDAD_FIELD, it) }
 
-            // Filtro de precio máximo: whereLessThanOrEqualTo
             filters.maxPrice?.let {
-                if (it > 0) { // Solo aplicar si el precio es positivo
-                    query = query.whereLessThanOrEqualTo("price", it)
+                if (it > 0) query = query.whereLessThanOrEqualTo(PRICE_FIELD, it)
+            }
+            filters.minYear?.let {
+                query = query.whereGreaterThanOrEqualTo(YEAR_FIELD, it.toString())
+            }
+
+            if (!filters.searchTerm.isNullOrBlank()) {
+                val keywords = filters.searchTerm.lowercase().split("\\s+".toRegex()).filter { it.length > 1 }
+                if (keywords.isNotEmpty()) {
+                    if (keywords.size == 1) {
+                        query = query.whereArrayContains(SEARCHABLE_KEYWORDS_FIELD, keywords.first())
+                    } else if (keywords.size <= 10) {
+                        query = query.whereArrayContainsAny(SEARCHABLE_KEYWORDS_FIELD, keywords)
+                    } else {
+                        query = query.whereArrayContainsAny(SEARCHABLE_KEYWORDS_FIELD, keywords.take(10))
+                        Log.w("CarListRepo", "Search term has >10 keywords, using first 10: $keywords")
+                    }
                 }
             }
 
-            // TODO: Firestore requiere un índice compuesto para consultas con múltiples whereEqualTo y orderBy diferentes.
-            // Por ahora, ordenaremos por timestamp, pero si combinas muchos filtros y un orderBy
-            // en un campo no filtrado, necesitarás índices.
-            // Si no hay un filtro de precio, podemos ordenar por precio y luego por timestamp.
-            // Si hay filtro de precio, es mejor ordenar por timestamp o relevancia (más complejo).
-            if (filters.maxPrice != null && filters.maxPrice > 0) {
-                query = query.orderBy(
-                    "price",
-                    Query.Direction.ASCENDING
-                ) // O DESCENDING, según prefieras
+
+            if (filters.maxPrice != null && filters.maxPrice > 0 && filters.searchTerm.isNullOrBlank()) {
+                query = query.orderBy(PRICE_FIELD, Query.Direction.ASCENDING)
             }
-            query = query.orderBy("timestamp", Query.Direction.DESCENDING)
+            else if (filters.minYear != null && filters.searchTerm.isNullOrBlank()) {
+                query = query.orderBy(YEAR_FIELD, Query.Direction.DESCENDING)
+            }
+
+            try {
+                query = query.orderBy(TIMESTAMP_FIELD, Query.Direction.DESCENDING)
+            } catch (e: Exception) {
+                Log.w("CarListRepo", "Could not apply default timestamp ordering, possibly due to other filters: ${e.message}")
+                // Si falla el orderBy por timestamp (ej. por un filtro array-contains-any),
+                // la consulta se ejecutará sin este orden específico, o podrías intentar otro.
+                // Firestore podría ordenar por ID de documento por defecto en algunos casos.
+            }
 
 
             val snapshot = query.limit(limit.toLong()).get().await()
             val cars = mapSnapshotToCarList(snapshot, currentUserId)
-            return Result.Success(cars)
+            Result.Success(cars)
         } catch (e: Exception) {
             Log.e("CarListRepo", "Error searching cars with filters: $filters", e)
-            return Result.Error(e)
+            Result.Error(e)
         }
     }
 }

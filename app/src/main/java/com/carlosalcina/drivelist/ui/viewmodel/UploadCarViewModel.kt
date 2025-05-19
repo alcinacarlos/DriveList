@@ -16,6 +16,7 @@ import com.carlosalcina.drivelist.domain.usecase.GetVersionsUseCase
 import com.carlosalcina.drivelist.domain.usecase.GetYearsUseCase
 import com.carlosalcina.drivelist.domain.usecase.UploadCarDataUseCase
 import com.carlosalcina.drivelist.ui.view.states.UploadCarScreenState
+import com.carlosalcina.drivelist.utils.KeywordGenerator
 import com.carlosalcina.drivelist.utils.NetworkUtils
 import com.carlosalcina.drivelist.utils.Result
 import com.google.firebase.auth.FirebaseAuth
@@ -515,10 +516,19 @@ class UploadCarViewModel @Inject constructor(
                     return@launch // No continuar si la subida de imágenes falló
                 }
             }
-            _uiState.update { it.copy(isUploadingImages = false) } // Imágenes subidas (o no había)
+            _uiState.update { it.copy(isUploadingImages = false) }
 
+            val keywords = KeywordGenerator.generateKeywords(
+                brand = state.selectedBrand,
+                model = state.selectedModel,
+                version = state.selectedVersion,
+                carColorName = state.selectedCarColor.name,
+                fuelType = state.selectedFuelType,
+                year = state.selectedYear,
+                ciudad = state.finalCiudad,
+                comunidadAutonoma = state.finalComunidadAutonoma,
+            )
 
-            // Ahora, proceder a subir los datos del formulario con las URLs de las imágenes
             val carToUpload = CarForSale(
                 id = carId, // Usa el ID generado
                 userId = userId,
@@ -535,7 +545,8 @@ class UploadCarViewModel @Inject constructor(
                 imageUrls = uploadedImageUrls,
                 comunidadAutonoma = state.finalComunidadAutonoma?.takeIf { it.isNotBlank() },
                 ciudad = state.finalCiudad?.takeIf { it.isNotBlank() },
-                postalCode = state.finalPostalCode?.takeIf { it.isNotBlank() }
+                postalCode = state.finalPostalCode?.takeIf { it.isNotBlank() },
+                searchableKeywords = keywords
             )
 
             // Subir datos del coche a Firestore

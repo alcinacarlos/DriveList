@@ -21,4 +21,16 @@
     <string name="label_car_color">Vehicle Color</string>
     <string name="label_brand">Brand</string>
 
+    <string name="screen_title_settings">Settigns</string>
+    <string name="screen_title_profile">Profile</string>
+    <string name="screen_title_login">Login</string>
+    <string name="screen_title_register">Register</string>
+    <string name="screen_title_welcome">Welcome</string>
+    <string name="screen_title_home">Home</string>
+    <string name="screen_title_search">Search</string>
+    <string name="screen_title_sell">Sell</string>
+    <string name="screen_title_favorites">Favorites</string>
+    <string name="screen_title_chat">Chat</string>
+    <string name="screen_title_car_detail">Car Details</string>
+
 </resources>

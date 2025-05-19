@@ -78,12 +78,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.carlosalcina.drivelist.R
 import com.carlosalcina.drivelist.domain.model.CarColor
 import com.carlosalcina.drivelist.domain.model.CarForSale
 import com.carlosalcina.drivelist.domain.model.CarSearchFilters
+import com.carlosalcina.drivelist.navigation.Screen
 import com.carlosalcina.drivelist.ui.viewmodel.HomeScreenViewModel
 
 // --- PANTALLA PRINCIPAL ---
@@ -91,7 +93,8 @@ import com.carlosalcina.drivelist.ui.viewmodel.HomeScreenViewModel
 @Composable
 fun HomeScreen(
     // navController: NavController, // Para navegar a "Ver Más" o detalles del coche
-    viewModel: HomeScreenViewModel = hiltViewModel()
+    viewModel: HomeScreenViewModel = hiltViewModel(),
+    navController: NavController
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val scrollState = rememberScrollState() // Para el scroll vertical principal
@@ -109,12 +112,18 @@ fun HomeScreen(
     }
     LaunchedEffect(uiState.carLoadError) {
         uiState.carLoadError?.let {
-            snackbarHostState.showSnackbar(message = "Error cargando coches: $it", duration = SnackbarDuration.Long)
+            snackbarHostState.showSnackbar(
+                message = "Error cargando coches: $it",
+                duration = SnackbarDuration.Long
+            )
         }
     }
     LaunchedEffect(uiState.searchError) {
         uiState.searchError?.let {
-            snackbarHostState.showSnackbar(message = "Error en búsqueda: $it", duration = SnackbarDuration.Long)
+            snackbarHostState.showSnackbar(
+                message = "Error en búsqueda: $it",
+                duration = SnackbarDuration.Long
+            )
         }
     }
 
@@ -145,7 +154,11 @@ fun HomeScreen(
                 onBrandModelClick = { viewModel.openBrandModelDialog() },
                 onMaxPriceChange = { viewModel.onMaxPriceChanged(it) },
                 onFuelTypeSelect = { viewModel.onFuelTypeSelected(it) },
-                onSearchClick = { viewModel.performSearch() },
+                onSearchClick = {
+                    val currentFiltersFromHome = viewModel.uiState.value.filters
+                    val route = Screen.SearchVehicle.createRoute(filters = currentFiltersFromHome)
+                    navController.navigate(route)
+                },
                 onClearBrandModel = { viewModel.clearBrandModelFilter() }
             )
 
@@ -187,8 +200,8 @@ fun HomeScreen(
                     viewModel.toggleFavoriteStatus(carId)
                 },
                 onSeeMoreClick = {
-                    Log.d("HomeScreen", "Ver más clickeado")
-                    // navController.navigate("allCarsList") // Podría pasar los filtros actuales
+                    val route = Screen.SearchVehicle.createRoute(searchTerm = "coches_recientes")
+                    navController.navigate(route)
                 },
                 showSeeMoreButton = !(uiState.searchedCars.isNotEmpty() || uiState.noSearchResults) // Solo para "últimos coches"
             )
@@ -262,10 +275,18 @@ fun SearchFilterCard(
                     disabledLeadingIconColor = MaterialTheme.colorScheme.primary, // Icono con color primario
                     disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant
                 ),
-                leadingIcon = { Icon(Icons.Filled.FilterList, contentDescription = "Filtro Marca/Modelo") },
+                leadingIcon = {
+                    Icon(
+                        Icons.Filled.FilterList,
+                        contentDescription = "Filtro Marca/Modelo"
+                    )
+                },
                 trailingIcon = if (filters.brand != null || filters.model != null) {
                     {
-                        IconButton(onClick = onClearBrandModel, modifier = Modifier.size(24.dp)) { // Tamaño del icono
+                        IconButton(
+                            onClick = onClearBrandModel,
+                            modifier = Modifier.size(24.dp)
+                        ) { // Tamaño del icono
                             Icon(Icons.Filled.Close, contentDescription = "Limpiar Marca/Modelo")
                         }
                     }
@@ -279,7 +300,7 @@ fun SearchFilterCard(
                     value = filters.maxPrice?.toString() ?: "",
                     onValueChange = onMaxPriceChange,
                     label = { Text("Precio Máx (€)") },
-                    placeholder = {Text("Ej: 20000")},
+                    placeholder = { Text("Ej: 20000") },
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number,
                         imeAction = ImeAction.Next
@@ -364,7 +385,10 @@ fun BrandModelFilterDialog(
 
     Dialog(
         onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false, dismissOnClickOutside = false)
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            dismissOnClickOutside = false
+        )
     ) {
         Scaffold(
             topBar = {
@@ -391,13 +415,20 @@ fun BrandModelFilterDialog(
                     modifier = Modifier.padding(16.dp)
                 )
                 if (isLoadingBrands) {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally).padding(16.dp))
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .padding(16.dp)
+                    )
                 } else if (brandLoadError != null) {
-                    Text("Error cargando marcas: $brandLoadError", color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp))
-                } else if (brands.isEmpty()){
+                    Text(
+                        "Error cargando marcas: $brandLoadError",
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                } else if (brands.isEmpty()) {
                     Text("No hay marcas disponibles.", modifier = Modifier.padding(16.dp))
-                }
-                else {
+                } else {
                     LazyColumn(
                         modifier = Modifier.weight(1f), // Ocupa espacio disponible para marcas
                         contentPadding = PaddingValues(horizontal = 16.dp)
@@ -421,19 +452,33 @@ fun BrandModelFilterDialog(
 
                 // Sección de Modelos (si se ha seleccionado una marca)
                 if (selectedBrand != null) {
-                    HorizontalDivider(thickness = 4.dp, modifier = Modifier.padding(vertical = 8.dp))
+                    HorizontalDivider(
+                        thickness = 4.dp,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
                     Text(
                         "Selecciona un Modelo para $selectedBrand",
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.padding(16.dp)
                     )
                     if (isLoadingModels) {
-                        CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally).padding(16.dp))
+                        CircularProgressIndicator(
+                            modifier = Modifier
+                                .align(Alignment.CenterHorizontally)
+                                .padding(16.dp)
+                        )
                     } else if (modelLoadError != null) {
-                        Text("Error cargando modelos: $modelLoadError", color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp))
+                        Text(
+                            "Error cargando modelos: $modelLoadError",
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(16.dp)
+                        )
                     } else if (models.isEmpty() && !isLoadingModels) { // Asegurar que no está cargando
-                        Text("No hay modelos disponibles para $selectedBrand.", modifier = Modifier.padding(16.dp))
-                    } else if (models.isNotEmpty()){
+                        Text(
+                            "No hay modelos disponibles para $selectedBrand.",
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    } else if (models.isNotEmpty()) {
                         // Usar un Dropdown aquí puede ser un poco extraño en un diálogo de pantalla completa
                         // Considera otra LazyColumn para modelos si la lista es larga.
                         // Por ahora, mantendremos el ExposedDropdownMenuBox como lo pediste.
@@ -448,8 +493,14 @@ fun BrandModelFilterDialog(
                                     onValueChange = {},
                                     readOnly = true,
                                     label = { Text("Modelo") },
-                                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = modelMenuExpanded) },
-                                    modifier = Modifier.menuAnchor().fillMaxWidth()
+                                    trailingIcon = {
+                                        ExposedDropdownMenuDefaults.TrailingIcon(
+                                            expanded = modelMenuExpanded
+                                        )
+                                    },
+                                    modifier = Modifier
+                                        .menuAnchor()
+                                        .fillMaxWidth()
                                 )
                                 ExposedDropdownMenu(
                                     expanded = modelMenuExpanded,
@@ -508,7 +559,12 @@ fun LatestCarsSection(
         Spacer(modifier = Modifier.height(12.dp))
 
         if (isLoading) {
-            Box(modifier = Modifier.fillMaxWidth().height(240.dp), contentAlignment = Alignment.Center) { // Altura ajustada
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(240.dp),
+                contentAlignment = Alignment.Center
+            ) { // Altura ajustada
                 CircularProgressIndicator()
             }
         } else if (error != null) {
@@ -520,11 +576,12 @@ fun LatestCarsSection(
         } else if (cars.isEmpty() && (title == "Últimos Coches Publicados" || title == "No se encontraron resultados")) {
             Text(
                 if (title == "No se encontraron resultados") title else "No hay coches publicados recientemente.",
-                modifier = Modifier.padding(horizontal = 16.dp).align(Alignment.CenterHorizontally),
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .align(Alignment.CenterHorizontally),
                 style = MaterialTheme.typography.bodyLarge
             )
-        }
-        else {
+        } else {
             LazyRow(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -598,7 +655,11 @@ fun CarItemCard(
                             .padding(8.dp)
                             .size(28.dp) // Un poco más grande
                             .background(carColorValue, CircleShape)
-                            .border(1.5.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape) // Borde más visible
+                            .border(
+                                1.5.dp,
+                                MaterialTheme.colorScheme.outlineVariant,
+                                CircleShape
+                            ) // Borde más visible
                     )
                 }
 
@@ -623,7 +684,10 @@ fun CarItemCard(
                 }
             }
 
-            Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(
+                modifier = Modifier.padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
                 Text(
                     text = "${car.brand} ${car.model}",
                     style = MaterialTheme.typography.titleMedium,
@@ -649,7 +713,11 @@ fun CarItemCard(
                 ) {
                     Text(text = car.year, style = MaterialTheme.typography.bodySmall)
                     Text("•", style = MaterialTheme.typography.bodySmall)
-                    Text(text = car.fuelType, style = MaterialTheme.typography.bodySmall, maxLines = 1)
+                    Text(
+                        text = car.fuelType,
+                        style = MaterialTheme.typography.bodySmall,
+                        maxLines = 1
+                    )
                 }
                 if (!car.ciudad.isNullOrBlank()) {
                     Text(

@@ -22,5 +22,7 @@ data class CarForSale(
     val postalCode: String? = null,
 
     @Transient
-    val isFavoriteByCurrentUser: Boolean = false
+    val isFavoriteByCurrentUser: Boolean = false,
+
+    val searchableKeywords: List<String> = emptyList()
 )

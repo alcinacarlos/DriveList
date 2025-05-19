@@ -102,6 +102,9 @@ dependencies {
     implementation(libs.converter.gson)
     implementation(libs.logging.interceptor)
 
-    implementation(libs.play.services.location) // O la última versión estable
+    implementation(libs.play.services.location)
+
+    implementation("com.meilisearch.sdk:meilisearch-java:0.10.1")
+
 
 }

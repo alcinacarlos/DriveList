@@ -9,10 +9,10 @@ data class HomeScreenState(
     val latestCars: List<CarForSale> = emptyList(),
     val carLoadError: String? = null,
 
-    val isLoadingSearchedCars: Boolean = false,
-    val searchedCars: List<CarForSale> = emptyList(), // Para los resultados de búsqueda
+    val isLoadingSearchedCars: Boolean = false, // Aunque la búsqueda principal se mueva a otra pantalla
+    val searchedCars: List<CarForSale> = emptyList(),
     val searchError: String? = null,
-    val noSearchResults: Boolean = false, // Para indicar si la búsqueda no arrojó resultados
+    val noSearchResults: Boolean = false,
 
     // Filtros de búsqueda
     val filters: CarSearchFilters = CarSearchFilters(),
@@ -26,11 +26,12 @@ data class HomeScreenState(
     val isLoadingModels: Boolean = false,
     val models: List<String> = emptyList(),
     val modelLoadError: String? = null,
-    val selectedBrandForDialog: String? = null, // Marca seleccionada dentro del diálogo
+    val selectedBrandForDialog: String? = null,
 
     // Favoritos
-    val favoriteCarIds: Set<String> = emptySet(), // IDs de los coches favoritos del usuario
-    val isTogglingFavorite: Boolean = false, // Para mostrar un indicador de carga al marcar favorito
+    val favoriteCarIds: Set<String> = emptySet(),
+    // CORRECCIÓN AQUÍ: isTogglingFavorite debe ser un Map para la lógica implementada
+    val isTogglingFavorite: Map<String, Boolean> = emptyMap(), // carId -> isLoading
     val favoriteToggleError: String? = null,
 
     // Autenticación

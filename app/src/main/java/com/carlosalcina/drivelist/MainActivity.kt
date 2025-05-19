@@ -5,6 +5,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
+import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
@@ -12,7 +15,8 @@ import com.carlosalcina.drivelist.data.preferences.LanguageRepository
 import com.carlosalcina.drivelist.localization.LocaleHelper
 import com.carlosalcina.drivelist.navigation.AppNavigation
 import com.carlosalcina.drivelist.ui.theme.DriveListTheme
-import com.google.firebase.FirebaseApp
+import com.carlosalcina.drivelist.ui.view.components.AppBottomNavigationBar
+import com.carlosalcina.drivelist.ui.view.components.TopBar
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -31,15 +35,23 @@ class MainActivity : ComponentActivity() {
         installSplashScreen()
         enableEdgeToEdge()
 
+
         setContent {
             val navController = rememberNavController()
-            DriveListTheme(dynamicColor = false) {
-                AppNavigation(navController, onLanguageChange = { newLang ->
-                    lifecycleScope.launch {
-                        LanguageRepository.saveLanguage(newLang)
-                        recreate()
-                    }
-                })
+            Scaffold(
+                topBar = {TopBar(navController = navController)},
+                bottomBar = {
+                    AppBottomNavigationBar(navController = navController)
+                }
+            ) { innerPadding ->
+                DriveListTheme(dynamicColor = false) {
+                    AppNavigation(navController, modifier= Modifier.padding(innerPadding), onLanguageChange = { newLang ->
+                        lifecycleScope.launch {
+                            LanguageRepository.saveLanguage(newLang)
+                            recreate()
+                        }
+                    })
+                }
             }
         }
     }

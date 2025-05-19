@@ -19,11 +19,10 @@ import com.carlosalcina.drivelist.domain.repository.CarUploadRepository
 import com.carlosalcina.drivelist.domain.repository.GoogleSignInHandler
 import com.carlosalcina.drivelist.domain.repository.LocationRepository
 import com.carlosalcina.drivelist.domain.repository.UserFavoriteRepository
+import com.carlosalcina.drivelist.utils.FirebaseUtils
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
-import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreSettings
 import com.google.firebase.firestore.PersistentCacheSettings
@@ -96,7 +95,7 @@ object AppModule {
     @Provides
     @Singleton
     fun provideFirebaseAuth(): FirebaseAuth {
-        return Firebase.auth
+        return FirebaseUtils.getInstance()
     }
 
     @Provides
