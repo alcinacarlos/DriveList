@@ -7,14 +7,18 @@ import com.carlosalcina.drivelist.data.datasource.FirebaseImageStorageDataSource
 import com.carlosalcina.drivelist.data.datasource.FirestoreCarRemoteDataSource
 import com.carlosalcina.drivelist.data.datasource.ImageStorageDataSource
 import com.carlosalcina.drivelist.data.remote.GeoNamesApiService
+import com.carlosalcina.drivelist.data.repository.CarListRepositoryImpl
 import com.carlosalcina.drivelist.data.repository.CarUploadRepositoryImpl
 import com.carlosalcina.drivelist.data.repository.CredentialManagerGoogleSignInHandler
 import com.carlosalcina.drivelist.data.repository.FirebaseAuthRepository
 import com.carlosalcina.drivelist.data.repository.LocationRepositoryImpl
+import com.carlosalcina.drivelist.data.repository.UserFavoriteRepositoryImpl
 import com.carlosalcina.drivelist.domain.repository.AuthRepository
+import com.carlosalcina.drivelist.domain.repository.CarListRepository
 import com.carlosalcina.drivelist.domain.repository.CarUploadRepository
 import com.carlosalcina.drivelist.domain.repository.GoogleSignInHandler
 import com.carlosalcina.drivelist.domain.repository.LocationRepository
+import com.carlosalcina.drivelist.domain.repository.UserFavoriteRepository
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.firebase.Firebase
@@ -155,5 +159,23 @@ object AppModule {
     @Singleton
     fun provideImageStorageDataSource(storage: FirebaseStorage): ImageStorageDataSource {
         return FirebaseImageStorageDataSource(storage)
+    }
+
+    @Provides
+    @Singleton
+    fun provideCarListRepository(
+        firestore: FirebaseFirestore,
+        userFavoriteRepository: UserFavoriteRepository
+    ): CarListRepository {
+        return CarListRepositoryImpl(firestore, userFavoriteRepository)
+    }
+
+    // Repositorio para los favoritos del usuario
+    @Provides
+    @Singleton
+    fun provideUserFavoriteRepository(
+        firestore: FirebaseFirestore
+    ): UserFavoriteRepository {
+        return UserFavoriteRepositoryImpl(firestore)
     }
 }

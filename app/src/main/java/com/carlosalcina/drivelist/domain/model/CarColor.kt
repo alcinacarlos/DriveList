@@ -21,5 +21,13 @@ enum class CarColor(
 
     companion object {
         fun GAMA_COMPLETA(): List<CarColor> = CarColor.entries
+
+        fun fromName(name: String?): CarColor? {
+            return try {
+                if (name == null) null else valueOf(name)
+            } catch (e: IllegalArgumentException) {
+                null
+            }
+        }
     }
 }

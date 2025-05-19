@@ -18,7 +18,7 @@ import com.google.firebase.auth.FirebaseAuth
 fun AppNavigation(navController: NavHostController, onLanguageChange: (String) -> Unit) {
     val firebaseAuth = FirebaseAuth.getInstance()
     val currentUser = firebaseAuth.currentUser
-    val startDestination = if (currentUser != null) "upload_car" else "register"
+    val startDestination = if (currentUser != null) "home" else "register"
 
     NavHost(navController = navController, startDestination = startDestination) {
 
@@ -56,7 +56,7 @@ fun AppNavigation(navController: NavHostController, onLanguageChange: (String) -
             )
         }
         composable("home") {
-            HomeScreen(navController)
+            HomeScreen()
         }
         composable("profile") {
             ProfileScreen(navController)

@@ -19,4 +19,6 @@
 
     <string name="label_select_a_color">Select a color…</string>
     <string name="label_car_color">Vehicle Color</string>
+    <string name="label_brand">Brand</string>
+
 </resources>

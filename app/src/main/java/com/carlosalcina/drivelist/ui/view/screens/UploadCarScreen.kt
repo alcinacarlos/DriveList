@@ -247,7 +247,7 @@ fun UploadCarScreen(
             }
             // Desplegable de Marcas
             DropdownSelector(
-                label = "Marca",
+                label = stringResource(R.string.label_brand),
                 options = uiState.brands,
                 selectedOption = uiState.selectedBrand,
                 onOptionSelected = { viewModel.onBrandSelected(it) },
