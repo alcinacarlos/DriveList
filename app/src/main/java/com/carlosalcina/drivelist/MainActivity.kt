@@ -38,19 +38,22 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val navController = rememberNavController()
-            Scaffold(
-                topBar = {TopBar(navController = navController)},
-                bottomBar = {
-                    AppBottomNavigationBar(navController = navController)
-                }
-            ) { innerPadding ->
-                DriveListTheme(dynamicColor = false) {
-                    AppNavigation(navController, modifier= Modifier.padding(innerPadding), onLanguageChange = { newLang ->
-                        lifecycleScope.launch {
-                            LanguageRepository.saveLanguage(newLang)
-                            recreate()
-                        }
-                    })
+            DriveListTheme(dynamicColor = false) {
+                Scaffold(
+                    topBar = { TopBar(navController = navController) },
+                    bottomBar = {
+                        AppBottomNavigationBar(navController = navController)
+                    }
+                ) { innerPadding ->
+                    AppNavigation(
+                        navController,
+                        modifier = Modifier.padding(innerPadding),
+                        onLanguageChange = { newLang ->
+                            lifecycleScope.launch {
+                                LanguageRepository.saveLanguage(newLang)
+                                recreate()
+                            }
+                        })
                 }
             }
         }

@@ -14,6 +14,7 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.carlosalcina.drivelist.navigation.Screen
+import com.carlosalcina.drivelist.utils.Utils
 
 @Composable
 fun AppBottomNavigationBar(
@@ -29,14 +30,18 @@ fun AppBottomNavigationBar(
     )
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
-    val showBottomBar = bottomNavItems.any { it.route == currentDestination?.route || currentDestination?.hierarchy?.any { dest -> dest.route == it.route } == true }
+    val currentRoute = currentDestination?.route
 
+    val showBottomBar = bottomNavItems.any { screen ->
+        Utils.matchDestination(currentRoute, screen.route)
+                || navBackStackEntry?.destination?.hierarchy?.any { Utils.matchDestination(it.route, screen.route) } == true
+    }
 
     if (showBottomBar) {
         NavigationBar(
             modifier = modifier,
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
         ) {
             bottomNavItems.forEach { screen ->
                 val isSelected = currentDestination?.hierarchy?.any { it.route == screen.route } == true

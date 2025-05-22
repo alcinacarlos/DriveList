@@ -1,6 +1,7 @@
 package com.carlosalcina.drivelist.data.repository
 
 import android.util.Log
+import com.carlosalcina.drivelist.data.remote.MeiliSearchApi
 import com.carlosalcina.drivelist.domain.model.CarForSale
 import com.carlosalcina.drivelist.domain.model.CarSearchFilters
 import com.carlosalcina.drivelist.domain.repository.CarListRepository
@@ -15,7 +16,8 @@ import javax.inject.Inject
 
 class CarListRepositoryImpl @Inject constructor(
     private val firestore: FirebaseFirestore,
-    private val userFavoriteRepository: UserFavoriteRepository
+    private val userFavoriteRepository: UserFavoriteRepository,
+    private val meiliSearchApi: MeiliSearchApi
 ) : CarListRepository {
 
     companion object {
@@ -94,6 +96,14 @@ class CarListRepositoryImpl @Inject constructor(
         currentUserId: String?
     ): Result<List<CarForSale>, Exception> {
         return try {
+            val carIdsFromSearch = mutableListOf<String>()
+
+            // Buscar primero con MeiliSearch si hay término de búsqueda
+            if (!filters.searchTerm.isNullOrBlank()) {
+                val response = meiliSearchApi.searchCars(filters.searchTerm, limit)
+                carIdsFromSearch.addAll(response.hits.map { it.id })
+            }
+
             var query: Query = firestore.collection(CARS_COLLECTION)
 
             filters.brand?.let { query = query.whereEqualTo(BRAND_FIELD, it) }
@@ -109,37 +119,25 @@ class CarListRepositoryImpl @Inject constructor(
                 query = query.whereGreaterThanOrEqualTo(YEAR_FIELD, it.toString())
             }
 
-            if (!filters.searchTerm.isNullOrBlank()) {
-                val keywords = filters.searchTerm.lowercase().split("\\s+".toRegex()).filter { it.length > 1 }
-                if (keywords.isNotEmpty()) {
-                    if (keywords.size == 1) {
-                        query = query.whereArrayContains(SEARCHABLE_KEYWORDS_FIELD, keywords.first())
-                    } else if (keywords.size <= 10) {
-                        query = query.whereArrayContainsAny(SEARCHABLE_KEYWORDS_FIELD, keywords)
-                    } else {
-                        query = query.whereArrayContainsAny(SEARCHABLE_KEYWORDS_FIELD, keywords.take(10))
-                        Log.w("CarListRepo", "Search term has >10 keywords, using first 10: $keywords")
-                    }
+            // Si hay resultados de MeiliSearch, filtrar por ellos
+            if (carIdsFromSearch.isNotEmpty()) {
+                query = query.whereIn("id", carIdsFromSearch.take(10)) // Firestore limita a 10 elementos en whereIn
+            }
+
+            // Ordenar si no hay término de búsqueda (para evitar conflicto con whereIn)
+            if (filters.searchTerm.isNullOrBlank()) {
+                if (filters.maxPrice != null && filters.maxPrice > 0) {
+                    query = query.orderBy(PRICE_FIELD, Query.Direction.ASCENDING)
+                } else if (filters.minYear != null) {
+                    query = query.orderBy(YEAR_FIELD, Query.Direction.DESCENDING)
+                }
+
+                try {
+                    query = query.orderBy(TIMESTAMP_FIELD, Query.Direction.DESCENDING)
+                } catch (e: Exception) {
+                    Log.w("CarListRepo", "No se pudo aplicar orden por timestamp: ${e.message}")
                 }
             }
-
-
-            if (filters.maxPrice != null && filters.maxPrice > 0 && filters.searchTerm.isNullOrBlank()) {
-                query = query.orderBy(PRICE_FIELD, Query.Direction.ASCENDING)
-            }
-            else if (filters.minYear != null && filters.searchTerm.isNullOrBlank()) {
-                query = query.orderBy(YEAR_FIELD, Query.Direction.DESCENDING)
-            }
-
-            try {
-                query = query.orderBy(TIMESTAMP_FIELD, Query.Direction.DESCENDING)
-            } catch (e: Exception) {
-                Log.w("CarListRepo", "Could not apply default timestamp ordering, possibly due to other filters: ${e.message}")
-                // Si falla el orderBy por timestamp (ej. por un filtro array-contains-any),
-                // la consulta se ejecutará sin este orden específico, o podrías intentar otro.
-                // Firestore podría ordenar por ID de documento por defecto en algunos casos.
-            }
-
 
             val snapshot = query.limit(limit.toLong()).get().await()
             val cars = mapSnapshotToCarList(snapshot, currentUserId)
@@ -149,4 +147,5 @@ class CarListRepositoryImpl @Inject constructor(
             Result.Error(e)
         }
     }
+
 }

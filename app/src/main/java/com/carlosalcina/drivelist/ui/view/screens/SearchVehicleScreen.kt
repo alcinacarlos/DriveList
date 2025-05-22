@@ -1,5 +1,6 @@
 package com.carlosalcina.drivelist.ui.view.screens
 
+import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -52,6 +53,7 @@ import com.carlosalcina.drivelist.ui.view.components.AdvancedFiltersDialog
 import com.carlosalcina.drivelist.ui.view.components.SearchResultsList
 import com.carlosalcina.drivelist.ui.viewmodel.SearchVehicleScreenViewModel
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchVehicleScreen(
@@ -75,21 +77,19 @@ fun SearchVehicleScreen(
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        topBar = {
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+        ) {
+
             SearchBarWithFilterButton(
                 searchTerm = uiState.currentSearchTerm,
                 onSearchTermChange = { viewModel.onSearchTermChanged(it) },
                 onSearchAction = { viewModel.onPerformSearchFromBar() },
                 onFilterAction = { viewModel.openAdvancedFiltersDialog() }
             )
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .padding(paddingValues)
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-        ) {
             QuickFiltersRow(
                 quickFilters = uiState.quickFilters,
                 activeQuickFilterIds = uiState.activeQuickFilterIds,

@@ -1,5 +1,6 @@
 package com.carlosalcina.drivelist.data.datasource
 
+import com.carlosalcina.drivelist.data.remote.MeiliSearchApi
 import com.carlosalcina.drivelist.domain.model.CarForSale
 import com.carlosalcina.drivelist.utils.Result
 import com.carlosalcina.drivelist.utils.Utils
@@ -7,9 +8,11 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
+import javax.inject.Named
 
 class FirestoreCarRemoteDataSource @Inject constructor(
-    private val firestore: FirebaseFirestore
+    private val firestore: FirebaseFirestore,
+    @Named("MeiliSearch") private val meiliSearchApi: MeiliSearchApi
 ) : CarRemoteDataSource {
 
     private val carsForSaleCollectionRef = firestore.collection("coches_venta")
@@ -153,6 +156,7 @@ class FirestoreCarRemoteDataSource @Inject constructor(
 
     override suspend fun saveCarToFirestore(car: CarForSale): Result<Unit, Exception> {
         return try {
+            meiliSearchApi.addOrUpdateCars(listOf(car))
             carsForSaleCollectionRef.document(car.id).set(car).await()
             Result.Success(Unit)
         } catch (e: Exception) {

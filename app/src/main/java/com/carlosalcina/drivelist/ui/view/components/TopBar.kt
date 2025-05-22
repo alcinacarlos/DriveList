@@ -13,6 +13,7 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.carlosalcina.drivelist.R
 import com.carlosalcina.drivelist.navigation.Screen
+import com.carlosalcina.drivelist.utils.Utils
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,9 +30,15 @@ fun TopBar(
     // Solo mostrar la barra si estamos en una de las pantallas principales de la bottom nav
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
-    val showBottomBar =
-        bottomNavItems.any { it.route == currentDestination?.route || currentDestination?.hierarchy?.any { dest -> dest.route == it.route } == true }
-    val currentScreen = bottomNavItems.find { it.route == currentDestination?.route }
+    val currentRoute = currentDestination?.route
+
+    val showBottomBar = bottomNavItems.any { screen ->
+        Utils.matchDestination(currentRoute, screen.route)
+                || navBackStackEntry?.destination?.hierarchy?.any { Utils.matchDestination(it.route, screen.route) } == true
+    }
+    val currentScreen = bottomNavItems.find { screen ->
+        Utils.matchDestination(currentRoute, screen.route)
+    }
 
     if (showBottomBar) {
         TopAppBar(

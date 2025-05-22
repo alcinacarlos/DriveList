@@ -62,4 +62,13 @@ object Utils {
             else -> {"Gasolina"}
         }
     }
+    fun matchDestination(currentRoute: String?, screenRoute: String): Boolean {
+        val currentSegments = currentRoute?.split("?") ?: return false
+        val screenSegments = screenRoute.split("?")
+
+        return currentSegments.zip(screenSegments).all { (curr, expected) ->
+            curr == expected
+        }
+    }
+
 }

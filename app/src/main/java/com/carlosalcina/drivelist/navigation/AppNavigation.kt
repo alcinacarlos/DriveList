@@ -74,7 +74,7 @@ fun AppNavigation(navController: NavHostController, modifier: Modifier = Modifie
         composable(route = Screen.UploadCar.route) {
             UploadCarScreen(
                 onBack = { navController.popBackStack() },
-                onUploadSuccess = { navController.navigate(Screen.Home.route) },
+                onUploadSuccess = { navController.popBackStack() },
                 onSettings = { navController.navigate("settings") }
             )
         }

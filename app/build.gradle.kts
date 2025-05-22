@@ -104,7 +104,4 @@ dependencies {
 
     implementation(libs.play.services.location)
 
-    implementation("com.meilisearch.sdk:meilisearch-java:0.10.1")
-
-
 }
