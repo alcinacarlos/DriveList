@@ -7,14 +7,8 @@ import androidx.lifecycle.viewModelScope
 import com.carlosalcina.drivelist.data.datasource.ImageStorageDataSource
 import com.carlosalcina.drivelist.domain.model.CarColor
 import com.carlosalcina.drivelist.domain.model.CarForSale
+import com.carlosalcina.drivelist.domain.repository.CarUploadRepository
 import com.carlosalcina.drivelist.domain.repository.LocationRepository
-import com.carlosalcina.drivelist.domain.usecase.GetBodyTypesUseCase
-import com.carlosalcina.drivelist.domain.usecase.GetBrandsUseCase
-import com.carlosalcina.drivelist.domain.usecase.GetFuelTypesUseCase
-import com.carlosalcina.drivelist.domain.usecase.GetModelsUseCase
-import com.carlosalcina.drivelist.domain.usecase.GetVersionsUseCase
-import com.carlosalcina.drivelist.domain.usecase.GetYearsUseCase
-import com.carlosalcina.drivelist.domain.usecase.UploadCarDataUseCase
 import com.carlosalcina.drivelist.ui.view.states.UploadCarScreenState
 import com.carlosalcina.drivelist.utils.KeywordGenerator
 import com.carlosalcina.drivelist.utils.NetworkUtils
@@ -35,13 +29,7 @@ import javax.inject.Inject
 @HiltViewModel
 class UploadCarViewModel @Inject constructor(
     @ApplicationContext private val applicationContext: Context,
-    private val getBrandsUseCase: GetBrandsUseCase,
-    private val getModelsUseCase: GetModelsUseCase,
-    private val getBodyTypesUseCase: GetBodyTypesUseCase,
-    private val getFuelTypesUseCase: GetFuelTypesUseCase,
-    private val getYearsUseCase: GetYearsUseCase,
-    private val getVersionsUseCase: GetVersionsUseCase,
-    private val uploadCarDataUseCase: UploadCarDataUseCase,
+    private val uploadRepository: CarUploadRepository,
     private val firebaseAuth: FirebaseAuth,
     private val imageStorageDataSource: ImageStorageDataSource,
     private val locationRepository: LocationRepository
@@ -61,7 +49,7 @@ class UploadCarViewModel @Inject constructor(
     fun loadBrands() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoadingBrands = true, generalErrorMessage = null) }
-            when (val result = getBrandsUseCase()) {
+            when (val result = uploadRepository.getBrands()) {
                 is Result.Success -> {
                     _uiState.update {
                         it.copy(isLoadingBrands = false, brands = result.data)
@@ -112,7 +100,7 @@ class UploadCarViewModel @Inject constructor(
             )
         }
         viewModelScope.launch {
-            when (val result = getModelsUseCase(brand)) {
+            when (val result = uploadRepository.getModels(brand)) {
                 is Result.Success -> _uiState.update {
                     it.copy(isLoadingModels = false, models = result.data)
                 }
@@ -141,7 +129,7 @@ class UploadCarViewModel @Inject constructor(
             )
         }
         viewModelScope.launch {
-            when (val result = getBodyTypesUseCase(currentBrand, model)) {
+            when (val result = uploadRepository.getBodyTypes(currentBrand, model)) {
                 is Result.Success -> _uiState.update {
                     it.copy(isLoadingBodyTypes = false, bodyTypes = result.data)
                 }
@@ -171,7 +159,7 @@ class UploadCarViewModel @Inject constructor(
             )
         }
         viewModelScope.launch {
-            when (val result = getFuelTypesUseCase(currentBrand, currentModel, bodyType)) {
+            when (val result = uploadRepository.getFuelTypes(currentBrand, currentModel, bodyType)) {
                 is Result.Success -> _uiState.update {
                     it.copy(isLoadingFuelTypes = false, fuelTypes = result.data)
                 }
@@ -205,7 +193,7 @@ class UploadCarViewModel @Inject constructor(
         }
         viewModelScope.launch {
             when (val result =
-                getYearsUseCase(currentBrand, currentModel, currentBodyType, fuelType)) {
+                uploadRepository.getYears(currentBrand, currentModel, currentBodyType, fuelType)) {
                 is Result.Success -> _uiState.update {
                     it.copy(isLoadingYears = false, years = result.data)
                 }
@@ -238,7 +226,7 @@ class UploadCarViewModel @Inject constructor(
             )
         }
         viewModelScope.launch {
-            when (val result = getVersionsUseCase(
+            when (val result = uploadRepository.getVersions(
                 currentBrand,
                 currentModel,
                 currentBodyType,
@@ -550,7 +538,7 @@ class UploadCarViewModel @Inject constructor(
             )
 
             // Subir datos del coche a Firestore
-            when (val formResult = uploadCarDataUseCase(carToUpload)) {
+            when (val formResult = uploadRepository.uploadCar(carToUpload)) {
                 is Result.Success -> {
                     _uiState.update {
                         it.copy(

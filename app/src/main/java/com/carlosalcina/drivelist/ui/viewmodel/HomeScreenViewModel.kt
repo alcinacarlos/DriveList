@@ -3,12 +3,9 @@ package com.carlosalcina.drivelist.ui.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.carlosalcina.drivelist.domain.model.CarSearchFilters
-import com.carlosalcina.drivelist.domain.usecase.GetBrandsUseCase
-import com.carlosalcina.drivelist.domain.usecase.GetLatestCarsUseCase
-import com.carlosalcina.drivelist.domain.usecase.GetModelsUseCase
-import com.carlosalcina.drivelist.domain.usecase.GetUserFavoriteIdsUseCase
-import com.carlosalcina.drivelist.domain.usecase.SearchCarsUseCase
+import com.carlosalcina.drivelist.domain.repository.CarListRepository
+import com.carlosalcina.drivelist.domain.repository.CarUploadRepository
+import com.carlosalcina.drivelist.domain.repository.UserFavoriteRepository
 import com.carlosalcina.drivelist.domain.usecase.ToggleFavoriteCarUseCase
 import com.carlosalcina.drivelist.ui.view.states.HomeScreenState
 import com.carlosalcina.drivelist.utils.Result
@@ -25,12 +22,10 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeScreenViewModel @Inject constructor(
-    private val getLatestCarsUseCase: GetLatestCarsUseCase,
-    private val searchCarsUseCase: SearchCarsUseCase,
-    private val getBrandsUseCase: GetBrandsUseCase,
-    private val getModelsUseCase: GetModelsUseCase,
-    private val getUserFavoriteIdsUseCase: GetUserFavoriteIdsUseCase,
+    private val uploadRepository: CarUploadRepository,
+    private val userFavoriteRepository: UserFavoriteRepository,
     private val toggleFavoriteCarUseCase: ToggleFavoriteCarUseCase,
+    private val carListRepository: CarListRepository,
     private val firebaseAuth: FirebaseAuth
 ) : ViewModel() {
 
@@ -48,7 +43,6 @@ class HomeScreenViewModel @Inject constructor(
     }
 
     init {
-        Log.d(TAG, "ViewModel initialized. Observing auth state.")
         observeAuthState()
     }
 
@@ -59,14 +53,12 @@ class HomeScreenViewModel @Inject constructor(
             val isAuthenticated = user != null
 
             if (isAuthenticated && currentUserId != null) {
-                Log.d(TAG, "User is authenticated. CurrentUserID: $currentUserId")
-                if (currentUserId != null && _uiState.value.latestCars.isEmpty() || (_uiState.value.latestCars.isEmpty() && !_uiState.value.isLoadingLatestCars)) {
+                if (_uiState.value.latestCars.isEmpty() || (_uiState.value.latestCars.isEmpty() && !_uiState.value.isLoadingLatestCars)) {
                         Log.d(TAG, "Conditions met to fetch latest cars and favorites.")
                         fetchLatestCars()
                         fetchUserFavorites(currentUserId)
                     }
                     if (_uiState.value.brands.isEmpty() && !_uiState.value.isLoadingBrands) {
-                        Log.d(TAG, "Conditions met to fetch brands.")
                         fetchBrands()
                     }
             } else {
@@ -87,8 +79,7 @@ class HomeScreenViewModel @Inject constructor(
 
     private fun fetchUserFavorites(userId: String) {
         viewModelScope.launch {
-            Log.d(TAG, "Fetching user favorites for UID: $userId")
-            when (val result = getUserFavoriteIdsUseCase(userId)) {
+            when (val result = userFavoriteRepository.getUserFavoriteCarIds(userId)) {
                 is Result.Success -> {
                     Log.d(TAG, "Successfully fetched favorite IDs: ${result.data.size} items.")
                     _uiState.update {
@@ -108,13 +99,11 @@ class HomeScreenViewModel @Inject constructor(
 
     fun fetchLatestCars() {
         val currentUserId = firebaseAuth.currentUser?.uid
-        Log.d(TAG, "fetchLatestCars called. CurrentUserID for favorites check: $currentUserId")
 
         viewModelScope.launch {
             _uiState.update { it.copy(isLoadingLatestCars = true, carLoadError = null) }
-            when (val result = getLatestCarsUseCase(limit = 20, currentUserId = currentUserId)) {
+            when (val result = carListRepository.getLatestCars(limit = 20, currentUserId = currentUserId)) {
                 is Result.Success -> {
-                    Log.d(TAG, "fetchLatestCars success. Received ${result.data.size} cars.")
                     if (result.data.isEmpty()) {
                         Log.w(TAG, "fetchLatestCars returned an empty list.")
                     }
@@ -138,7 +127,7 @@ class HomeScreenViewModel @Inject constructor(
     fun fetchBrands() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoadingBrands = true, brandLoadError = null) }
-            when (val result = getBrandsUseCase()) {
+            when (val result = uploadRepository.getBrands()) {
                 is Result.Success -> {
                     _uiState.update { it.copy(isLoadingBrands = false, brands = result.data) }
                 }
@@ -152,7 +141,7 @@ class HomeScreenViewModel @Inject constructor(
     fun onBrandSelectedInDialog(brand: String) {
         _uiState.update { it.copy(selectedBrandForDialog = brand, isLoadingModels = true, modelLoadError = null, models = emptyList()) }
         viewModelScope.launch {
-            when (val result = getModelsUseCase(brand)) {
+            when (val result = uploadRepository.getModels(brand)) {
                 is Result.Success -> {
                     _uiState.update { it.copy(isLoadingModels = false, models = result.data) }
                 }
@@ -198,12 +187,6 @@ class HomeScreenViewModel @Inject constructor(
 
     fun onFuelTypeSelected(fuelType: String?) {
         _uiState.update { it.copy(filters = it.filters.copy(fuelType = fuelType)) }
-    }
-
-    fun performSearchAndNavigate(navigateToSearchScreen: (CarSearchFilters) -> Unit) {
-        val currentFilters = _uiState.value.filters
-        Log.d(TAG, "Preparing to navigate to search screen with filters: $currentFilters")
-        navigateToSearchScreen(currentFilters)
     }
 
     fun clearBrandModelFilter() {

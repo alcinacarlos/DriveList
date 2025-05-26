@@ -7,10 +7,9 @@ import androidx.lifecycle.viewModelScope
 import com.carlosalcina.drivelist.domain.model.CarSearchFilters
 import com.carlosalcina.drivelist.domain.model.QuickFilter
 import com.carlosalcina.drivelist.domain.model.QuickFilterType
-import com.carlosalcina.drivelist.domain.usecase.GetBrandsUseCase
-import com.carlosalcina.drivelist.domain.usecase.GetModelsUseCase
-import com.carlosalcina.drivelist.domain.usecase.GetUserFavoriteIdsUseCase
-import com.carlosalcina.drivelist.domain.usecase.SearchCarsUseCase
+import com.carlosalcina.drivelist.domain.repository.CarListRepository
+import com.carlosalcina.drivelist.domain.repository.CarUploadRepository
+import com.carlosalcina.drivelist.domain.repository.UserFavoriteRepository
 import com.carlosalcina.drivelist.domain.usecase.ToggleFavoriteCarUseCase
 import com.carlosalcina.drivelist.navigation.NavigationArgs
 import com.carlosalcina.drivelist.ui.view.states.SearchVehicleScreenState
@@ -25,16 +24,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.util.Calendar
 import javax.inject.Inject
 
 @HiltViewModel
 class SearchVehicleScreenViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
-    private val searchCarsUseCase: SearchCarsUseCase,
-    private val getBrandsUseCase: GetBrandsUseCase,
-    private val getModelsUseCase: GetModelsUseCase,
-    private val getUserFavoriteIdsUseCase: GetUserFavoriteIdsUseCase,
+    private val uploadRepository: CarUploadRepository,
+    private val carListRepository: CarListRepository,
+    private val userFavoriteRepository: UserFavoriteRepository,
     private val toggleFavoriteCarUseCase: ToggleFavoriteCarUseCase,
     private val firebaseAuth: FirebaseAuth
 ) : ViewModel() {
@@ -132,7 +129,7 @@ class SearchVehicleScreenViewModel @Inject constructor(
 
     private fun fetchUserFavorites(userId: String) {
         viewModelScope.launch {
-            when (val result = getUserFavoriteIdsUseCase(userId)) {
+            when (val result = userFavoriteRepository.getUserFavoriteCarIds(userId)) {
                 is Result.Success -> {
                     _uiState.update {
                         it.copy(
@@ -218,7 +215,7 @@ class SearchVehicleScreenViewModel @Inject constructor(
 
             // Aquí se podría añadir lógica para paginación si 'searchCarsUseCase' la soporta
             // (ej. pasando el último documento visible para 'startAfter' o un offset)
-            when (val result = searchCarsUseCase(filters = filtersToUse, limit = RESULTS_PER_PAGE, currentUserId = currentUserId)) {
+            when (val result = carListRepository.searchCars(filters = filtersToUse, limit = RESULTS_PER_PAGE, currentUserId = currentUserId)) {
                 is Result.Success -> {
                     val newCars = result.data
                     _uiState.update {
@@ -285,7 +282,7 @@ class SearchVehicleScreenViewModel @Inject constructor(
     private fun fetchBrandsForDialog() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoadingBrandsForDialog = true, brandLoadErrorForDialog = null) }
-            when (val result = getBrandsUseCase()) {
+            when (val result = uploadRepository.getBrands()) {
                 is Result.Success -> _uiState.update { it.copy(isLoadingBrandsForDialog = false, brandsForDialog = result.data) }
                 is Result.Error -> _uiState.update { it.copy(isLoadingBrandsForDialog = false, brandLoadErrorForDialog = result.error.message) }
             }
@@ -304,7 +301,7 @@ class SearchVehicleScreenViewModel @Inject constructor(
             )
         }
         viewModelScope.launch {
-            when (val result = getModelsUseCase(brand)) {
+            when (val result = uploadRepository.getModels(brand)) {
                 is Result.Success -> {
                     _uiState.update {
                         it.copy(
@@ -355,8 +352,7 @@ class SearchVehicleScreenViewModel @Inject constructor(
         performSearch(isNewSearch = true)
     }
 
-    fun clearAdvancedFilters() { // Limpia los filtros DENTRO del diálogo
-        val currentYear = Calendar.getInstance().get(Calendar.YEAR)
+    fun clearAdvancedFilters() {
         _uiState.update {
             it.copy(
                 tempAdvancedFilters = CarSearchFilters(searchTerm = it.appliedFilters.searchTerm), // Mantener searchTerm
