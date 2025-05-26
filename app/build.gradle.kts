@@ -1,3 +1,12 @@
+import java.io.FileInputStream
+import java.util.Properties
+
+val localProperties = Properties().apply {
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        load(FileInputStream(localPropertiesFile))
+    }
+}
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -23,8 +32,24 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        buildConfigField("String", "GEONAMES_USERNAME", "\"seta_maligna\"")
-        buildConfigField("String", "GOOGLE_SERVER_CLIENT_ID", "\"1063637134638-v816om6gg24utetk2dspjth8bhrk62b1.apps.googleusercontent.com\"")
+        buildConfigField(
+            "String",
+            "GEONAMES_USERNAME",
+            "\"${localProperties["GEONAMES_USERNAME"]}\""
+        )
+
+        buildConfigField(
+            "String",
+            "GOOGLE_SERVER_CLIENT_ID",
+            "\"${localProperties["GOOGLE_SERVER_CLIENT_ID"]}\""
+        )
+
+        buildConfigField(
+            "String",
+            "MEILI_API_KEY",
+            "\"${localProperties["MEILI_API_KEY"]}\""
+        )
+
     }
 
     buildTypes {

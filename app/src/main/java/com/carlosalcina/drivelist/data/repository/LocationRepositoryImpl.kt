@@ -131,7 +131,7 @@ class LocationRepositoryImpl @Inject constructor(
                             ciudad = postalCodeInfo.placeName ?: postalCodeInfo.adminName2,
                             comunidadAutonoma = postalCodeInfo.adminName1,
                             postalCode = postalCodeInfo.postalCode,
-                            countryCode = "ES" // Ya lo sabemos
+                            countryCode = "ES"
                         )
                     )
                 } else {

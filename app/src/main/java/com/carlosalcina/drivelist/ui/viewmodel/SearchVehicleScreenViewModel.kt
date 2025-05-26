@@ -43,7 +43,7 @@ class SearchVehicleScreenViewModel @Inject constructor(
 
     companion object {
         private const val TAG = "SearchVehicleVM"
-        private const val RESULTS_PER_PAGE = 10 // Límite para cada carga/paginación
+        private const val RESULTS_PER_PAGE = 10
         private const val SEARCH_DEBOUNCE_MS = 500L
     }
 
@@ -74,7 +74,6 @@ class SearchVehicleScreenViewModel @Inject constructor(
                     _uiState.update { currentState ->
                         currentState.copy(
                             favoriteCarIds = emptySet(),
-                            // Actualizar los coches para que no aparezcan como favoritos
                             searchResults = currentState.searchResults.map { it.copy(isFavoriteByCurrentUser = false) }
                         )
                     }
@@ -94,7 +93,6 @@ class SearchVehicleScreenViewModel @Inject constructor(
             }
         }
 
-        // Sincronizar activeQuickFilterIds con los filtros iniciales
         val newActiveQuickFilterIds = mutableSetOf<String>()
         _uiState.value.quickFilters.forEach { qf ->
             when (qf.type) {
@@ -102,7 +100,6 @@ class SearchVehicleScreenViewModel @Inject constructor(
                 QuickFilterType.MAX_PRICE -> if (initialFilters.maxPrice == qf.value) newActiveQuickFilterIds.add(qf.id)
                 QuickFilterType.MIN_YEAR -> if (initialFilters.minYear == qf.value) newActiveQuickFilterIds.add(qf.id)
                 QuickFilterType.LOCATION -> {
-                    // Asumir que el valor del filtro rápido de ubicación se aplica a 'ciudad'
                     if (initialFilters.ciudad == qf.value || initialFilters.comunidadAutonoma == qf.value) newActiveQuickFilterIds.add(qf.id)
                 }
             }
@@ -145,15 +142,15 @@ class SearchVehicleScreenViewModel @Inject constructor(
 
     fun onSearchTermChanged(term: String) {
         _uiState.update { it.copy(currentSearchTerm = term) }
-        searchJob?.cancel() // Cancelar búsqueda anterior con debounce
+        searchJob?.cancel()
         searchJob = viewModelScope.launch {
-            delay(SEARCH_DEBOUNCE_MS) // Esperar antes de buscar automáticamente
+            delay(SEARCH_DEBOUNCE_MS)
             onPerformSearchFromBar()
         }
     }
 
-    fun onPerformSearchFromBar() { // Llamado por el botón de búsqueda o después del debounce
-        searchJob?.cancel() // Cancelar cualquier job de debounce pendiente
+    fun onPerformSearchFromBar() {
+        searchJob?.cancel()
         val currentTerm = _uiState.value.currentSearchTerm
         _uiState.update {
             it.copy(appliedFilters = it.appliedFilters.copy(searchTerm = currentTerm.ifBlank { null }))
@@ -167,7 +164,6 @@ class SearchVehicleScreenViewModel @Inject constructor(
 
         val alreadyActive = newActiveQuickFilterIds.contains(quickFilter.id)
 
-        // Lógica para quitar filtros del mismo tipo si son mutuamente excluyentes
         _uiState.value.quickFilters
             .filter { it.type == quickFilter.type && it.id != quickFilter.id && newActiveQuickFilterIds.contains(it.id) }
             .forEach { newActiveQuickFilterIds.remove(it.id) }
@@ -187,8 +183,6 @@ class SearchVehicleScreenViewModel @Inject constructor(
                 QuickFilterType.MAX_PRICE -> updatedFilters.copy(maxPrice = quickFilter.value as? Double)
                 QuickFilterType.MIN_YEAR -> updatedFilters.copy(minYear = quickFilter.value as? Int)
                 QuickFilterType.LOCATION -> {
-                    // Asumir que el valor del filtro rápido de ubicación se aplica a 'ciudad'
-                    // Podrías tener una lógica más compleja si quieres diferenciar
                     updatedFilters.copy(ciudad = quickFilter.value as? String, comunidadAutonoma = null)
                 }
             }
@@ -201,7 +195,6 @@ class SearchVehicleScreenViewModel @Inject constructor(
 
     private fun performSearch(isNewSearch: Boolean) {
         val currentUserId = _uiState.value.currentUserId
-        // Usar los filtros aplicados, que ya incluyen el searchTerm de la barra si se pulsó buscar
         val filtersToUse = _uiState.value.appliedFilters
 
         Log.d(TAG, "Performing search with filters: $filtersToUse, isNewSearch: $isNewSearch, page: ${if(isNewSearch) 0 else _uiState.value.currentPage +1}")
@@ -213,8 +206,6 @@ class SearchVehicleScreenViewModel @Inject constructor(
                 _uiState.update { it.copy(isLoadingMore = true, searchError = null) }
             }
 
-            // Aquí se podría añadir lógica para paginación si 'searchCarsUseCase' la soporta
-            // (ej. pasando el último documento visible para 'startAfter' o un offset)
             when (val result = carListRepository.searchCars(filters = filtersToUse, limit = RESULTS_PER_PAGE, currentUserId = currentUserId)) {
                 is Result.Success -> {
                     val newCars = result.data
@@ -251,11 +242,9 @@ class SearchVehicleScreenViewModel @Inject constructor(
 
     // --- Lógica para Filtros Avanzados (Marca/Modelo/Año/Ubicación) ---
     fun openAdvancedFiltersDialog() {
-        // Cargar marcas si no están ya cargadas para el diálogo
         if (_uiState.value.brandsForDialog.isEmpty() && !_uiState.value.isLoadingBrandsForDialog) {
             fetchBrandsForDialog()
         }
-        // Inicializar tempAdvancedFilters con los filtros aplicados actualmente
         _uiState.update {
             it.copy(
                 showAdvancedFiltersDialog = true,
@@ -267,7 +256,6 @@ class SearchVehicleScreenViewModel @Inject constructor(
                 advancedFilterLocationInput = it.appliedFilters.ciudad ?: it.appliedFilters.comunidadAutonoma ?: ""
             )
         }
-        // Si hay una marca pre-seleccionada, cargar sus modelos
         _uiState.value.appliedFilters.brand?.let { currentBrand ->
             if (_uiState.value.brandsForDialog.contains(currentBrand) || _uiState.value.brandsForDialog.isEmpty()){ // Si las marcas están cargadas o se van a cargar
                 onBrandSelectedInDialog(currentBrand, preselectModel = _uiState.value.appliedFilters.model)
@@ -307,7 +295,6 @@ class SearchVehicleScreenViewModel @Inject constructor(
                         it.copy(
                             isLoadingModelsForDialog = false,
                             modelsForDialog = result.data,
-                            // Si hay un modelo para preseleccionar y existe en la lista, seleccionarlo
                             selectedModelInDialog = if (preselectModel != null && result.data.contains(preselectModel)) preselectModel else null,
                             tempAdvancedFilters = it.tempAdvancedFilters.copy(model = if (preselectModel != null && result.data.contains(preselectModel)) preselectModel else null)
                         )
@@ -334,8 +321,6 @@ class SearchVehicleScreenViewModel @Inject constructor(
         _uiState.update { it.copy(advancedFilterMaxPriceInput = price, tempAdvancedFilters = it.tempAdvancedFilters.copy(maxPrice = price.toDoubleOrNull())) }
     }
     fun onAdvancedFilterLocationChanged(location: String) {
-        // Asumimos que la entrada de ubicación en el diálogo se aplica a 'ciudad'
-        // Podrías tener dos campos si quieres ser más específico (ciudad, comunidad)
         _uiState.update { it.copy(advancedFilterLocationInput = location, tempAdvancedFilters = it.tempAdvancedFilters.copy(ciudad = location.ifBlank { null }, comunidadAutonoma = null)) }
     }
 
@@ -345,7 +330,6 @@ class SearchVehicleScreenViewModel @Inject constructor(
             it.copy(
                 appliedFilters = tempFilters,
                 showAdvancedFiltersDialog = false,
-                // Sincronizar activeQuickFilterIds con los nuevos filtros avanzados
                 activeQuickFilterIds = syncQuickFiltersWithApplied(tempFilters, it.quickFilters)
             )
         }
@@ -366,7 +350,6 @@ class SearchVehicleScreenViewModel @Inject constructor(
         }
     }
 
-    // Helper para sincronizar QuickFilters después de aplicar filtros avanzados
     private fun syncQuickFiltersWithApplied(applied: CarSearchFilters, quickFiltersList: List<QuickFilter>): Set<String> {
         val newActiveIds = mutableSetOf<String>()
         quickFiltersList.forEach { qf ->
@@ -382,7 +365,6 @@ class SearchVehicleScreenViewModel @Inject constructor(
     }
 
 
-    // --- Lógica de Favoritos (sin cambios significativos, solo actualiza searchResults) ---
     fun toggleFavoriteStatus(carId: String) {
         val currentUserId = _uiState.value.currentUserId
         if (currentUserId == null) {
