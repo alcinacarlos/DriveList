@@ -1,13 +1,15 @@
 package com.carlosalcina.drivelist.data.repository
 
 import com.carlosalcina.drivelist.data.datasource.CarRemoteDataSource
+import com.carlosalcina.drivelist.data.remote.MeiliSearchApi
 import com.carlosalcina.drivelist.domain.model.CarForSale
 import com.carlosalcina.drivelist.domain.repository.CarUploadRepository
 import com.carlosalcina.drivelist.utils.Result
 import javax.inject.Inject
 
 class CarUploadRepositoryImpl @Inject constructor(
-    private val remoteDataSource: CarRemoteDataSource
+    private val remoteDataSource: CarRemoteDataSource,
+    private val meiliSearchApi: MeiliSearchApi
 ) : CarUploadRepository {
 
     override suspend fun getBrands(): Result<List<String>, Exception> {
@@ -50,6 +52,7 @@ class CarUploadRepositoryImpl @Inject constructor(
     }
 
     override suspend fun uploadCar(car: CarForSale): Result<Unit, Exception> {
+        meiliSearchApi.addOrUpdateCars(listOf(car))
         return remoteDataSource.saveCarToFirestore(car)
     }
 }

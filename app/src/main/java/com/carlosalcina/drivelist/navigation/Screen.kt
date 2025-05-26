@@ -54,6 +54,4 @@ sealed class Screen(val route: String, @StringRes val resourceId: Int, val icon:
 
     object Favorites : Screen("favorites_screen", R.string.screen_title_favorites, Icons.Filled.Favorite)
     object ChatList : Screen("chat_list_screen", R.string.screen_title_chat, Icons.AutoMirrored.Filled.Chat)
-
-    // Puedes añadir más pantallas aquí (Login, Profile, etc.)
 }

@@ -24,4 +24,11 @@ interface CarListRepository {
      * @param currentUserId El ID del usuario actual.
      */
     suspend fun searchCars(filters: CarSearchFilters, limit: Int, currentUserId: String?): Result<List<CarForSale>, Exception>
+
+    /**
+     * Obtiene los detalles de un coche específico por su ID.
+     * @param carId El ID del coche a obtener.
+     * @param currentUserId El ID del usuario actual para determinar si el coche es favorito.
+     */
+    suspend fun getCarById(carId: String, currentUserId: String?): Result<CarForSale, Exception>
 }
