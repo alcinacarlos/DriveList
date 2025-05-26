@@ -10,11 +10,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
+import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.carlosalcina.drivelist.navigation.Screen
-import com.carlosalcina.drivelist.utils.Utils
 
 @Composable
 fun AppBottomNavigationBar(
@@ -30,33 +30,43 @@ fun AppBottomNavigationBar(
     )
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
-    val currentRoute = currentDestination?.route
+
+    // Función helper para comparar la ruta actual (potencialmente con args) con una ruta base
+    fun NavDestination.matchesRoute(baseRoute: String): Boolean {
+        // Compara la ruta del destino actual (o sus padres en la jerarquía)
+        // con la ruta base del item de la bottom bar.
+        // El 'route' de un NavDestination puede ser la plantilla con placeholders.
+        return hierarchy.any { it.route?.substringBefore('?') == baseRoute.substringBefore('?') }
+    }
 
     val showBottomBar = bottomNavItems.any { screen ->
-        Utils.matchDestination(currentRoute, screen.route)
-                || navBackStackEntry?.destination?.hierarchy?.any { Utils.matchDestination(it.route, screen.route) } == true
+        currentDestination?.matchesRoute(screen.route) == true
     }
 
     if (showBottomBar) {
         NavigationBar(
             modifier = modifier,
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+            containerColor = MaterialTheme.colorScheme.surfaceContainer, // Color M3 para superficie de contenedores
+            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
         ) {
             bottomNavItems.forEach { screen ->
-                val isSelected = currentDestination?.hierarchy?.any { it.route == screen.route } == true
+                val isSelected = currentDestination?.matchesRoute(screen.route) == true
                 NavigationBarItem(
                     icon = {
-                        Icon(
-                            imageVector = screen.icon!!,
-                            contentDescription = stringResource(id = screen.resourceId)
-                        )
+                        screen.icon?.let { // Comprobar si el icono no es nulo
+                            Icon(
+                                imageVector = it,
+                                contentDescription = stringResource(id = screen.resourceId)
+                            )
+                        }
                     },
                     label = { Text(stringResource(id = screen.resourceId)) },
                     selected = isSelected,
                     onClick = {
+                        // No navegar si ya está seleccionado para evitar recomposiciones innecesarias
+                        // o recarga de la misma pantalla.
                         if (!isSelected) {
-                            navController.navigate(screen.route) {
+                            navController.navigate(screen.route) { // Usa la ruta base del screen
                                 popUpTo(navController.graph.findStartDestination().id) {
                                     saveState = true
                                 }

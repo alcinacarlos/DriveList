@@ -30,7 +30,7 @@ sealed class Screen(val route: String, @StringRes val resourceId: Int, val icon:
             var path = route
             val queryParams = mutableListOf<String>()
             filters?.let {
-                if (it != com.carlosalcina.drivelist.domain.model.CarSearchFilters(searchTerm = null) && it != CarSearchFilters()) {
+                if (it != CarSearchFilters(searchTerm = null) && it != CarSearchFilters()) {
                     try {
                         val filtersJson = gson.toJson(it)
                         queryParams.add("${NavigationArgs.SEARCH_FILTERS_JSON_ARG}=${android.net.Uri.encode(filtersJson)}")

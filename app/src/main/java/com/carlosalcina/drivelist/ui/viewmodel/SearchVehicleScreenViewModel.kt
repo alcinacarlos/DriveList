@@ -118,9 +118,8 @@ class SearchVehicleScreenViewModel @Inject constructor(
             )
         }
         Log.d(TAG, "Filtros iniciales procesados: $initialFilters")
-        if (initialFilters != CarSearchFilters() || !initialFilters.searchTerm.isNullOrBlank()) {
-            performSearch(isNewSearch = true)
-        }
+        performSearch(isNewSearch = true)
+
     }
 
 
