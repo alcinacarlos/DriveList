@@ -46,7 +46,7 @@ fun AppBottomNavigationBar(
     if (showBottomBar) {
         NavigationBar(
             modifier = modifier,
-            containerColor = MaterialTheme.colorScheme.surfaceContainer, // Color M3 para superficie de contenedores
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
             contentColor = MaterialTheme.colorScheme.onSurfaceVariant
         ) {
             bottomNavItems.forEach { screen ->
@@ -63,24 +63,18 @@ fun AppBottomNavigationBar(
                     label = { Text(stringResource(id = screen.resourceId)) },
                     selected = isSelected,
                     onClick = {
-                        // No navegar si ya está seleccionado para evitar recomposiciones innecesarias
-                        // o recarga de la misma pantalla.
                         if (!isSelected) {
-                            navController.navigate(screen.route) { // Usa la ruta base del screen
+                            navController.navigate(screen.route) {
                                 popUpTo(navController.graph.findStartDestination().id) {
                                     saveState = true
                                 }
                                 launchSingleTop = true
-                                restoreState = true
+                                restoreState = false
                             }
                         }
                     },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                        selectedTextColor = MaterialTheme.colorScheme.primary,
-                        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                        indicatorColor = MaterialTheme.colorScheme.inverseSurface
                     )
                 )
             }

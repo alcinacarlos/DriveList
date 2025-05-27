@@ -31,13 +31,12 @@ fun SearchResultsList(
     modifier: Modifier = Modifier
 ) {
     if (cars.isNotEmpty() && canLoadMore && !isLoadingMore) {
-        // Comprobar si el último item visible está cerca del final de la lista
         val layoutInfo = listState.layoutInfo
         val visibleItemsInfo = layoutInfo.visibleItemsInfo
         if (visibleItemsInfo.isNotEmpty()) {
             val lastVisibleItemIndex = visibleItemsInfo.last().index
-            if (lastVisibleItemIndex >= cars.size - 1 - 5) { // Cargar más cuando quedan 5 items o menos
-                LaunchedEffect(lastVisibleItemIndex) { // Usar una clave que cambie
+            if (lastVisibleItemIndex >= cars.size - 1 - 5) {
+                LaunchedEffect(lastVisibleItemIndex) {
                     onLoadMore()
                 }
             }
@@ -51,8 +50,8 @@ fun SearchResultsList(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         items(cars, key = { "car_${it.id}" }) { car ->
-            CarSearchCard( // Reutilizar la tarjeta de coche de HomeScreen
-                car = car, // El ViewModel ya debería haber actualizado isFavoriteByCurrentUser
+            CarSearchCard(
+                car = car,
                 isUserAuthenticated = isUserAuthenticated,
                 isTogglingFavorite = isTogglingFavoriteMap[car.id] ?: false, // Estado de carga para este coche
                 onClick = { onCarClick(car.id) },

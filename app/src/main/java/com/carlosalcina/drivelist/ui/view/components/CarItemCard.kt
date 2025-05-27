@@ -1,6 +1,5 @@
 package com.carlosalcina.drivelist.ui.view.components
 
-// import com.carlosalcina.drivelist.domain.model.CarColor // Your CarColor definition
 import android.annotation.SuppressLint
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -28,7 +27,6 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -45,6 +43,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import coil.imageLoader
 import coil.request.CachePolicy
@@ -57,12 +56,12 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalFoundationApi::class)
 @SuppressLint("DefaultLocale")
 @Composable
-fun CarSearchCard(
+fun CarItemCard(
     car: CarForSale,
     isUserAuthenticated: Boolean,
-    isTogglingFavorite: Boolean,
     onClick: () -> Unit,
-    onToggleFavorite: () -> Unit
+    onToggleFavorite: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -91,7 +90,7 @@ fun CarSearchCard(
             val twoAheadIndex = (currentPage + 2) % car.imageUrls.size
             if (twoAheadIndex != currentPage && twoAheadIndex != nextPageIndex) {
                 preloadCandidates.add(car.imageUrls[twoAheadIndex])
-             }
+            }
 
 
             preloadCandidates.distinct().forEach { imageUrlToPreload ->
@@ -104,21 +103,21 @@ fun CarSearchCard(
             }
         }
     }
+
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = modifier
+            .width(240.dp)
             .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column {
-            // --- IMAGE SLIDER ---
             Box(
                 modifier = Modifier
-                    .height(200.dp)
+                    .height(160.dp)
                     .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.primaryContainer)
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
             ) {
                 if (car.imageUrls.isNotEmpty()) {
                     HorizontalPager(
@@ -130,27 +129,27 @@ fun CarSearchCard(
                                 ImageRequest.Builder(context)
                                     .data(car.imageUrls[page])
                                     .crossfade(true)
-                                    .error(R.drawable.no_photo) // Ensure this drawable exists
-                                    .placeholder(R.drawable.no_photo) // Ensure this drawable exists
+                                    .error(R.drawable.no_photo)
+                                    .placeholder(R.drawable.no_photo)
                                     .build()
                             ),
-                            contentDescription = "Imagen de ${car.brand} ${car.model} (${page + 1} de ${car.imageUrls.size})",
+                            contentDescription = "Imagen de ${car.brand} ${car.model}",
                             contentScale = ContentScale.Crop,
                             modifier = Modifier.fillMaxSize()
                         )
                     }
                 } else {
-                    // Placeholder if no images
                     Image(
                         painter = painterResource(id = R.drawable.no_photo),
-                        contentDescription = "No hay imagen disponible",
+                        contentDescription = "No hay imagen",
                         contentScale = ContentScale.Fit,
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(32.dp)
+                            .padding(16.dp)
                     )
                 }
 
+                // Botones de navegación para el Pager
                 if (car.imageUrls.size > 1) {
                     Row(
                         Modifier
@@ -165,188 +164,159 @@ fun CarSearchCard(
                             enabled = enabledBack,
                             onClick = {
                                 coroutineScope.launch {
-                                    val prevPage = (pagerState.currentPage - 1 + car.imageUrls.size) % car.imageUrls.size
-                                    pagerState.animateScrollToPage(prevPage)
+                                    pagerState.animateScrollToPage((pagerState.currentPage - 1 + car.imageUrls.size) % car.imageUrls.size)
                                 }
-                            },
-                            modifier = Modifier
-                                .background(if (enabledBack) Color.Black.copy(alpha = 0.3f) else Color.Transparent, CircleShape)
+                            }
                         ) {
                             Icon(
-                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                                contentDescription = "Imagen anterior",
-                                tint = if (enabledBack) Color.White else Color.Transparent
+                                Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                                "Anterior",
+                                tint = if (enabledBack) Color.White else Color.Transparent,
+                                modifier = Modifier.size(18.dp)
                             )
                         }
-
                         IconButton(
                             onClick = {
                                 coroutineScope.launch {
-                                    val nextPage = (pagerState.currentPage + 1) % car.imageUrls.size
-                                    pagerState.animateScrollToPage(nextPage)
+                                    pagerState.animateScrollToPage((pagerState.currentPage + 1) % car.imageUrls.size)
                                 }
-                            },
-                            modifier = Modifier
-                                .background(Color.Black.copy(alpha = 0.3f), CircleShape)
+                            }
                         ) {
                             Icon(
-                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                contentDescription = "Siguiente imagen",
-                                tint = Color.White
+                                Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                "Siguiente",
+                                tint = Color.White,
+                                modifier = Modifier.size(18.dp)
                             )
                         }
                     }
-
-                    // Image count indicator
+                    // Indicador de página
                     Box(
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
-                            .padding(bottom = 8.dp)
-                            .background(
-                                Color.Black.copy(alpha = 0.6f),
-                                RoundedCornerShape(8.dp)
-                            )
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                            .padding(bottom = 6.dp)
+                            .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(6.dp))
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
                     ) {
                         Text(
-                            text = "${pagerState.currentPage + 1} / ${car.imageUrls.size}",
-                            color = Color.White,
-                            style = MaterialTheme.typography.labelSmall
+                            "${pagerState.currentPage + 1}/${car.imageUrls.size}",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontSize = 10.sp,
+                                color = Color.White
+                            )
                         )
                     }
                 }
 
 
-                // Favorite Button
+                // Botón de Favorito
                 if (isUserAuthenticated) {
                     Box(
                         modifier = Modifier
                             .align(Alignment.TopEnd)
-                            .padding(8.dp)
+                            .padding(4.dp)
                     ) {
                         IconButton(
                             onClick = onToggleFavorite,
                             modifier = Modifier
+                                .size(32.dp)
                                 .background(
                                     MaterialTheme.colorScheme.surface.copy(alpha = 0.6f),
                                     CircleShape
                                 )
-                                .size(40.dp)
                         ) {
-                            if (isTogglingFavorite) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(24.dp),
-                                    strokeWidth = 2.dp,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            } else {
-                                Icon(
-                                    imageVector = if (car.isFavoriteByCurrentUser) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                                    contentDescription = if (car.isFavoriteByCurrentUser) "Quitar de favoritos" else "Añadir a favoritos",
-                                    tint = if (car.isFavoriteByCurrentUser) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
+
+                            Icon(
+                                imageVector = if (car.isFavoriteByCurrentUser) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                                contentDescription = "Favorito",
+                                tint = if (car.isFavoriteByCurrentUser) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(18.dp)
+                            )
                         }
                     }
                 }
             }
 
-            //CAR DETAILS
+
+            // DETALLES DEL COCHE
             Column(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(3.dp)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Top
                 ) {
                     Text(
                         text = "${car.brand.capitalize()} ${car.model}",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false)
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
-                    Spacer(Modifier.width(8.dp))
+
                     Text(
                         text = "${String.format("%,.0f", car.price).replace(",", ".")} €",
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.ExtraBold),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary,
                         maxLines = 1
                     )
+
                 }
 
                 if (car.version.isNotBlank()) {
                     Text(
                         text = car.version,
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(Modifier.height(2.dp))
 
+                // Info chips: Año, KM, Combustible
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start), // Align chips to the start
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    InfoChip(text = car.year)
-                    InfoChip(text = "${car.mileage} km")
-                    InfoChip(text = car.fuelType, maxLines = 1)
+                    InfoChipSmall(text = car.year)
+                    InfoChipSmall(text = "${car.mileage} km")
+                    InfoChipSmall(text = car.fuelType)
                 }
+                Spacer(Modifier.height(2.dp))
 
-                Spacer(modifier = Modifier.height(8.dp))
-
+                // Ciudad y tiempo de publicación
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     if (!car.ciudad.isNullOrBlank()) {
                         Text(
                             text = car.ciudad,
-                            style = MaterialTheme.typography.bodySmall,
+                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false)
                         )
+                        Spacer(modifier = Modifier.width(4.dp))
                     } else {
-                        Spacer(Modifier.weight(1f)) // Fill space if city is not present, pushing timeAgo to the end
+                        Spacer(Modifier.weight(1f))
                     }
                     Text(
-                        text = timeAgo, // Display time ago
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.outline // Subtle color for less emphasis
+                        text = timeAgo,
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                        color = MaterialTheme.colorScheme.outline
                     )
                 }
             }
-        }
-    }
-}
-
-// Reusable Composable for displaying small pieces of info (Year, Km, Fuel)
-@Composable
-fun InfoChip(text: String, modifier: Modifier = Modifier, maxLines: Int = 1) {
-    if (text.isNotBlank()){
-        Box(
-            modifier = modifier
-                .background(
-                    MaterialTheme.colorScheme.inverseSurface,
-                    RoundedCornerShape(8.dp)
-                )
-                .padding(horizontal = 10.dp, vertical = 5.dp) // Slightly more padding
-        ) {
-            Text(
-                text = text,
-                style = MaterialTheme.typography.labelMedium, // Adjusted style for chips
-                maxLines = maxLines,
-                overflow = if (maxLines == 1) TextOverflow.Ellipsis else TextOverflow.Clip
-            )
         }
     }
 }

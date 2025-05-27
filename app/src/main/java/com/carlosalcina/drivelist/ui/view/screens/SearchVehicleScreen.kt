@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -96,7 +97,7 @@ fun SearchVehicleScreen(
                 onQuickFilterClicked = { viewModel.onApplyQuickFilter(it) }
             )
 
-            if (uiState.isLoading && uiState.searchResults.isEmpty()) { // Loading inicial
+            if (uiState.isLoading && uiState.searchResults.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
@@ -171,9 +172,10 @@ fun SearchBarWithFilterButton(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        shape = RoundedCornerShape(28.dp), // Forma redondeada como las search bars de M3
-        color = MaterialTheme.colorScheme.surfaceVariant, // Un color de fondo sutil
+            .padding(top = 16.dp)
+            .padding(horizontal = 16.dp),
+        shape = RoundedCornerShape(28.dp),
+        color = MaterialTheme.colorScheme.primaryContainer,
         tonalElevation = 2.dp
     ) {
         Row(
@@ -182,14 +184,14 @@ fun SearchBarWithFilterButton(
                 .padding(horizontal = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = onSearchAction) { // Icono de búsqueda al principio
+            IconButton(onClick = onSearchAction) {
                 Icon(
                     Icons.Filled.Search,
                     contentDescription = "Buscar",
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            BasicTextField( // Usar BasicTextField para más control sobre el estilo
+            BasicTextField(
                 value = searchTerm,
                 onValueChange = onSearchTermChange,
                 modifier = Modifier
@@ -250,7 +252,10 @@ fun QuickFiltersRow(
                 selected = activeQuickFilterIds.contains(filter.id),
                 onClick = { onQuickFilterClicked(filter) },
                 label = { Text(filter.displayText) },
-                shape = RoundedCornerShape(16.dp) // Chips más redondeados
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = MaterialTheme.colorScheme.inverseSurface
+                ),
+                shape = RoundedCornerShape(16.dp)
             )
         }
     }

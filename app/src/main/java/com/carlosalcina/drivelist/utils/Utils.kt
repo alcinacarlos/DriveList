@@ -3,6 +3,7 @@ package com.carlosalcina.drivelist.utils
 import android.util.Patterns
 import com.carlosalcina.drivelist.domain.model.AuthError
 import com.carlosalcina.drivelist.domain.model.GoogleSignInError
+import java.util.concurrent.TimeUnit
 
 object Utils {
 
@@ -68,6 +69,23 @@ object Utils {
 
         return currentSegments.zip(screenSegments).all { (curr, expected) ->
             curr == expected
+        }
+    }
+
+    fun formatTimestamp(timestamp: Long): String {
+        val currentTime = System.currentTimeMillis()
+        val diffMillis = currentTime - timestamp
+
+        val diffHours = TimeUnit.MILLISECONDS.toHours(diffMillis)
+        val diffDays = TimeUnit.MILLISECONDS.toDays(diffMillis)
+
+        return when {
+            diffHours < 1 -> {
+                val diffMinutes = TimeUnit.MILLISECONDS.toMinutes(diffMillis)
+                if (diffMinutes < 1) "Ahora" else "$diffMinutes min"
+            }
+            diffHours < 24 -> "$diffHours h"
+            else -> "$diffDays d"
         }
     }
 
