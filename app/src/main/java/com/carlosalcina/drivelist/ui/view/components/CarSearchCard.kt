@@ -113,7 +113,7 @@ fun CarSearchCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
     ) {
         Column {
-            // --- IMAGE SLIDER ---
+            //IMAGE SLIDER
             Box(
                 modifier = Modifier
                     .height(200.dp)
@@ -130,8 +130,8 @@ fun CarSearchCard(
                                 ImageRequest.Builder(context)
                                     .data(car.imageUrls[page])
                                     .crossfade(true)
-                                    .error(R.drawable.no_photo) // Ensure this drawable exists
-                                    .placeholder(R.drawable.no_photo) // Ensure this drawable exists
+                                    .error(R.drawable.no_photo)
+                                    .placeholder(R.drawable.no_photo)
                                     .build()
                             ),
                             contentDescription = "Imagen de ${car.brand} ${car.model} (${page + 1} de ${car.imageUrls.size})",
@@ -316,37 +316,15 @@ fun CarSearchCard(
                             overflow = TextOverflow.Ellipsis
                         )
                     } else {
-                        Spacer(Modifier.weight(1f)) // Fill space if city is not present, pushing timeAgo to the end
+                        Spacer(Modifier.weight(1f))
                     }
                     Text(
                         text = timeAgo, // Display time ago
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.outline // Subtle color for less emphasis
+                        color = MaterialTheme.colorScheme.outline
                     )
                 }
             }
-        }
-    }
-}
-
-// Reusable Composable for displaying small pieces of info (Year, Km, Fuel)
-@Composable
-fun InfoChip(text: String, modifier: Modifier = Modifier, maxLines: Int = 1) {
-    if (text.isNotBlank()){
-        Box(
-            modifier = modifier
-                .background(
-                    MaterialTheme.colorScheme.inverseSurface,
-                    RoundedCornerShape(8.dp)
-                )
-                .padding(horizontal = 10.dp, vertical = 5.dp) // Slightly more padding
-        ) {
-            Text(
-                text = text,
-                style = MaterialTheme.typography.labelMedium, // Adjusted style for chips
-                maxLines = maxLines,
-                overflow = if (maxLines == 1) TextOverflow.Ellipsis else TextOverflow.Clip
-            )
         }
     }
 }

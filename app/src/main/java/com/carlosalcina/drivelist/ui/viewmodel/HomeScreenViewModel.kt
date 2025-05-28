@@ -77,6 +77,13 @@ class HomeScreenViewModel @Inject constructor(
         }
     }
 
+    fun onRefreshTriggered() {
+        fetchLatestCars()
+        firebaseAuth.currentUser?.uid?.let { userId ->
+            fetchUserFavorites(userId)
+        }
+    }
+
     private fun fetchUserFavorites(userId: String) {
         viewModelScope.launch {
             when (val result = userFavoriteRepository.getUserFavoriteCarIds(userId)) {

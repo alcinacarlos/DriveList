@@ -14,6 +14,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -72,70 +73,81 @@ fun HomeScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(scrollState)
-                .background(MaterialTheme.colorScheme.background)
+        PullToRefreshBox(
+            isRefreshing = uiState.isLoadingLatestCars,
+            onRefresh = { viewModel.onRefreshTriggered() },
+            modifier = Modifier.fillMaxSize()
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
-            SearchFilterCard(
-                filters = uiState.filters,
-                fuelTypeOptions = viewModel.fuelTypesForFilter,
-                onBrandModelClick = { viewModel.openBrandModelDialog() },
-                onMaxPriceChange = { viewModel.onMaxPriceChanged(it) },
-                onFuelTypeSelect = { viewModel.onFuelTypeSelected(it) },
-                onSearchClick = {
-                    val currentFiltersFromHome = viewModel.uiState.value.filters
-                    val route = Screen.SearchVehicle.createRoute(filters = currentFiltersFromHome)
-                    navController.navigate(route)
-                },
-                onClearBrandModel = { viewModel.clearBrandModelFilter() }
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .background(MaterialTheme.colorScheme.background)
+            ) {
+                Spacer(modifier = Modifier.height(16.dp))
+                SearchFilterCard(
+                    filters = uiState.filters,
+                    fuelTypeOptions = viewModel.fuelTypesForFilter,
+                    onBrandModelClick = { viewModel.openBrandModelDialog() },
+                    onMaxPriceChange = { viewModel.onMaxPriceChanged(it) },
+                    onFuelTypeSelect = { viewModel.onFuelTypeSelected(it) },
+                    onSearchClick = {
+                        val currentFiltersFromHome = viewModel.uiState.value.filters
+                        val route =
+                            Screen.SearchVehicle.createRoute(filters = currentFiltersFromHome)
+                        navController.navigate(route)
+                    },
+                    onClearBrandModel = { viewModel.clearBrandModelFilter() }
+                )
 
-            // Mostrar resultados de búsqueda si existen, sino los últimos coches
-            val carsToShow = if (uiState.searchedCars.isNotEmpty() || uiState.noSearchResults) {
-                uiState.searchedCars
-            } else {
-                uiState.latestCars
-            }
-            val isLoading = if (uiState.searchedCars.isNotEmpty() || uiState.noSearchResults) {
-                uiState.isLoadingSearchedCars
-            } else {
-                uiState.isLoadingLatestCars
-            }
-            val errorToShow = if (uiState.searchedCars.isNotEmpty() || uiState.noSearchResults) {
-                uiState.searchError
-            } else {
-                uiState.carLoadError
-            }
-            val sectionTitle = if (uiState.searchedCars.isNotEmpty() || uiState.noSearchResults) {
-                if (uiState.noSearchResults) "No se encontraron resultados" else "Resultados de Búsqueda"
-            } else {
-                "Últimos Coches Publicados"
-            }
+                // Mostrar resultados de búsqueda si existen, sino los últimos coches
+                val carsToShow = if (uiState.searchedCars.isNotEmpty() || uiState.noSearchResults) {
+                    uiState.searchedCars
+                } else {
+                    uiState.latestCars
+                }
+                val isLoading = if (uiState.searchedCars.isNotEmpty() || uiState.noSearchResults) {
+                    uiState.isLoadingSearchedCars
+                } else {
+                    uiState.isLoadingLatestCars
+                }
+                val errorToShow =
+                    if (uiState.searchedCars.isNotEmpty() || uiState.noSearchResults) {
+                        uiState.searchError
+                    } else {
+                        uiState.carLoadError
+                    }
+                val sectionTitle =
+                    if (uiState.searchedCars.isNotEmpty() || uiState.noSearchResults) {
+                        if (uiState.noSearchResults) "No se encontraron resultados" else "Resultados de Búsqueda"
+                    } else {
+                        "Últimos Coches Publicados"
+                    }
 
 
-            LatestCarsSection(
-                title = sectionTitle,
-                isLoading = isLoading,
-                cars = carsToShow,
-                error = errorToShow,
-                favoriteCarIds = uiState.favoriteCarIds,
-                isUserAuthenticated = uiState.isUserAuthenticated,
-                onCarClick = { carId ->
-                    navController.navigate(Screen.CarDetail.createRoute(carId))
-                },
-                onToggleFavorite = { carId ->
-                    viewModel.toggleFavoriteStatus(carId)
-                },
-                onSeeMoreClick = {
-                    val route = Screen.SearchVehicle.createRoute(searchTerm = "coches_recientes")
-                    navController.navigate(route)
-                },
-                showSeeMoreButton = !(uiState.searchedCars.isNotEmpty() || uiState.noSearchResults) // Solo para "últimos coches"
-            )
+                LatestCarsSection(
+                    title = sectionTitle,
+                    isLoading = isLoading,
+                    cars = carsToShow,
+                    error = errorToShow,
+                    favoriteCarIds = uiState.favoriteCarIds,
+                    isUserAuthenticated = uiState.isUserAuthenticated,
+                    onCarClick = { carId ->
+                        navController.navigate(Screen.CarDetail.createRoute(carId))
+                    },
+                    onToggleFavorite = { carId ->
+                        viewModel.toggleFavoriteStatus(carId)
+                    },
+                    onSeeMoreClick = {
+                        val route =
+                            Screen.SearchVehicle.createRoute(searchTerm = "coches_recientes")
+                        navController.navigate(route)
+                    },
+                    showSeeMoreButton = !(uiState.searchedCars.isNotEmpty() || uiState.noSearchResults) // Solo para "últimos coches"
+                )
+            }
         }
+
 
         if (uiState.showBrandModelDialog) {
             BrandModelFilterDialog(

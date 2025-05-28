@@ -73,8 +73,8 @@ import com.carlosalcina.drivelist.R
 import com.carlosalcina.drivelist.domain.model.CarColor
 import com.carlosalcina.drivelist.domain.model.CarForSale
 import com.carlosalcina.drivelist.ui.states.CarDataState
-import com.carlosalcina.drivelist.ui.viewmodel.CarDetailViewModel
 import com.carlosalcina.drivelist.ui.states.SellerUiState
+import com.carlosalcina.drivelist.ui.viewmodel.CarDetailViewModel
 import com.google.firebase.Timestamp
 import kotlinx.coroutines.launch
 import java.text.NumberFormat
@@ -111,7 +111,6 @@ fun formatAdPublicationDate(timestamp: Long): String {
 @Composable
 fun CarDetailScreen(
     viewModel: CarDetailViewModel = hiltViewModel(),
-    onNavigateBack: () -> Unit,
     onContactSeller: (sellerId: String, carId: String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -157,7 +156,9 @@ private fun HandleCarDataState(
             }
             is CarDataState.Error -> {
                 Column(
-                    modifier = Modifier.fillMaxSize().padding(16.dp),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -225,7 +226,9 @@ private fun CarDetailContent(
         // 1. Image Carousel
         item {
             Box(
-                modifier = Modifier.fillMaxWidth().height(300.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(300.dp)
                     .background(MaterialTheme.colorScheme.surfaceVariant)
             ) {
                 if (car.imageUrls.isNotEmpty()) {
@@ -247,7 +250,9 @@ private fun CarDetailContent(
                         )
                     }
                 } else {
-                    Image(painterResource(R.drawable.no_photo), "No hay imagen", Modifier.fillMaxSize().padding(32.dp), contentScale = ContentScale.Fit)
+                    Image(painterResource(R.drawable.no_photo), "No hay imagen", Modifier
+                        .fillMaxSize()
+                        .padding(32.dp), contentScale = ContentScale.Fit)
                 }
             }
         }
@@ -264,45 +269,53 @@ private fun CarDetailContent(
         // 5. Seller Info
         item { SellerInfoSectionDetail(sellerUiState) }
 
-        item { Spacer(Modifier.height(110.dp)) } // Final spacer
+        item { Spacer(Modifier.height(110.dp)) }
     }
 }
 
 @Composable
 private fun PagerControls(currentPage: Int, pageCount: Int, onNext: () -> Unit, onPrevious: () -> Unit) {
     Row(
-        Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // This Row should be placed inside the Box as an independent child for Alignment.Center to work
     }
-    // For simplicity, placing page indicator at bottom, nav buttons might need overlay
-    Box(modifier = Modifier.fillMaxSize()) { //This Box is redundant as the parent is already a Box
+    Box(modifier = Modifier.fillMaxSize()) {
         if (pageCount > 1) {
             Row(
-                Modifier.align(Alignment.BottomCenter).padding(16.dp)
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(16.dp)
                     .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
                     .padding(horizontal = 8.dp, vertical = 4.dp)
             ) {
                 (0 until pageCount).forEach { index ->
                     Box(
-                        modifier = Modifier.padding(4.dp).size(8.dp).clip(CircleShape)
+                        modifier = Modifier
+                            .padding(4.dp)
+                            .size(8.dp)
+                            .clip(CircleShape)
                             .background(if (currentPage == index) MaterialTheme.colorScheme.primary else Color.LightGray)
                     )
                 }
             }
-            // Simple arrow buttons if needed, can be overlaid
             IconButton(
                 onClick = onPrevious,
-                modifier = Modifier.align(Alignment.CenterStart).padding(8.dp)
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .padding(8.dp)
                     .background(Color.Black.copy(alpha = 0.3f), CircleShape),
                 enabled = currentPage > 0
             ) { Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, "Anterior", tint = Color.White) }
 
             IconButton(
                 onClick = onNext,
-                modifier = Modifier.align(Alignment.CenterEnd).padding(8.dp)
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(8.dp)
                     .background(Color.Black.copy(alpha = 0.3f), CircleShape),
                 enabled = currentPage < pageCount - 1
             ) { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, "Siguiente", tint = Color.White) }
@@ -330,7 +343,7 @@ data class AttributeItemUIData(val icon: ImageVector, val label: String, val val
 @Composable
 private fun CarAttributesSectionDetail(car: CarForSale) {
     val attributes = listOfNotNull(
-        AttributeItemUIData(Icons.Filled.Speed, "Kilometraje", NumberFormat.getNumberInstance(Locale.GERMAN).format(car.mileage) + " km"),
+        AttributeItemUIData(Icons.Filled.Speed, "Kilometraje", "${car.mileage} km"),
         car.fuelType.takeIf { it.isNotBlank() }?.let { AttributeItemUIData(Icons.Filled.LocalGasStation, "Combustible", it) },
         car.year.takeIf { it.isNotBlank() }?.let { AttributeItemUIData(Icons.Filled.CalendarToday, "Año", it) },
         car.bodyType.takeIf { it.isNotBlank() }?.let { AttributeItemUIData(Icons.Filled.DirectionsCar, "Carrocería", it) },
@@ -348,7 +361,7 @@ private fun CarAttributesSectionDetail(car: CarForSale) {
                     rowAttrs.forEach { attr ->
                         AttributeCardDetail(attr.icon, attr.label, attr.value!!, Modifier.weight(1f))
                     }
-                    if (rowAttrs.size == 1) Spacer(Modifier.weight(1f)) // Fill space if odd number
+                    if (rowAttrs.size == 1) Spacer(Modifier.weight(1f))
                 }
                 Spacer(Modifier.height(12.dp))
             }
@@ -364,7 +377,9 @@ private fun AttributeCardDetail(icon: ImageVector, label: String, value: String,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp)),
         elevation = CardDefaults.cardElevation(1.dp)
     ) {
-        Column(Modifier.padding(16.dp).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(Modifier
+            .padding(16.dp)
+            .fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(icon, label, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(32.dp))
             Spacer(Modifier.height(8.dp))
             Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
@@ -395,12 +410,16 @@ private fun SellerInfoSectionDetail(sellerUiState: SellerUiState) {
         ) {
             when (sellerUiState) {
                 is SellerUiState.Loading -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally).padding(32.dp))
+                    CircularProgressIndicator(modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .padding(32.dp))
                 }
                 is SellerUiState.Error -> {
                     Text(
                         sellerUiState.message,
-                        modifier = Modifier.padding(16.dp).align(Alignment.CenterHorizontally),
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .align(Alignment.CenterHorizontally),
                         color = MaterialTheme.colorScheme.error,
                         textAlign = TextAlign.Center
                     )
@@ -411,12 +430,14 @@ private fun SellerInfoSectionDetail(sellerUiState: SellerUiState) {
                         AsyncImage(
                             model = ImageRequest.Builder(LocalContext.current)
                                 .data(seller.photoURL)
-                                .error(R.drawable.no_photo) // Default avatar placeholder
+                                .error(R.drawable.no_photo)
                                 .placeholder(R.drawable.no_photo)
                                 .transformations(CircleCropTransformation())
                                 .build(),
                             contentDescription = "Avatar del vendedor",
-                            modifier = Modifier.size(64.dp).clip(CircleShape)
+                            modifier = Modifier
+                                .size(64.dp)
+                                .clip(CircleShape)
                                 .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
                         )
                         Spacer(Modifier.width(16.dp))

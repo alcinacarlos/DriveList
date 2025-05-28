@@ -89,7 +89,7 @@ fun FavoritesScreen(
                     onToggleFavorite = { carId ->
                         viewModel.toggleFavoriteStatus(carId)
                     },
-                    onLoadMore = { /* No-op */ },
+                    onLoadMore = {  },
                     modifier = Modifier.fillMaxSize()
                 )
             }

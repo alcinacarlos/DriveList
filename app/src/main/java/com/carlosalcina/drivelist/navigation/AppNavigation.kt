@@ -116,9 +116,8 @@ fun AppNavigation(
             arguments = listOf(navArgument(NavigationArgs.CAR_ID_ARG) { type = NavType.StringType })
         ) { backStackEntry ->
             CarDetailScreen(
-                onNavigateBack = { navController.popBackStack() },
                 onContactSeller = { sellerId, carId ->
-                    navController.navigate("chat_detail_screen/$sellerId/$carId") // Define esta ruta
+                    navController.navigate(Screen.ChatDetail.createRoute(sellerId, carId))
                 }
             )
         }
