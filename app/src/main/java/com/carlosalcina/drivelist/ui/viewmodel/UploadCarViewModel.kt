@@ -450,13 +450,9 @@ class UploadCarViewModel @Inject constructor(
                 _uiState.update { it.copy(generalErrorMessage = "Por favor, proporciona una ubicación para el vehículo.") }
                 return
             }
-            // Si el usuario escribió algo y no ha pulsado buscar, no podemos asumir que es válido aún.
-            // Quizás es mejor confiar en que 'finalCiudad' o 'finalComunidadAutonoma' tengan valor.
         }
 
-        // Fin validaciones básicas
 
-        // Iniciar subida
         _uiState.update {
             it.copy(
                 isUploadingImages = true,
@@ -474,13 +470,13 @@ class UploadCarViewModel @Inject constructor(
                 val uploadJobs = state.selectedImageUris.mapIndexed { index, uri ->
                     async {
                         val imageName =
-                            "image_${index}_${System.currentTimeMillis()}.jpg" // Nombre de archivo único
+                            "image_${index}_${System.currentTimeMillis()}.jpg"
                         val storagePath = "car_images/$carId/$imageName"
                         imageStorageDataSource.uploadImage(uri, storagePath)
                     }
                 }
 
-                val results = uploadJobs.awaitAll() // Espera a que todas las subidas terminen
+                val results = uploadJobs.awaitAll()
 
                 var uploadFailed = false
                 results.forEach { result ->
@@ -488,7 +484,6 @@ class UploadCarViewModel @Inject constructor(
                         is Result.Success -> uploadedImageUrls.add(result.data)
                         is Result.Error -> {
                             uploadFailed = true
-                            // Puedes acumular errores si quieres mostrarlos todos
                         }
                     }
                 }

@@ -25,7 +25,8 @@ fun TopBar(
         Screen.SearchVehicle,
         Screen.UploadCar,
         Screen.Favorites,
-        Screen.ChatList
+        Screen.ChatList,
+        Screen.CarDetail
     )
     // Solo mostrar la barra si estamos en una de las pantallas principales de la bottom nav
     val navBackStackEntry by navController.currentBackStackEntryAsState()

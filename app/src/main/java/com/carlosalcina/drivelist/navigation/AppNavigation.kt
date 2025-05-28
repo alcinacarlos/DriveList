@@ -1,6 +1,10 @@
 package com.carlosalcina.drivelist.navigation
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
@@ -8,6 +12,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.carlosalcina.drivelist.ui.view.screens.CarDetailScreen
 import com.carlosalcina.drivelist.ui.view.screens.HomeScreen
 import com.carlosalcina.drivelist.ui.view.screens.LoginScreen
 import com.carlosalcina.drivelist.ui.view.screens.ProfileScreen
@@ -19,12 +24,20 @@ import com.carlosalcina.drivelist.utils.FirebaseUtils
 
 
 @Composable
-fun AppNavigation(navController: NavHostController, modifier: Modifier = Modifier, onLanguageChange: (String) -> Unit) {
+fun AppNavigation(
+    navController: NavHostController,
+    modifier: Modifier = Modifier,
+    onLanguageChange: (String) -> Unit
+) {
     val firebaseAuth = FirebaseUtils.getInstance()
     val currentUser = firebaseAuth.currentUser
     val startDestination = if (currentUser != null) Screen.Home.route else Screen.Login.route
 
-    NavHost(navController = navController, startDestination = startDestination, modifier = modifier) {
+    NavHost(
+        navController = navController,
+        startDestination = startDestination,
+        modifier = modifier
+    ) {
 
         composable(Screen.Welcome.route) {
             // WelcomeScreen(navController)
@@ -80,43 +93,48 @@ fun AppNavigation(navController: NavHostController, modifier: Modifier = Modifie
         }
 
         composable(
-            route = Screen.SearchVehicle.routeWithArgsTemplate(), // Usar la plantilla con placeholders
+            route = Screen.SearchVehicle.routeWithArgsTemplate(),
             arguments = listOf(
                 navArgument(NavigationArgs.SEARCH_FILTERS_JSON_ARG) {
                     type = NavType.StringType
-                    nullable = true // Puede que no se pasen filtros
+                    nullable = true
                     defaultValue = null
                 },
                 navArgument(NavigationArgs.INITIAL_SEARCH_TERM_ARG) {
                     type = NavType.StringType
-                    nullable = true // Puede que no haya término de búsqueda inicial
+                    nullable = true
                     defaultValue = null
                 }
             )
-        ) { /* backStackEntry ->
-            // El SearchVehicleScreenViewModel ya obtiene los argumentos vía SavedStateHandle
-            // No necesitas pasar backStackEntry.arguments aquí si usas SavedStateHandle en el ViewModel
-            */
-            SearchVehicleScreen(
-                //navController = navController // Pasa si SearchVehicleScreen necesita navegar
-            )
+        ) {
+            SearchVehicleScreen()
         }
 
         composable(
             route = Screen.CarDetail.route,
             arguments = listOf(navArgument(NavigationArgs.CAR_ID_ARG) { type = NavType.StringType })
         ) { backStackEntry ->
-            val carId = backStackEntry.arguments?.getString(NavigationArgs.CAR_ID_ARG)
-            if (carId != null) {
-                // CarDetailScreen(navController = navController, carId = carId)
-                // Por ahora, un placeholder:
-                // Text("Pantalla de Detalles del Coche para ID: $carId")
-            } else {
-                // Manejar el caso de carId nulo (no debería pasar si la ruta está bien definida)
-                // Text("Error: ID de coche no encontrado")
-            }
+            CarDetailScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onContactSeller = { sellerId, carId ->
+                    navController.navigate("chat_detail_screen/$sellerId/$carId") // Define esta ruta
+                }
+            )
         }
 
-        // Añade aquí tus otras pantallas (Login, Register, etc.)
+        composable(
+            route = "chat_detail_screen/{sellerId}/{carId}",
+            arguments = listOf(
+                navArgument("sellerId") { type = NavType.StringType },
+                navArgument("carId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val sellerId = backStackEntry.arguments?.getString("sellerId")
+            val carIdArg = backStackEntry.arguments?.getString("carId")
+            // ChatDetailScreen(sellerId = sellerId, carId = carIdArg, onNavigateBack = { navController.popBackStack() })
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("Pantalla de Chat (Pendiente)\nSeller: $sellerId\nCar: $carIdArg")
+            }
+        }
     }
 }

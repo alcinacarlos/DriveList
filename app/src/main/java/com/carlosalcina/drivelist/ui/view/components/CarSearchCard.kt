@@ -262,7 +262,7 @@ fun CarSearchCard(
                     verticalAlignment = Alignment.Top
                 ) {
                     Text(
-                        text = "${car.brand.capitalize()} ${car.model}",
+                        text = "${car.brand} ${car.model}",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         maxLines = 2,

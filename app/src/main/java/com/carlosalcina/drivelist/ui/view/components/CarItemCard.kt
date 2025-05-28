@@ -248,7 +248,7 @@ fun CarItemCard(
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Text(
-                        text = "${car.brand.capitalize()} ${car.model}",
+                        text = "${car.brand} ${car.model}",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold,
                         maxLines = 1,

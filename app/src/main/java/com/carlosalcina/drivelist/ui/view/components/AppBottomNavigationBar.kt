@@ -31,11 +31,8 @@ fun AppBottomNavigationBar(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
-    // Función helper para comparar la ruta actual (potencialmente con args) con una ruta base
+    // Comparar la ruta actual con una ruta base
     fun NavDestination.matchesRoute(baseRoute: String): Boolean {
-        // Compara la ruta del destino actual (o sus padres en la jerarquía)
-        // con la ruta base del item de la bottom bar.
-        // El 'route' de un NavDestination puede ser la plantilla con placeholders.
         return hierarchy.any { it.route?.substringBefore('?') == baseRoute.substringBefore('?') }
     }
 
@@ -53,7 +50,7 @@ fun AppBottomNavigationBar(
                 val isSelected = currentDestination?.matchesRoute(screen.route) == true
                 NavigationBarItem(
                     icon = {
-                        screen.icon?.let { // Comprobar si el icono no es nulo
+                        screen.icon?.let {
                             Icon(
                                 imageVector = it,
                                 contentDescription = stringResource(id = screen.resourceId)

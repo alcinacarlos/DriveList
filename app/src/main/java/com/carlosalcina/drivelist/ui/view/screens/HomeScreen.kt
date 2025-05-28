@@ -1,7 +1,6 @@
 package com.carlosalcina.drivelist.ui.view.screens
 
 import android.annotation.SuppressLint
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -169,8 +168,7 @@ fun HomeScreen(
                 favoriteCarIds = uiState.favoriteCarIds,
                 isUserAuthenticated = uiState.isUserAuthenticated,
                 onCarClick = { carId ->
-                    Log.d("HomeScreen", "Coche clickeado: $carId")
-                    // navController.navigate("carDetail/$carId")
+                    navController.navigate("car_detail_screen/$carId")
                 },
                 onToggleFavorite = { carId ->
                     viewModel.toggleFavoriteStatus(carId)

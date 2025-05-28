@@ -48,10 +48,13 @@ sealed class Screen(val route: String, @StringRes val resourceId: Int, val icon:
             return path
         }
     }
-    object CarDetail : Screen("car_detail_screen/{${NavigationArgs.CAR_ID_ARG}}", R.string.screen_title_car_detail, Icons.Filled.Home) {
+    object CarDetail : Screen("car_detail_screen/{${NavigationArgs.CAR_ID_ARG}}", R.string.screen_title_car_detail) { // Icono opcional
         fun createRoute(carId: String): String = "car_detail_screen/$carId"
     }
 
+    object ChatDetail : Screen("chat_detail_screen/{sellerId}/{carId}", R.string.screen_title_chat_detail) { // Necesitarás R.string.screen_title_chat_detail
+        fun createRoute(sellerId: String, carId: String): String = "chat_detail_screen/$sellerId/$carId"
+    }
     object Favorites : Screen("favorites_screen", R.string.screen_title_favorites, Icons.Filled.Favorite)
     object ChatList : Screen("chat_list_screen", R.string.screen_title_chat, Icons.AutoMirrored.Filled.Chat)
 }

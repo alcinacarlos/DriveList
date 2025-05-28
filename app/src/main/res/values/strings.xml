@@ -33,4 +33,5 @@
     <string name="screen_title_favorites">Favoritos</string>
     <string name="screen_title_chat">Chat</string>
     <string name="screen_title_car_detail">Detalles del Coche</string>
+    <string name="screen_title_chat_detail">Conversaciones</string>
 </resources>
