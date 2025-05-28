@@ -168,7 +168,7 @@ fun HomeScreen(
                 favoriteCarIds = uiState.favoriteCarIds,
                 isUserAuthenticated = uiState.isUserAuthenticated,
                 onCarClick = { carId ->
-                    navController.navigate("car_detail_screen/$carId")
+                    navController.navigate(Screen.CarDetail.createRoute(carId))
                 },
                 onToggleFavorite = { carId ->
                     viewModel.toggleFavoriteStatus(carId)

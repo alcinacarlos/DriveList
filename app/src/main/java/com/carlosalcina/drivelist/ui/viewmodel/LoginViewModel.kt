@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.carlosalcina.drivelist.domain.repository.AuthRepository
 import com.carlosalcina.drivelist.domain.repository.GoogleSignInHandler
-import com.carlosalcina.drivelist.ui.view.states.LoginUiState
+import com.carlosalcina.drivelist.ui.states.LoginUiState
 import com.carlosalcina.drivelist.utils.Result
 import com.carlosalcina.drivelist.utils.Utils
 import kotlinx.coroutines.flow.MutableStateFlow

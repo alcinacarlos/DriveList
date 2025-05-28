@@ -1,4 +1,4 @@
-package com.carlosalcina.drivelist.ui.view.states
+package com.carlosalcina.drivelist.ui.states
 
 import android.net.Uri
 import com.carlosalcina.drivelist.domain.model.CarColor

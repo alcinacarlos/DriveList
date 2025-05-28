@@ -49,7 +49,9 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import com.carlosalcina.drivelist.domain.model.QuickFilter
+import com.carlosalcina.drivelist.navigation.Screen
 import com.carlosalcina.drivelist.ui.view.components.AdvancedFiltersDialog
 import com.carlosalcina.drivelist.ui.view.components.SearchResultsList
 import com.carlosalcina.drivelist.ui.viewmodel.SearchVehicleScreenViewModel
@@ -58,7 +60,8 @@ import com.carlosalcina.drivelist.ui.viewmodel.SearchVehicleScreenViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchVehicleScreen(
-    viewModel: SearchVehicleScreenViewModel = hiltViewModel()
+    viewModel: SearchVehicleScreenViewModel = hiltViewModel(),
+    navController: NavController
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -119,7 +122,7 @@ fun SearchVehicleScreen(
                     isTogglingFavoriteMap = uiState.isTogglingFavorite,
                     onCarClick = { carId ->
                         Log.d("SearchScreen", "Coche clickeado: $carId")
-                        // navController.navigate("carDetail/$carId")
+                        navController.navigate(Screen.CarDetail.createRoute(carId))
                     },
                     onToggleFavorite = { carId ->
                         viewModel.toggleFavoriteStatus(carId)

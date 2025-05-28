@@ -107,7 +107,7 @@ fun AppNavigation(
                 }
             )
         ) {
-            SearchVehicleScreen()
+            SearchVehicleScreen(navController= navController)
         }
 
         composable(

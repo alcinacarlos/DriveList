@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.carlosalcina.drivelist.BuildConfig
 import com.carlosalcina.drivelist.domain.repository.AuthRepository
 import com.carlosalcina.drivelist.domain.repository.GoogleSignInHandler
-import com.carlosalcina.drivelist.ui.view.states.RegisterUiState
+import com.carlosalcina.drivelist.ui.states.RegisterUiState
 import com.carlosalcina.drivelist.utils.Result
 import com.carlosalcina.drivelist.utils.Utils
 import dagger.hilt.android.lifecycle.HiltViewModel

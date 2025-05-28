@@ -1,4 +1,4 @@
-package com.carlosalcina.drivelist.ui.view.states
+package com.carlosalcina.drivelist.ui.states
 
 import com.carlosalcina.drivelist.domain.model.CarForSale
 import com.carlosalcina.drivelist.domain.model.CarSearchFilters

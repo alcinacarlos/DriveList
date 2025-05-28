@@ -1,4 +1,4 @@
-package com.carlosalcina.drivelist.ui.view.states
+package com.carlosalcina.drivelist.ui.states
 
 data class RegisterUiState(
     val email: String = "",

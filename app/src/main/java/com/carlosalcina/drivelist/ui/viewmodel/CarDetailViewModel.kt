@@ -3,11 +3,12 @@ package com.carlosalcina.drivelist.ui.viewmodel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.carlosalcina.drivelist.domain.model.CarForSale
 import com.carlosalcina.drivelist.domain.model.FirestoreError
-import com.carlosalcina.drivelist.domain.model.UserData
 import com.carlosalcina.drivelist.domain.repository.AuthRepository
 import com.carlosalcina.drivelist.domain.repository.CarListRepository
+import com.carlosalcina.drivelist.ui.states.CarDataState
+import com.carlosalcina.drivelist.ui.states.CarDetailUiState
+import com.carlosalcina.drivelist.ui.states.SellerUiState
 import com.carlosalcina.drivelist.utils.Result
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -19,24 +20,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-
-data class CarDetailUiState(
-    val carDataState: CarDataState = CarDataState.Loading,
-    val sellerUiState: SellerUiState = SellerUiState.Loading,
-    val imagePagerIndex: Int = 0
-)
-
-sealed class CarDataState {
-    object Loading : CarDataState()
-    data class Success(val car: CarForSale) : CarDataState()
-    data class Error(val message: String) : CarDataState()
-}
-
-sealed class SellerUiState {
-    object Loading : SellerUiState()
-    data class Success(val userData: UserData) : SellerUiState()
-    data class Error(val message: String) : SellerUiState()
-}
 
 @HiltViewModel
 class CarDetailViewModel @Inject constructor(

@@ -31,7 +31,7 @@ fun AppBottomNavigationBar(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
-    // Comparar la ruta actual con una ruta base
+    // Función para comparar la ruta actual con una ruta base
     fun NavDestination.matchesRoute(baseRoute: String): Boolean {
         return hierarchy.any { it.route?.substringBefore('?') == baseRoute.substringBefore('?') }
     }

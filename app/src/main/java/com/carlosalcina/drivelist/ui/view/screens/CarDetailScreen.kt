@@ -72,9 +72,9 @@ import coil.transform.CircleCropTransformation
 import com.carlosalcina.drivelist.R
 import com.carlosalcina.drivelist.domain.model.CarColor
 import com.carlosalcina.drivelist.domain.model.CarForSale
-import com.carlosalcina.drivelist.ui.viewmodel.CarDataState
+import com.carlosalcina.drivelist.ui.states.CarDataState
 import com.carlosalcina.drivelist.ui.viewmodel.CarDetailViewModel
-import com.carlosalcina.drivelist.ui.viewmodel.SellerUiState
+import com.carlosalcina.drivelist.ui.states.SellerUiState
 import com.google.firebase.Timestamp
 import kotlinx.coroutines.launch
 import java.text.NumberFormat

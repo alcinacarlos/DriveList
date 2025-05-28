@@ -9,7 +9,7 @@ import com.carlosalcina.drivelist.domain.model.CarColor
 import com.carlosalcina.drivelist.domain.model.CarForSale
 import com.carlosalcina.drivelist.domain.repository.CarUploadRepository
 import com.carlosalcina.drivelist.domain.repository.LocationRepository
-import com.carlosalcina.drivelist.ui.view.states.UploadCarScreenState
+import com.carlosalcina.drivelist.ui.states.UploadCarScreenState
 import com.carlosalcina.drivelist.utils.KeywordGenerator
 import com.carlosalcina.drivelist.utils.NetworkUtils
 import com.carlosalcina.drivelist.utils.Result
