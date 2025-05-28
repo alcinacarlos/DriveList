@@ -13,6 +13,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.carlosalcina.drivelist.ui.view.screens.CarDetailScreen
+import com.carlosalcina.drivelist.ui.view.screens.FavoritesScreen
 import com.carlosalcina.drivelist.ui.view.screens.HomeScreen
 import com.carlosalcina.drivelist.ui.view.screens.LoginScreen
 import com.carlosalcina.drivelist.ui.view.screens.ProfileScreen
@@ -135,6 +136,10 @@ fun AppNavigation(
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("Pantalla de Chat (Pendiente)\nSeller: $sellerId\nCar: $carIdArg")
             }
+        }
+
+        composable(Screen.Favorites.route) {
+            FavoritesScreen(navController)
         }
     }
 }

@@ -2,87 +2,43 @@ package com.carlosalcina.drivelist.ui.view.screens
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.FilterList
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.carlosalcina.drivelist.domain.model.CarForSale
-import com.carlosalcina.drivelist.domain.model.CarSearchFilters
 import com.carlosalcina.drivelist.navigation.Screen
-import com.carlosalcina.drivelist.ui.view.components.CarItemCard
+import com.carlosalcina.drivelist.ui.view.components.BrandModelFilterDialog
+import com.carlosalcina.drivelist.ui.view.components.LatestCarsSection
+import com.carlosalcina.drivelist.ui.view.components.SearchFilterCard
 import com.carlosalcina.drivelist.ui.viewmodel.HomeScreenViewModel
 
-// --- PANTALLA PRINCIPAL ---
+//PANTALLA PRINCIPAL
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    // navController: NavController, // Para navegar a "Ver Más" o detalles del coche
     viewModel: HomeScreenViewModel = hiltViewModel(),
     navController: NavController
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val scrollState = rememberScrollState() // Para el scroll vertical principal
+    val scrollState = rememberScrollState()
     val snackbarHostState = remember { SnackbarHostState() }
 
     // Efecto para mostrar errores de favoritos
@@ -92,7 +48,7 @@ fun HomeScreen(
                 message = it,
                 duration = SnackbarDuration.Short
             )
-            viewModel.clearFavoriteToggleError() // Limpiar el error después de mostrarlo
+            viewModel.clearFavoriteToggleError()
         }
     }
     LaunchedEffect(uiState.carLoadError) {
@@ -194,381 +150,6 @@ fun HomeScreen(
                 onModelSelected = { viewModel.onModelSelectedInDialog(it) },
                 onDismiss = { viewModel.closeBrandModelDialog() }
             )
-        }
-    }
-}
-
-// --- TARJETA DE FILTROS DE BÚSQUEDA ---
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun SearchFilterCard(
-    filters: CarSearchFilters,
-    fuelTypeOptions: List<String>,
-    onBrandModelClick: () -> Unit,
-    onMaxPriceChange: (String) -> Unit,
-    onFuelTypeSelect: (String?) -> Unit,
-    onSearchClick: () -> Unit,
-    onClearBrandModel: () -> Unit
-) {
-    var fuelMenuExpanded by remember { mutableStateOf(false) }
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp), // Ajuste de padding
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        shape = RoundedCornerShape(16.dp), // Bordes más redondeados,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                "Encuentra tu próximo coche", // Podría ser un stringResource
-                style = MaterialTheme.typography.titleLarge, // Un poco más grande
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
-
-            // Campo de Marca y Modelo (Clickable)
-            OutlinedTextField(
-                value = if (filters.brand != null && filters.model != null) "${filters.brand} - ${filters.model}"
-                else if (filters.brand != null) filters.brand
-                else "Todas las Marcas y Modelos", // Placeholder mejorado
-                onValueChange = { /* No editable directamente */ },
-                label = { Text("Marca y Modelo") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(onClick = onBrandModelClick),
-                enabled = false, // Deshabilitado para que el click funcione en todo el área
-                colors = TextFieldDefaults.colors( // Usar .colors() para M3
-                    disabledTextColor = MaterialTheme.colorScheme.onSurface,
-                    disabledContainerColor = Color.Transparent, // Fondo transparente
-                    disabledIndicatorColor = MaterialTheme.colorScheme.outline,
-                    disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    disabledLeadingIconColor = MaterialTheme.colorScheme.primary, // Icono con color primario
-                    disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant
-                ),
-                leadingIcon = {
-                    Icon(
-                        Icons.Filled.FilterList,
-                        contentDescription = "Filtro Marca/Modelo"
-                    )
-                },
-                trailingIcon = if (filters.brand != null || filters.model != null) {
-                    {
-                        IconButton(
-                            onClick = onClearBrandModel,
-                            modifier = Modifier.size(24.dp)
-                        ) { // Tamaño del icono
-                            Icon(Icons.Filled.Close, contentDescription = "Limpiar Marca/Modelo")
-                        }
-                    }
-                } else null,
-                shape = RoundedCornerShape(8.dp)
-            )
-
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                // Campo de Precio Máximo
-                OutlinedTextField(
-                    value = filters.maxPrice?.toString() ?: "",
-                    onValueChange = onMaxPriceChange,
-                    label = { Text("Precio Máx (€)") },
-                    placeholder = { Text("Ej: 20000") },
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Number,
-                        imeAction = ImeAction.Next
-                    ),
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(8.dp)
-                )
-
-                // Desplegable de Tipo de Combustible
-                Box(modifier = Modifier.weight(1f)) { // Box para alinear el dropdown
-                    ExposedDropdownMenuBox(
-                        expanded = fuelMenuExpanded,
-                        onExpandedChange = { fuelMenuExpanded = !fuelMenuExpanded }
-                    ) {
-                        OutlinedTextField(
-                            value = filters.fuelType ?: "Todos",
-                            onValueChange = {},
-                            readOnly = true,
-                            label = { Text("Combustible") },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = fuelMenuExpanded) },
-                            modifier = Modifier
-                                .menuAnchor()
-                                .fillMaxWidth(),
-                            shape = RoundedCornerShape(8.dp)
-                        )
-                        ExposedDropdownMenu(
-                            expanded = fuelMenuExpanded,
-                            onDismissRequest = { fuelMenuExpanded = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text("Todos los combustibles") },
-                                onClick = {
-                                    onFuelTypeSelect(null)
-                                    fuelMenuExpanded = false
-                                }
-                            )
-                            fuelTypeOptions.forEach { fuel ->
-                                DropdownMenuItem(
-                                    text = { Text(fuel) },
-                                    onClick = {
-                                        onFuelTypeSelect(fuel)
-                                        fuelMenuExpanded = false
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-
-            Button(
-                onClick = onSearchClick,
-                modifier = Modifier.fillMaxWidth(), // Botón de ancho completo
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Icon(Icons.Filled.Search, contentDescription = "Buscar")
-                Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-                Text("Buscar Coches")
-            }
-        }
-    }
-}
-
-
-// --- DIÁLOGO DE FILTRO MARCA/MODELO ---
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun BrandModelFilterDialog(
-    brands: List<String>,
-    models: List<String>,
-    selectedBrand: String?,
-    isLoadingBrands: Boolean,
-    isLoadingModels: Boolean,
-    brandLoadError: String?,
-    modelLoadError: String?,
-    onBrandSelected: (String) -> Unit,
-    onModelSelected: (String) -> Unit,
-    onDismiss: () -> Unit
-) {
-    var modelMenuExpanded by remember { mutableStateOf(false) }
-
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(
-            usePlatformDefaultWidth = false,
-            dismissOnClickOutside = false
-        )
-    ) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text("Seleccionar Marca y Modelo") },
-                    navigationIcon = {
-                        IconButton(onClick = onDismiss) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, "Cerrar")
-                        }
-                    }
-                )
-            }
-        ) { paddingValues ->
-            Column(
-                modifier = Modifier
-                    .padding(paddingValues)
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.surface) // Fondo del diálogo
-            ) {
-                // Sección de Marcas
-                Text(
-                    "Selecciona una Marca",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(16.dp)
-                )
-                if (isLoadingBrands) {
-                    CircularProgressIndicator(
-                        modifier = Modifier
-                            .align(Alignment.CenterHorizontally)
-                            .padding(16.dp)
-                    )
-                } else if (brandLoadError != null) {
-                    Text(
-                        "Error cargando marcas: $brandLoadError",
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(16.dp)
-                    )
-                } else if (brands.isEmpty()) {
-                    Text("No hay marcas disponibles.", modifier = Modifier.padding(16.dp))
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.weight(1f), // Ocupa espacio disponible para marcas
-                        contentPadding = PaddingValues(horizontal = 16.dp)
-                    ) {
-                        items(brands) { brand ->
-                            ListItem(
-                                headlineContent = { Text(brand) },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { onBrandSelected(brand) }
-                                    .background(
-                                        if (brand == selectedBrand) MaterialTheme.colorScheme.primaryContainer
-                                        else Color.Transparent
-                                    )
-                                    .padding(vertical = 8.dp) // Padding vertical para cada item
-                            )
-                            HorizontalDivider()
-                        }
-                    }
-                }
-
-                // Sección de Modelos (si se ha seleccionado una marca)
-                if (selectedBrand != null) {
-                    HorizontalDivider(
-                        thickness = 4.dp,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-                    Text(
-                        "Selecciona un Modelo para $selectedBrand",
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(16.dp)
-                    )
-                    if (isLoadingModels) {
-                        CircularProgressIndicator(
-                            modifier = Modifier
-                                .align(Alignment.CenterHorizontally)
-                                .padding(16.dp)
-                        )
-                    } else if (modelLoadError != null) {
-                        Text(
-                            "Error cargando modelos: $modelLoadError",
-                            color = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.padding(16.dp)
-                        )
-                    } else if (models.isEmpty() && !isLoadingModels) { // Asegurar que no está cargando
-                        Text(
-                            "No hay modelos disponibles para $selectedBrand.",
-                            modifier = Modifier.padding(16.dp)
-                        )
-                    } else if (models.isNotEmpty()) {
-                        // Usar un Dropdown aquí puede ser un poco extraño en un diálogo de pantalla completa
-                        // Considera otra LazyColumn para modelos si la lista es larga.
-                        // Por ahora, mantendremos el ExposedDropdownMenuBox como lo pediste.
-                        Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                            ExposedDropdownMenuBox(
-                                expanded = modelMenuExpanded,
-                                onExpandedChange = { modelMenuExpanded = !modelMenuExpanded },
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                OutlinedTextField(
-                                    value = "Seleccionar modelo...", // Placeholder
-                                    onValueChange = {},
-                                    readOnly = true,
-                                    label = { Text("Modelo") },
-                                    trailingIcon = {
-                                        ExposedDropdownMenuDefaults.TrailingIcon(
-                                            expanded = modelMenuExpanded
-                                        )
-                                    },
-                                    modifier = Modifier
-                                        .menuAnchor()
-                                        .fillMaxWidth()
-                                )
-                                ExposedDropdownMenu(
-                                    expanded = modelMenuExpanded,
-                                    onDismissRequest = { modelMenuExpanded = false },
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    models.forEach { model ->
-                                        DropdownMenuItem(
-                                            text = { Text(model) },
-                                            onClick = {
-                                                onModelSelected(model)
-                                                modelMenuExpanded = false
-                                            }
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-// --- SECCIÓN DE ÚLTIMOS COCHES ---
-@Composable
-fun LatestCarsSection(
-    title: String,
-    isLoading: Boolean,
-    cars: List<CarForSale>,
-    error: String?,
-    favoriteCarIds: Set<String>,
-    isUserAuthenticated: Boolean,
-    onCarClick: (String) -> Unit,
-    onToggleFavorite: (String) -> Unit,
-    onSeeMoreClick: () -> Unit,
-    showSeeMoreButton: Boolean
-) {
-    Column(modifier = Modifier.padding(vertical = 8.dp)) { // Reducido padding vertical
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(title, style = MaterialTheme.typography.titleLarge)
-            if (showSeeMoreButton && cars.isNotEmpty()) { // Mostrar "Ver más" solo si hay coches y es la sección de "últimos"
-                TextButton(onClick = onSeeMoreClick) {
-                    Text("Ver más")
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        if (isLoading) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(240.dp),
-                contentAlignment = Alignment.Center
-            ) { // Altura ajustada
-                CircularProgressIndicator()
-            }
-        } else if (error != null) {
-            Text(
-                "Error: $error",
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
-        } else if (cars.isEmpty() && (title == "Últimos Coches Publicados" || title == "No se encontraron resultados")) {
-            Text(
-                if (title == "No se encontraron resultados") title else "No hay coches publicados recientemente.",
-                modifier = Modifier
-                    .padding(horizontal = 16.dp)
-                    .align(Alignment.CenterHorizontally),
-                style = MaterialTheme.typography.bodyLarge
-            )
-        } else {
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(cars, key = { it.id }) { car ->
-                    CarItemCard(
-                        car = car.copy(isFavoriteByCurrentUser = favoriteCarIds.contains(car.id)),
-                        isUserAuthenticated = isUserAuthenticated,
-                        onClick = { onCarClick(car.id) },
-                        onToggleFavorite = { onToggleFavorite(car.id) }
-                    )
-                }
-            }
         }
     }
 }

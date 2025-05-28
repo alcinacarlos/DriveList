@@ -11,5 +11,4 @@ data class LanguageItem(
 val availableLanguages = listOf(
     LanguageItem(code = "en", displayNameResId = R.string.language_display_en),
     LanguageItem(code = "es", displayNameResId = R.string.language_display_es)
-    // Añade más idiomas aquí si los soportas
 )
