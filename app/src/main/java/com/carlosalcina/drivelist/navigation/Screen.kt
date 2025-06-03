@@ -1,5 +1,6 @@
 package com.carlosalcina.drivelist.navigation
 
+import android.util.Log
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
@@ -41,7 +42,7 @@ sealed class Screen(
                     try {
                         val filtersJson = gson.toJson(it)
                         queryParams.add("${NavigationArgs.SEARCH_FILTERS_JSON_ARG}=${android.net.Uri.encode(filtersJson)}")
-                    } catch (e: Exception) { /* Log o manejar */ }
+                    } catch (e: Exception) { Log.d("SearchVehicleScreen", "Error al convertir a JSON: ${e.message}") }
                 } else if (it.searchTerm != null && searchTerm == null) {
                     queryParams.add("${NavigationArgs.INITIAL_SEARCH_TERM_ARG}=${android.net.Uri.encode(it.searchTerm)}")
                 }

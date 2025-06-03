@@ -52,4 +52,8 @@ class CarUploadRepositoryImpl @Inject constructor(
     override suspend fun uploadCar(car: CarForSale): Result<Unit, Exception> {
         return remoteDataSource.saveCarToFirestore(car)
     }
+
+    override suspend fun updateCar(carToUpdate: CarForSale): Result<Unit, Exception> {
+        return remoteDataSource.editCarFromFirestore(carToUpdate)
+    }
 }

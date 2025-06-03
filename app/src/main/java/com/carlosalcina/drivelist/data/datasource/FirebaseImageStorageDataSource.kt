@@ -22,13 +22,23 @@ class FirebaseImageStorageDataSource @Inject constructor(
             val originalBitmap = BitmapFactory.decodeStream(inputStream)
 
             val outputStream = ByteArrayOutputStream()
-            originalBitmap.compress(Bitmap.CompressFormat.JPEG, 75, outputStream) // Calidad 75%
+            originalBitmap.compress(Bitmap.CompressFormat.JPEG, 75, outputStream)
             val compressedData = outputStream.toByteArray()
 
             val storageRef = storage.reference.child(storagePath)
             val uploadTask = storageRef.putBytes(compressedData).await()
             val downloadUrl = uploadTask.storage.downloadUrl.await().toString()
             Result.Success(downloadUrl)
+        } catch (e: Exception) {
+            Result.Error(e)
+        }
+    }
+
+    override suspend fun deleteImage(storagePath: String): Result<Unit, Exception> {
+        return try {
+            val storageRef = storage.reference.child(storagePath)
+            storageRef.delete().await()
+            Result.Success(Unit)
         } catch (e: Exception) {
             Result.Error(e)
         }

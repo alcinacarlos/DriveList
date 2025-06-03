@@ -11,12 +11,13 @@ import javax.inject.Inject
 class FirestoreCarRemoteDataSource @Inject constructor(
     private val firestore: FirebaseFirestore
 ) : CarRemoteDataSource {
-
-    private val carsForSaleCollectionRef = firestore.collection("coches_venta")
+    
+    private val carsForSaleCollection = firestore.collection("coches_venta")
+    private val brandsCollection = firestore.collection("marcas")
 
     override suspend fun fetchBrands(): Result<List<String>, Exception> {
         return try {
-            val snapshot = firestore.collection("marcas").orderBy("nombre").get().await()
+            val snapshot = brandsCollection.orderBy("nombre").get().await()
             val brands = snapshot.documents.mapNotNull { it.getString("nombre") }
             Result.Success(brands)
         } catch (e: Exception) {
@@ -28,7 +29,7 @@ class FirestoreCarRemoteDataSource @Inject constructor(
         return try {
             val brandId = brandDisplayName
 
-            val snapshot = firestore.collection("marcas").document(brandId)
+            val snapshot = brandsCollection.document(brandId)
                 .collection("modelos").orderBy("nombre").get().await()
             val models = snapshot.documents.mapNotNull { it.getString("nombre") }
             Result.Success(models)
@@ -45,7 +46,7 @@ class FirestoreCarRemoteDataSource @Inject constructor(
             val brandId = brandDisplayName
             val modelId = getDocumentIdFromName(modelDisplayName) // "Serie 3" -> "Serie3"
 
-            val snapshot = firestore.collection("marcas").document(brandId)
+            val snapshot = brandsCollection.document(brandId)
                 .collection("modelos").document(modelId) // USA EL ID SIN ESPACIOS
                 .collection("carrocerias").orderBy("tipo").get().await()
             val bodyTypes =
@@ -65,7 +66,7 @@ class FirestoreCarRemoteDataSource @Inject constructor(
             val bodyTypeId =
                 getDocumentIdFromName(bodyTypeDisplayName) // "Berlina 4 puertas" -> "Berlina4puertas"
 
-            val snapshot = firestore.collection("marcas").document(brandId)
+            val snapshot = brandsCollection.document(brandId)
                 .collection("modelos").document(modelId)
                 .collection("carrocerias").document(bodyTypeId) // USA EL ID
                 .collection("combustibles").orderBy("tipo").get().await()
@@ -89,7 +90,7 @@ class FirestoreCarRemoteDataSource @Inject constructor(
             val bodyTypeId = getDocumentIdFromName(bodyTypeDisplayName)
             val fuelTypeId = Utils.parseFuel(getDocumentIdFromName(fuelTypeDisplayName))
 
-            val snapshot = firestore.collection("marcas").document(brandId)
+            val snapshot = brandsCollection.document(brandId)
                 .collection("modelos").document(modelId)
                 .collection("carrocerias").document(bodyTypeId)
                 .collection("combustibles").document(fuelTypeId)
@@ -153,7 +154,16 @@ class FirestoreCarRemoteDataSource @Inject constructor(
 
     override suspend fun saveCarToFirestore(car: CarForSale): Result<Unit, Exception> {
         return try {
-            carsForSaleCollectionRef.document(car.id).set(car).await()
+            carsForSaleCollection.document(car.id).set(car).await()
+            Result.Success(Unit)
+        } catch (e: Exception) {
+            Result.Error(e)
+        }
+    }
+
+    override suspend fun editCarFromFirestore(car: CarForSale): Result<Unit, Exception> {
+        return try {
+            carsForSaleCollection.document(car.id).set(car).await()
             Result.Success(Unit)
         } catch (e: Exception) {
             Result.Error(e)

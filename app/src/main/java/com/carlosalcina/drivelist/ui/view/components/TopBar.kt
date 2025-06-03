@@ -1,7 +1,9 @@
 package com.carlosalcina.drivelist.ui.view.components
 
+import android.util.Log
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -23,14 +25,7 @@ import com.carlosalcina.drivelist.utils.Utils
 fun TopBar(
     navController: NavController
 ) {
-    val bottomNavItems = listOf(
-        Screen.Home,
-        Screen.SearchVehicle,
-        Screen.UploadCar,
-        Screen.Favorites,
-        Screen.ChatList,
-        Screen.CarDetail
-    )
+
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
     val currentRoute = currentDestination?.route
@@ -38,7 +33,7 @@ fun TopBar(
     val showTopBar = Screen.allScreens.any { screen ->
         screen.showTopBar == true
     }
-    val currentScreen = bottomNavItems.find { screen ->
+    val currentScreen = Screen.allScreens.find { screen ->
         Utils.matchDestination(currentRoute, screen.route)
     }
 
@@ -49,12 +44,19 @@ fun TopBar(
                 ?: Text(stringResource(id = R.string.app_name))
         },
             navigationIcon = {
+                Log.e("TopBar", "currentScreen: $currentScreen")
+                Log.e("TopBar", "currentRoute: $currentRoute")
                 if (currentScreen?.showBackArrow == true){
                     IconButton(onClick = { navController.popBackStack() } ) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                     }
                 }
 
+            },
+            actions = {
+                    IconButton(onClick = { navController.navigate(Screen.Profile.route) }) {
+                        Icon(Icons.Default.AccountCircle, "Profile")
+                    }
             },
             colors = TopAppBarDefaults.topAppBarColors(
                 containerColor = MaterialTheme.colorScheme.primaryContainer,

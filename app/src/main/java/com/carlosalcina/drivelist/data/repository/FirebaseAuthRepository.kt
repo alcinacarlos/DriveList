@@ -154,7 +154,7 @@ class FirebaseAuthRepository @Inject constructor(
     override suspend fun getUserData(uid: String): Result<UserData, FirestoreError> {
         return try {
             val documentSnapshot = usersCollection.document(uid).get().await()
-            val userData = documentSnapshot.toObject<UserData>() // Usar ktx para convertir
+            val userData = documentSnapshot.toObject<UserData>()
             if (userData != null) {
                 Result.Success(userData)
             } else {
@@ -191,14 +191,14 @@ class FirebaseAuthRepository @Inject constructor(
             if (dataToUpdate.containsKey("email")) {
                 val newEmail = dataToUpdate["email"] as? String
                 if (newEmail != null) {
-                    currentUser.updateEmail(newEmail).await() // Requiere reautenticación reciente
+                    currentUser.updateEmail(newEmail).await()
                 }
             }
 
 
             usersCollection.document(currentUser.uid).update(dataToUpdate).await()
             Result.Success(Unit)
-        } catch (e: Exception) { // Podría ser FirebaseFirestoreException
+        } catch (e: Exception) {
             Result.Error(FirestoreError.OperationFailed(e.message ?: "Error al actualizar datos."))
         }
     }

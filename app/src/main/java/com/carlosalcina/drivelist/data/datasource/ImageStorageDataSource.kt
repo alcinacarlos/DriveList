@@ -11,4 +11,11 @@ interface ImageStorageDataSource {
      * @return Un Result que contiene la URL de descarga de la imagen subida o una excepción
      */
     suspend fun uploadImage(localImageUri: Uri, storagePath: String): Result<String, Exception>
+
+    /**
+     * Elimina una imagen de Firebase Storage
+     * @param storagePath Ruta completa en Firebase Storage del archivo a eliminar
+     * @return Un Result que indica éxito o error
+     */
+    suspend fun deleteImage(storagePath: String): Result<Unit, Exception>
 }

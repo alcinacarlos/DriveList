@@ -19,8 +19,6 @@ data class SearchVehicleScreenState(
         QuickFilter("qf_precio_10k", "< 10.000€", QuickFilterType.MAX_PRICE, 10000.0),
         QuickFilter("qf_min_year_2020", "Desde 2020", QuickFilterType.MIN_YEAR, 2020),
         QuickFilter("qf_min_year_2018", "Desde 2018", QuickFilterType.MIN_YEAR, 2018),
-        // Para LOCATION, el 'value' será la ciudad/comunidad y el ViewModel decidirá dónde aplicarlo
-        // O podrías tener un 'fieldToUpdate' en QuickFilter si quieres ser más explícito
         QuickFilter("qf_loc_madrid", "Madrid", QuickFilterType.LOCATION, "Madrid"),
         QuickFilter("qf_loc_barcelona", "Barcelona", QuickFilterType.LOCATION, "Barcelona")
     ),

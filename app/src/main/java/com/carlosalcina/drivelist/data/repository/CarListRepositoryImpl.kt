@@ -29,6 +29,7 @@ class CarListRepositoryImpl @Inject constructor(
         private const val FUEL_TYPE_FIELD = "fuelType"
         private const val TIMESTAMP_FIELD = "timestamp"
         private const val KEYWORDS_FIELD = "searchableKeywords"
+        private const val USER_FIELD = "userId"
     }
 
     private suspend fun mapSnapshotToCarList(
@@ -106,7 +107,7 @@ class CarListRepositoryImpl @Inject constructor(
             filters.ciudad?.takeIf { it.isNotBlank() }?.let { q = q.whereEqualTo(CIUDAD_FIELD, it) }
             filters.maxPrice?.let { q = q.whereLessThanOrEqualTo(PRICE_FIELD, it) }
             filters.minYear?.let { q = q.whereGreaterThanOrEqualTo(YEAR_FIELD, it.toString()) }
-
+            filters.userId?.let { q = q.whereEqualTo(USER_FIELD, it.toString()) }
             filters.searchTerm?.takeIf { it.isNotBlank() }?.let { term ->
                 q = q.whereArrayContainsAny(KEYWORDS_FIELD, listOf(term))
             }

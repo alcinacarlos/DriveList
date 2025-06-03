@@ -75,37 +75,12 @@ import com.carlosalcina.drivelist.domain.model.CarForSale
 import com.carlosalcina.drivelist.ui.states.CarDataState
 import com.carlosalcina.drivelist.ui.states.SellerUiState
 import com.carlosalcina.drivelist.ui.viewmodel.CarDetailViewModel
-import com.google.firebase.Timestamp
+import com.carlosalcina.drivelist.utils.Utils.formatAdPublicationDate
+import com.carlosalcina.drivelist.utils.Utils.formatPriceDetail
+import com.carlosalcina.drivelist.utils.Utils.formatUserSinceDetail
 import kotlinx.coroutines.launch
-import java.text.NumberFormat
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
-// --- Helper Functions for Formatting (Consider moving to a utils file) ---
-fun formatPriceDetail(price: Double): String {
-    val format = NumberFormat.getCurrencyInstance(Locale("es", "ES"))
-    format.maximumFractionDigits = if (price % 1 == 0.0) 0 else 2
-    format.minimumFractionDigits = if (price % 1 == 0.0) 0 else 2
-    return format.format(price)
-}
 
-fun formatUserSinceDetail(timestamp: Timestamp?): String {
-    if (timestamp == null) return "N/A"
-    return try {
-        val sdf = SimpleDateFormat("MMMM yyyy", Locale.getDefault())
-        "Miembro desde ${sdf.format(timestamp.toDate())}"
-    } catch (e: Exception) { "Fecha inválida" }
-}
-
-fun formatAdPublicationDate(timestamp: Long): String {
-    return try {
-        val sdf = SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault())
-        "Publicado: ${sdf.format(Date(timestamp))}"
-    } catch (e: Exception) { "Fecha desconocida" }
-}
-
-// --- Main Screen Composable ---
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

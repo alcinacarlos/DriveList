@@ -62,7 +62,7 @@ fun AppNavigation(
             RegisterScreen(
                 viewModel = hiltViewModel(),
                 onNavigateOnSuccess = {
-                    navController.navigate(Screen.Profile.route) {
+                    navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Register.route) { inclusive = true }
                     }
                 },
@@ -74,7 +74,11 @@ fun AppNavigation(
             )
         }
         composable(Screen.Profile.route) {
-            ProfileScreen(navController)
+            ProfileScreen(
+                onCarClicked = {
+                    navController.navigate(Screen.CarDetail.createRoute(it))
+                }
+            )
         }
         composable(Screen.Settings.route) {
             SettingsScreen(onLanguageChange)

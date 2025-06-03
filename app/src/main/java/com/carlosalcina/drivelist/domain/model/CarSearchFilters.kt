@@ -8,5 +8,6 @@ data class CarSearchFilters(
     val fuelType: String? = null,
     val comunidadAutonoma: String? = null,
     val ciudad: String? = null,
-    val minYear: Int? = null, // Nuevo campo para el año mínimo
+    val minYear: Int? = null,
+    val userId: String? = null,
 )

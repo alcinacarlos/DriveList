@@ -104,7 +104,6 @@ fun UploadCarScreen(
     LaunchedEffect(uiState.isRequestingLocationPermission) {
         if (uiState.isRequestingLocationPermission) {
             locationPermissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
-            // El ViewModel reseteará isRequestingLocationPermission después
         }
     }
 
