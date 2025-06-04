@@ -57,6 +57,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -167,7 +168,9 @@ fun ProfileContent(
                 authUserEmail = uiState.authUser?.email,
                 isUploadingPhoto = uiState.isUploadingPhoto,
                 onEditPhotoClicked = { viewModel.onProfilePhotoEditClicked() },
-                onEditField = { field -> viewModel.onEditField(field) })
+                onEditField = { field -> viewModel.onEditField(field) },
+                editable = uiState.isAuthUser
+            )
             Spacer(modifier = Modifier.height(16.dp))
             HorizontalDivider()
             Spacer(modifier = Modifier.height(16.dp))
@@ -222,7 +225,8 @@ fun ProfileHeader(
     authUserEmail: String?,
     isUploadingPhoto: Boolean,
     onEditPhotoClicked: () -> Unit,
-    onEditField: (EditableField) -> Unit
+    onEditField: (EditableField) -> Unit,
+    editable: Boolean = true
 ) {
     Column(
         modifier = Modifier.fillMaxWidth()
@@ -249,21 +253,24 @@ fun ProfileHeader(
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
-                IconButton(
-                    onClick = onEditPhotoClicked,
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .offset(x = (8).dp, y = (8).dp)
-                        .size(36.dp)
-                        .background(MaterialTheme.colorScheme.primaryContainer, CircleShape)
-                ) {
-                    Icon(
-                        Icons.Filled.Edit,
-                        contentDescription = "Editar Foto de Perfil",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(20.dp)
-                    )
+                if (editable){
+                    IconButton(
+                        onClick = onEditPhotoClicked,
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .offset(x = (8).dp, y = (8).dp)
+                            .size(36.dp)
+                            .background(MaterialTheme.colorScheme.primaryContainer, CircleShape)
+                    ) {
+                        Icon(
+                            Icons.Filled.Edit,
+                            contentDescription = "Editar Foto de Perfil",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
+
             }
 
         }
@@ -287,7 +294,9 @@ fun ProfileHeader(
             label = "Biografía",
             value = userData?.bio ?: "Sin biografía",
             placeholder = "Añade una biografía...",
-            onEditClicked = { onEditField(EditableField.BIO) })
+            onEditClicked = { onEditField(EditableField.BIO) },
+            editable = editable
+        )
         Spacer(modifier = Modifier.height(12.dp))
         Text(formatUserSinceDetail(userData?.createdAt), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
@@ -298,8 +307,9 @@ fun ProfileHeader(
 fun EditableProfileField(
     label: String,
     value: String,
+    editable: Boolean = true,
     placeholder: String = "Pulsa para editar",
-    textStyle: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.bodyMedium,
+    textStyle: TextStyle = MaterialTheme.typography.bodyMedium,
     onEditClicked: () -> Unit
 ) {
     Row(
@@ -321,12 +331,14 @@ fun EditableProfileField(
                 overflow = TextOverflow.Ellipsis,
             )
         }
-        IconButton(onClick = onEditClicked) {
-            Icon(
-                Icons.Filled.Edit,
-                contentDescription = "Editar $label",
-                tint = MaterialTheme.colorScheme.primary
-            )
+        if (editable){
+            IconButton(onClick = onEditClicked) {
+                Icon(
+                    Icons.Filled.Edit,
+                    contentDescription = "Editar $label",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
         }
     }
 }

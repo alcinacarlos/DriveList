@@ -122,6 +122,9 @@ fun AppNavigation(
             CarDetailScreen(
                 onContactSeller = { sellerId, carId ->
                     navController.navigate(Screen.ChatDetail.createRoute(sellerId, carId))
+                },
+                onSeeProfile = { sellerId ->
+                    navController.navigate(Screen.Profile.createRoute(sellerId))
                 }
             )
         }

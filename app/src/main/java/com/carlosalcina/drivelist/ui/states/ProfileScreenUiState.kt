@@ -29,5 +29,7 @@ data class ProfileScreenUiState(
 
     // Estado para la subida de imagen de perfil
     val isUploadingPhoto: Boolean = false,
-    val photoUploadErrorMessage: String? = null
+    val photoUploadErrorMessage: String? = null,
+
+    val isAuthUser:Boolean = true
 )

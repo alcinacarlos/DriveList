@@ -23,7 +23,9 @@ sealed class Screen(
     object Welcome : Screen("welcome_screen", R.string.screen_title_welcome, showTopBar = false, showBottomBar = false)
     object Login : Screen("login_screen", R.string.screen_title_login, showTopBar = false, showBottomBar = false)
     object Register : Screen("register_screen", R.string.screen_title_register, showTopBar = false, showBottomBar = false)
-    object Profile : Screen("profile_screen", R.string.screen_title_profile, showBottomBar = false, showBackArrow = true)
+    object Profile : Screen("profile_screen/{${NavigationArgs.PROFILE_USER_ID_ARG}}", R.string.screen_title_profile, showBottomBar = false, showBackArrow = true){
+        fun createRoute(userId: String): String = "profile_screen/$userId"
+    }
     object Settings : Screen("settings_screen", R.string.screen_title_settings, showBottomBar = false, showBackArrow = true)
 
     object Home : Screen("home_screen", R.string.screen_title_home, Icons.Filled.Home)

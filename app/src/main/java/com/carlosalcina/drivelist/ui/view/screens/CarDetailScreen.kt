@@ -1,10 +1,12 @@
 package com.carlosalcina.drivelist.ui.view.screens
 
 import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -86,14 +88,16 @@ import kotlinx.coroutines.launch
 @Composable
 fun CarDetailScreen(
     viewModel: CarDetailViewModel = hiltViewModel(),
-    onContactSeller: (sellerId: String, carId: String) -> Unit
+    onContactSeller: (sellerId: String, carId: String) -> Unit,
+    onSeeProfile: (sellerId: String) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val carState = uiState.carDataState
+    val sellerState = uiState.sellerUiState
 
     Scaffold(
         floatingActionButton = {
-            val carState = uiState.carDataState
-            val sellerState = uiState.sellerUiState
+
             if (carState is CarDataState.Success && sellerState is SellerUiState.Success) {
                 ExtendedFloatingActionButton(
                     onClick = { onContactSeller(carState.car.userId, carState.car.id) },
@@ -112,6 +116,12 @@ fun CarDetailScreen(
             imagePagerIndex = uiState.imagePagerIndex,
             onImagePageChanged = { index -> viewModel.onImagePageChanged(index) },
             onRetryLoadCar = { viewModel.retryLoadCarDetails() },
+            onSeeProfile = {
+                Log.e("CarDetailScreen", "onSeeProfile called")
+                if (carState is CarDataState.Success){
+                    onSeeProfile(carState.car.userId)
+                }
+            }
         )
     }
 }
@@ -122,7 +132,8 @@ private fun HandleCarDataState(
     sellerUiState: SellerUiState,
     imagePagerIndex: Int,
     onImagePageChanged: (Int) -> Unit,
-    onRetryLoadCar: () -> Unit
+    onRetryLoadCar: () -> Unit,
+    onSeeProfile:() -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         when (carDataState) {
@@ -149,7 +160,10 @@ private fun HandleCarDataState(
                     car = carDataState.car,
                     sellerUiState = sellerUiState,
                     imagePagerIndex = imagePagerIndex,
-                    onImagePageChanged = onImagePageChanged
+                    onImagePageChanged = onImagePageChanged,
+                    onSeeProfile = {
+                        onSeeProfile()
+                    }
                 )
             }
         }
@@ -162,7 +176,8 @@ private fun CarDetailContent(
     car: CarForSale,
     sellerUiState: SellerUiState,
     imagePagerIndex: Int,
-    onImagePageChanged: (Int) -> Unit
+    onImagePageChanged: (Int) -> Unit,
+    onSeeProfile: () -> Unit
 ) {
     val imagePagerState = rememberPagerState(
         initialPage = imagePagerIndex,
@@ -242,7 +257,9 @@ private fun CarDetailContent(
         item { DescriptionSectionDetail(car.description) }
 
         // 5. Seller Info
-        item { SellerInfoSectionDetail(sellerUiState) }
+        item { SellerInfoSectionDetail(sellerUiState, onClick = {
+            onSeeProfile()
+        }) }
 
         item { Spacer(Modifier.height(110.dp)) }
     }
@@ -374,11 +391,12 @@ private fun DescriptionSectionDetail(description: String) {
 }
 
 @Composable
-private fun SellerInfoSectionDetail(sellerUiState: SellerUiState) {
+private fun SellerInfoSectionDetail(sellerUiState: SellerUiState, onClick: () -> Unit) {
     Column(Modifier.padding(start = 16.dp, end = 16.dp, top=16.dp, bottom = 24.dp)) { // Adjusted bottom padding
         Text("Información del Vendedor", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(bottom = 12.dp))
         Card(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth()
+                .clickable{ onClick() },
             shape = RoundedCornerShape(16.dp),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp))

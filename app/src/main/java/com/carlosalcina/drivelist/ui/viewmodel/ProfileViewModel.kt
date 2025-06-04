@@ -1,12 +1,14 @@
 package com.carlosalcina.drivelist.ui.viewmodel
 
 import android.net.Uri
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.carlosalcina.drivelist.data.datasource.ImageStorageDataSource
 import com.carlosalcina.drivelist.domain.model.CarSearchFilters
 import com.carlosalcina.drivelist.domain.repository.AuthRepository
 import com.carlosalcina.drivelist.domain.repository.CarListRepository
+import com.carlosalcina.drivelist.navigation.NavigationArgs
 import com.carlosalcina.drivelist.ui.states.EditableField
 import com.carlosalcina.drivelist.ui.states.ProfileScreenUiState
 import com.carlosalcina.drivelist.utils.Result
@@ -23,7 +25,8 @@ import javax.inject.Inject
 class ProfileViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val carListRepository: CarListRepository,
-    private val imageStorageDataSource: ImageStorageDataSource
+    private val imageStorageDataSource: ImageStorageDataSource,
+    private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileScreenUiState())
@@ -37,14 +40,23 @@ class ProfileViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
+            val initialUserId: String? = savedStateHandle[NavigationArgs.PROFILE_USER_ID_ARG]
+            if (initialUserId == null){
+                _uiState.update { it.copy(isAuthUser = false) }
+            }
             val currentAuthUser = authRepository.getCurrentFirebaseUser()
             if (currentAuthUser == null) {
                 _uiState.update { it.copy(isLoading = false, errorMessage = "Usuario no autenticado.") }
                 return@launch
             }
             _uiState.update { it.copy(authUser = currentAuthUser) }
+            val userDataResult = if (_uiState.value.isAuthUser){
+                authRepository.getCurrentUserData()
+            }else{
+                authRepository.getUserData(initialUserId!!)
+            }
 
-            when (val userDataResult = authRepository.getCurrentUserData()) {
+            when (userDataResult) {
                 is Result.Success -> {
                     val fetchedUserData = userDataResult.data
                     _uiState.update {
