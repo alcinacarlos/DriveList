@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.carlosalcina.drivelist.domain.model.FirestoreError
 import com.carlosalcina.drivelist.domain.repository.AuthRepository
 import com.carlosalcina.drivelist.domain.repository.CarListRepository
+import com.carlosalcina.drivelist.navigation.NavigationArgs
 import com.carlosalcina.drivelist.ui.states.CarDataState
 import com.carlosalcina.drivelist.ui.states.CarDetailUiState
 import com.carlosalcina.drivelist.ui.states.SellerUiState
@@ -29,7 +30,7 @@ class CarDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    private val carId: String = savedStateHandle.get<String>("carId") ?: ""
+    private val carId: String = savedStateHandle.get<String>(NavigationArgs.CAR_ID_ARG) ?: ""
 
     private val _uiState = MutableStateFlow(CarDetailUiState())
     val uiState: StateFlow<CarDetailUiState> = _uiState.asStateFlow().stateIn(

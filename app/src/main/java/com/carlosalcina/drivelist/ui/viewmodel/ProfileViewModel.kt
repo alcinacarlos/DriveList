@@ -31,6 +31,8 @@ class ProfileViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(ProfileScreenUiState())
     val uiState: StateFlow<ProfileScreenUiState> = _uiState.asStateFlow()
+    private val initialUserId: String = savedStateHandle.get<String>(NavigationArgs.PROFILE_USER_ID_ARG) ?: ""
+
 
     init {
         loadInitialData()
@@ -40,20 +42,22 @@ class ProfileViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
-            val initialUserId: String? = savedStateHandle[NavigationArgs.PROFILE_USER_ID_ARG]
-            if (initialUserId == null){
-                _uiState.update { it.copy(isAuthUser = false) }
-            }
             val currentAuthUser = authRepository.getCurrentFirebaseUser()
             if (currentAuthUser == null) {
-                _uiState.update { it.copy(isLoading = false, errorMessage = "Usuario no autenticado.") }
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = "Usuario no autenticado."
+                    )
+                }
                 return@launch
             }
             _uiState.update { it.copy(authUser = currentAuthUser) }
-            val userDataResult = if (_uiState.value.isAuthUser){
-                authRepository.getCurrentUserData()
-            }else{
-                authRepository.getUserData(initialUserId!!)
+            var userDataResult = if (initialUserId.isBlank() || initialUserId == "{${NavigationArgs.PROFILE_USER_ID_ARG}}") {
+                authRepository.getUserData(currentAuthUser.uid)
+            } else {
+                _uiState.update { it.copy(isAuthUser = false) }
+                authRepository.getUserData(initialUserId)
             }
 
             when (userDataResult) {
@@ -64,6 +68,7 @@ class ProfileViewModel @Inject constructor(
                     }
                     fetchUserCars(fetchedUserData.uid)
                 }
+
                 is Result.Error -> {
                     _uiState.update {
                         it.copy(
@@ -80,12 +85,14 @@ class ProfileViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoadingCars = true, carsErrorMessage = null) }
             val filters = CarSearchFilters(userId = userId)
-            when (val carsResult = carListRepository.searchCars(filters, limit = 50, currentUserId = userId)) {
+            when (val carsResult =
+                carListRepository.searchCars(filters, limit = 50, currentUserId = userId)) {
                 is Result.Success -> {
                     _uiState.update {
                         it.copy(isLoadingCars = false, userCars = carsResult.data)
                     }
                 }
+
                 is Result.Error -> {
                     _uiState.update {
                         it.copy(
@@ -109,12 +116,19 @@ class ProfileViewModel @Inject constructor(
 
     fun onDeleteProfilePhoto() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isUploadingPhoto = true, photoUploadErrorMessage = null, showPhotoOptionsDialog = false) }
+            _uiState.update {
+                it.copy(
+                    isUploadingPhoto = true,
+                    photoUploadErrorMessage = null,
+                    showPhotoOptionsDialog = false
+                )
+            }
             val dataToUpdate = mapOf("photoURL" to "")
             when (authRepository.updateCurrentUserData(dataToUpdate)) {
                 is Result.Success -> {
                     refreshUserData("Foto de perfil eliminada.")
                 }
+
                 is Result.Error -> {
                     _uiState.update {
                         it.copy(
@@ -129,26 +143,48 @@ class ProfileViewModel @Inject constructor(
 
     fun onNewProfilePhotoSelected(imageUri: Uri?) {
         if (imageUri == null) return
-        _uiState.update { it.copy(showPhotoOptionsDialog = false, isUploadingPhoto = true, photoUploadErrorMessage = null) }
+        _uiState.update {
+            it.copy(
+                showPhotoOptionsDialog = false,
+                isUploadingPhoto = true,
+                photoUploadErrorMessage = null
+            )
+        }
 
         viewModelScope.launch {
             var downloadUrl = ""
             val storagePath = "users/${_uiState.value.userData!!.uid}/profile.jpg"
             val uploadResult = imageStorageDataSource.uploadImage(imageUri, storagePath)
-             when (uploadResult) {
-                 is Result.Success -> {
-                     downloadUrl = uploadResult.data
-                     val dataToUpdate = mapOf("photoURL" to downloadUrl)
-                     when (authRepository.updateCurrentUserData(dataToUpdate)) {
-                         is Result.Success -> refreshUserData("Foto de perfil actualizada.")
-                         is Result.Error -> _uiState.update { it.copy(isUploadingPhoto = false, photoUploadErrorMessage = "Fallo al guardar nueva URL de foto.") }
-                     }
-                 }
-                 is Result.Error -> {
-                     _uiState.update { it.copy(isUploadingPhoto = false, photoUploadErrorMessage = "Fallo al subir la imagen.") }
-                 }
-             }
-            _uiState.update { it.copy(isUploadingPhoto = false, photoUploadErrorMessage = "Funcionalidad de subida de imagen no implementada.") }
+            when (uploadResult) {
+                is Result.Success -> {
+                    downloadUrl = uploadResult.data
+                    val dataToUpdate = mapOf("photoURL" to downloadUrl)
+                    when (authRepository.updateCurrentUserData(dataToUpdate)) {
+                        is Result.Success -> refreshUserData("Foto de perfil actualizada.")
+                        is Result.Error -> _uiState.update {
+                            it.copy(
+                                isUploadingPhoto = false,
+                                photoUploadErrorMessage = "Fallo al guardar nueva URL de foto."
+                            )
+                        }
+                    }
+                }
+
+                is Result.Error -> {
+                    _uiState.update {
+                        it.copy(
+                            isUploadingPhoto = false,
+                            photoUploadErrorMessage = "Fallo al subir la imagen."
+                        )
+                    }
+                }
+            }
+            _uiState.update {
+                it.copy(
+                    isUploadingPhoto = false,
+                    photoUploadErrorMessage = "Funcionalidad de subida de imagen no implementada."
+                )
+            }
             val dataToUpdate = mapOf("photoURL" to downloadUrl)
             authRepository.updateCurrentUserData(dataToUpdate)
             refreshUserData()
@@ -160,9 +196,12 @@ class ProfileViewModel @Inject constructor(
     fun onEditField(field: EditableField) {
         val userData = _uiState.value.userData ?: return
         val currentValue = when (field) {
-            EditableField.DISPLAY_NAME -> userData.displayName ?: _uiState.value.authUser?.displayName ?: ""
+            EditableField.DISPLAY_NAME -> userData.displayName
+                ?: _uiState.value.authUser?.displayName ?: ""
+
             EditableField.BIO -> userData.bio ?: ""
-            EditableField.PHOTO_URL -> userData.photoURL ?: "" // Aunque PHOTO_URL se maneja diferente
+            EditableField.PHOTO_URL -> userData.photoURL
+                ?: "" // Aunque PHOTO_URL se maneja diferente
         }
         _uiState.update {
             it.copy(
@@ -186,13 +225,22 @@ class ProfileViewModel @Inject constructor(
         val fieldToEdit = _uiState.value.editingField ?: return
         val newValue = _uiState.value.fieldValueToEdit
         val originalValue = when (fieldToEdit) {
-            EditableField.DISPLAY_NAME -> _uiState.value.userData?.displayName ?: _uiState.value.authUser?.displayName
+            EditableField.DISPLAY_NAME -> _uiState.value.userData?.displayName
+                ?: _uiState.value.authUser?.displayName
+
             EditableField.BIO -> _uiState.value.userData?.bio
             EditableField.PHOTO_URL -> _uiState.value.userData?.photoURL
         }
 
-        if (newValue == (originalValue ?: "")) { // Si no hay cambios, o si el original era null y el nuevo es ""
-            _uiState.update { it.copy(editingField = null, fieldUpdateSuccessMessage = "No se hicieron cambios.") }
+        if (newValue == (originalValue
+                ?: "")
+        ) { // Si no hay cambios, o si el original era null y el nuevo es ""
+            _uiState.update {
+                it.copy(
+                    editingField = null,
+                    fieldUpdateSuccessMessage = "No se hicieron cambios."
+                )
+            }
             return
         }
 
@@ -206,13 +254,15 @@ class ProfileViewModel @Inject constructor(
                 EditableField.PHOTO_URL -> "photoURL" // Este caso no debería ocurrir aquí normalmente
             }
 
-            val dataToUpdate = mapOf(fieldKey to newValue.ifBlank { "" }) // Guardar null si está vacío
+            val dataToUpdate =
+                mapOf(fieldKey to newValue.ifBlank { "" }) // Guardar null si está vacío
 
             when (authRepository.updateCurrentUserData(dataToUpdate)) {
                 is Result.Success -> {
                     refreshUserData("${fieldKey.capitalizeFirstLetter()} actualizado.")
                     _uiState.update { it.copy(editingField = null) }
                 }
+
                 is Result.Error -> {
                     _uiState.update {
                         it.copy(
@@ -237,8 +287,10 @@ class ProfileViewModel @Inject constructor(
                         photoUploadErrorMessage = null // Clear photo error on general refresh
                     )
                 }
+
                 is Result.Error -> _uiState.update {
-                    it.copy( // Still success for update, but failed to refresh immediately
+                    it.copy(
+                        // Still success for update, but failed to refresh immediately
                         isUpdatingField = false,
                         isUploadingPhoto = false,
                         fieldUpdateErrorMessage = "Datos actualizados, pero falló la actualización inmediata de la UI.",

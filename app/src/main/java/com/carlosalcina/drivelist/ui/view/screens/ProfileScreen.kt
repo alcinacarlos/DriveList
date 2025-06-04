@@ -281,7 +281,9 @@ fun ProfileHeader(
             label = "Nombre",
             value = userData?.displayName ?: authUserEmail ?: "N/A",
             textStyle = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
-            onEditClicked = { onEditField(EditableField.DISPLAY_NAME) })
+            onEditClicked = { onEditField(EditableField.DISPLAY_NAME) },
+            editable = editable
+        )
 
         Text(
             text = userData?.email ?: authUserEmail ?: "Sin email",

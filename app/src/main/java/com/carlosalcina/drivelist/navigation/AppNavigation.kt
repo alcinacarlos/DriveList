@@ -73,7 +73,10 @@ fun AppNavigation(
                 }
             )
         }
-        composable(Screen.Profile.route) {
+        composable(
+            route = Screen.Profile.route,
+            arguments = listOf(navArgument(NavigationArgs.PROFILE_USER_ID_ARG) { type = NavType.StringType })
+        ) {
             ProfileScreen(
                 onCarClicked = {
                     navController.navigate(Screen.CarDetail.createRoute(it))
