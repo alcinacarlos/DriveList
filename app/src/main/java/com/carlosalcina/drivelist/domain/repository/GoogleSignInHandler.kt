@@ -1,7 +1,7 @@
 package com.carlosalcina.drivelist.domain.repository
 
 import android.content.Context
-import com.carlosalcina.drivelist.domain.model.GoogleSignInError
+import com.carlosalcina.drivelist.domain.error.GoogleSignInError
 import com.carlosalcina.drivelist.utils.Result
 
 interface GoogleSignInHandler {

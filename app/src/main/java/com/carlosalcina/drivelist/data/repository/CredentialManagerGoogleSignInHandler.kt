@@ -6,7 +6,7 @@ import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.NoCredentialException
-import com.carlosalcina.drivelist.domain.model.GoogleSignInError
+import com.carlosalcina.drivelist.domain.error.GoogleSignInError
 import com.carlosalcina.drivelist.domain.repository.GoogleSignInHandler
 import com.carlosalcina.drivelist.utils.Result
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption

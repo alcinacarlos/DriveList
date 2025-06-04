@@ -1,8 +1,8 @@
 package com.carlosalcina.drivelist.domain.repository
 
-import com.carlosalcina.drivelist.domain.model.AuthError
+import com.carlosalcina.drivelist.domain.error.AuthError
 import com.carlosalcina.drivelist.domain.model.AuthUser
-import com.carlosalcina.drivelist.domain.model.FirestoreError
+import com.carlosalcina.drivelist.domain.error.FirestoreError
 import com.carlosalcina.drivelist.domain.model.UserData
 import com.carlosalcina.drivelist.utils.Result
 

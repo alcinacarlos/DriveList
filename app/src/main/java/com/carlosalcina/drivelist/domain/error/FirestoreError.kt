@@ -1,4 +1,4 @@
-package com.carlosalcina.drivelist.domain.model
+package com.carlosalcina.drivelist.domain.error
 
 sealed class FirestoreError {
     data class OperationFailed(val message: String?) : FirestoreError()

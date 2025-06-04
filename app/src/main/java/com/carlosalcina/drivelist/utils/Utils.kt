@@ -1,8 +1,8 @@
 package com.carlosalcina.drivelist.utils
 
 import android.util.Patterns
-import com.carlosalcina.drivelist.domain.model.AuthError
-import com.carlosalcina.drivelist.domain.model.GoogleSignInError
+import com.carlosalcina.drivelist.domain.error.AuthError
+import com.carlosalcina.drivelist.domain.error.GoogleSignInError
 import com.google.firebase.Timestamp
 import java.text.NumberFormat
 import java.text.SimpleDateFormat

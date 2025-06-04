@@ -3,7 +3,7 @@ package com.carlosalcina.drivelist.ui.viewmodel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.carlosalcina.drivelist.domain.model.FirestoreError
+import com.carlosalcina.drivelist.domain.error.FirestoreError
 import com.carlosalcina.drivelist.domain.repository.AuthRepository
 import com.carlosalcina.drivelist.domain.repository.CarListRepository
 import com.carlosalcina.drivelist.navigation.NavigationArgs

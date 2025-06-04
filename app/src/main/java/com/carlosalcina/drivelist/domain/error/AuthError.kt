@@ -1,4 +1,4 @@
-package com.carlosalcina.drivelist.domain.model
+package com.carlosalcina.drivelist.domain.error
 
 sealed class AuthError {
     data class NetworkError(val message: String?) : AuthError()
