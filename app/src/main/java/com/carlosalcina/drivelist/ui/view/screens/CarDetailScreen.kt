@@ -1,7 +1,5 @@
 package com.carlosalcina.drivelist.ui.view.screens
 
-import android.annotation.SuppressLint
-import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -66,6 +64,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.imageLoader
 import coil.request.CachePolicy
@@ -76,6 +75,7 @@ import com.carlosalcina.drivelist.domain.model.CarColor
 import com.carlosalcina.drivelist.domain.model.CarForSale
 import com.carlosalcina.drivelist.ui.states.CarDataState
 import com.carlosalcina.drivelist.ui.states.SellerUiState
+import com.carlosalcina.drivelist.ui.view.components.TopBar
 import com.carlosalcina.drivelist.ui.viewmodel.CarDetailViewModel
 import com.carlosalcina.drivelist.utils.Utils.formatAdPublicationDate
 import com.carlosalcina.drivelist.utils.Utils.formatPriceDetail
@@ -83,19 +83,22 @@ import com.carlosalcina.drivelist.utils.Utils.formatUserSinceDetail
 import kotlinx.coroutines.launch
 
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CarDetailScreen(
     viewModel: CarDetailViewModel = hiltViewModel(),
     onContactSeller: (sellerId: String, carId: String) -> Unit,
     onSeeProfile: (sellerId: String) -> Unit,
+    navController: NavController
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val carState = uiState.carDataState
     val sellerState = uiState.sellerUiState
 
     Scaffold(
+        topBar = {
+            TopBar(navController,R.string.screen_title_car_detail , showBackArrow = true)
+        },
         floatingActionButton = {
 
             if (carState is CarDataState.Success && sellerState is SellerUiState.Success) {
@@ -109,15 +112,15 @@ fun CarDetailScreen(
             }
         },
         floatingActionButtonPosition = FabPosition.Center,
-    ) {
+    ) { innerPadding ->
         HandleCarDataState(
+            modifier = Modifier.padding(innerPadding),
             carDataState = uiState.carDataState,
             sellerUiState = uiState.sellerUiState,
             imagePagerIndex = uiState.imagePagerIndex,
             onImagePageChanged = { index -> viewModel.onImagePageChanged(index) },
             onRetryLoadCar = { viewModel.retryLoadCarDetails() },
             onSeeProfile = {
-                Log.e("CarDetailScreen", "onSeeProfile called")
                 if (carState is CarDataState.Success){
                     onSeeProfile(carState.car.userId)
                 }
@@ -128,6 +131,7 @@ fun CarDetailScreen(
 
 @Composable
 private fun HandleCarDataState(
+    modifier: Modifier = Modifier,
     carDataState: CarDataState,
     sellerUiState: SellerUiState,
     imagePagerIndex: Int,
@@ -135,7 +139,7 @@ private fun HandleCarDataState(
     onRetryLoadCar: () -> Unit,
     onSeeProfile:() -> Unit
 ) {
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = modifier.fillMaxSize()) {
         when (carDataState) {
             is CarDataState.Loading -> {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))

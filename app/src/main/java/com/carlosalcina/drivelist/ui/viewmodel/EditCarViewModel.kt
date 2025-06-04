@@ -111,8 +111,8 @@ class EditCarViewModel @Inject constructor(
         }
     }
 
-    // --- Actualizadores de campos del formulario ---
-    fun onBrandSelected(brand: String?) { // Permitir null para limpiar
+    // Actualizadores de campos del formulario
+    fun onBrandSelected(brand: String?) {
         _uiState.update { it.copy(brand = brand, model = null, availableModels = emptyList()) }
         brand?.let { fetchModelsForDropdown(it) }
     }
@@ -126,7 +126,7 @@ class EditCarViewModel @Inject constructor(
     fun onMileageChanged(mileage: String) { _uiState.update { it.copy(mileage = mileage.filter { it.isDigit() }) } }
     fun onDescriptionChanged(description: String) { _uiState.update { it.copy(description = description) } }
 
-    // --- Lógica de Imágenes ---
+    // Lógica de Imágenes
     fun onNewImagesSelected(uris: List<Uri>) {
         _uiState.update {
             val currentTotalImages = it.existingImageUrls.size - it.imagesToDelete.size + it.selectedImageUris.size
@@ -147,7 +147,7 @@ class EditCarViewModel @Inject constructor(
         }
     }
 
-    // --- Lógica de Localización (simplificada, asume que tienes la lógica en LocationRepository) ---
+    // Lógica de Localización
     fun onManualLocationInputChanged(input: String) { _uiState.update { it.copy(manualLocationInput = input, isManualLocationValid = true, locationValidationMessage = null) } }
     fun triggerLocationPermissionRequest() { /* ... (similar a UploadCarVM) ... */ }
     fun onLocationPermissionGranted() { fetchCurrentLocationAndPopulateInput() }
@@ -219,7 +219,7 @@ class EditCarViewModel @Inject constructor(
     }
 
 
-    // --- Carga de Desplegables ---
+    // Carga de Desplegables
     private fun fetchBrandsForDropdown() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoadingBrands = true, brandLoadError = null) }
@@ -243,7 +243,7 @@ class EditCarViewModel @Inject constructor(
         }
     }
 
-    // --- Guardar Cambios ---
+    // Guardar Cambios
     fun saveCarChanges() {
         val state = _uiState.value
         val carId = state.carIdToEdit ?: run {

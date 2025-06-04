@@ -118,4 +118,24 @@ object Utils {
         format.minimumFractionDigits = if (price % 1 == 0.0) 0 else 2
         return format.format(price)
     }
+    fun formatTimestampForChatList(timestamp: Timestamp?): String {
+        if (timestamp == null) return ""
+        val messageDate = timestamp.toDate()
+        val currentDate = Date()
+
+        val diffInMillis = currentDate.time - messageDate.time
+        val diffInDays = TimeUnit.MILLISECONDS.toDays(diffInMillis)
+
+        return when {
+            diffInDays == 0L -> SimpleDateFormat("HH:mm", Locale.getDefault()).format(messageDate) // Hoy: "10:30"
+            diffInDays == 1L -> "Ayer" // Ayer
+            diffInDays < 7L -> SimpleDateFormat("E", Locale.getDefault()).format(messageDate) // Esta semana: "lun.", "mar."
+            else -> SimpleDateFormat("dd/MM/yy", Locale.getDefault()).format(messageDate) // Más antiguo: "23/05/25"
+        }
+    }
+
+    fun formatTimestampForChatMessage(timestamp: Timestamp?): String {
+        if (timestamp == null) return ""
+        return SimpleDateFormat("HH:mm", Locale.getDefault()).format(timestamp.toDate()) // "10:30"
+    }
 }

@@ -64,12 +64,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.carlosalcina.drivelist.R
 import com.carlosalcina.drivelist.domain.model.UserData
 import com.carlosalcina.drivelist.ui.states.EditableField
 import com.carlosalcina.drivelist.ui.states.ProfileScreenUiState
 import com.carlosalcina.drivelist.ui.view.components.CarCardWithoutFavorite
+import com.carlosalcina.drivelist.ui.view.components.TopBar
 import com.carlosalcina.drivelist.ui.viewmodel.ProfileViewModel
 import com.carlosalcina.drivelist.utils.Utils.formatUserSinceDetail
 
@@ -79,6 +81,7 @@ import com.carlosalcina.drivelist.utils.Utils.formatUserSinceDetail
 fun ProfileScreen(
     viewModel: ProfileViewModel = hiltViewModel(),
     onCarClicked: (String) -> Unit,
+    navController: NavController
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -107,6 +110,9 @@ fun ProfileScreen(
 
 
     Scaffold(
+        topBar = {
+            TopBar(navController, stringResource = R.string.screen_title_profile, showBackArrow = true)
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) }) {
         if (uiState.isLoading) {
             CircularProgressIndicator()

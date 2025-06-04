@@ -1,11 +1,11 @@
 package com.carlosalcina.drivelist.ui.view.screens
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -24,19 +24,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.carlosalcina.drivelist.R
 import com.carlosalcina.drivelist.navigation.Screen
+import com.carlosalcina.drivelist.ui.view.components.AppBottomNavigationBar
 import com.carlosalcina.drivelist.ui.view.components.BrandModelFilterDialog
 import com.carlosalcina.drivelist.ui.view.components.LatestCarsSection
 import com.carlosalcina.drivelist.ui.view.components.SearchFilterCard
+import com.carlosalcina.drivelist.ui.view.components.TopBar
 import com.carlosalcina.drivelist.ui.viewmodel.HomeScreenViewModel
 
 //PANTALLA PRINCIPAL
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    viewModel: HomeScreenViewModel = hiltViewModel(),
-    navController: NavController
+    viewModel: HomeScreenViewModel = hiltViewModel(), navController: NavController
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val scrollState = rememberScrollState()
@@ -46,8 +47,7 @@ fun HomeScreen(
     LaunchedEffect(uiState.favoriteToggleError) {
         uiState.favoriteToggleError?.let {
             snackbarHostState.showSnackbar(
-                message = it,
-                duration = SnackbarDuration.Short
+                message = it, duration = SnackbarDuration.Short
             )
             viewModel.clearFavoriteToggleError()
         }
@@ -55,28 +55,34 @@ fun HomeScreen(
     LaunchedEffect(uiState.carLoadError) {
         uiState.carLoadError?.let {
             snackbarHostState.showSnackbar(
-                message = "Error cargando coches: $it",
-                duration = SnackbarDuration.Long
+                message = "Error cargando coches: $it", duration = SnackbarDuration.Long
             )
         }
     }
     LaunchedEffect(uiState.searchError) {
         uiState.searchError?.let {
             snackbarHostState.showSnackbar(
-                message = "Error en búsqueda: $it",
-                duration = SnackbarDuration.Long
+                message = "Error en búsqueda: $it", duration = SnackbarDuration.Long
             )
         }
     }
 
 
     Scaffold(
+        topBar = {
+            TopBar(navController, stringResource = R.string.screen_title_home)
+        },
+        bottomBar = {
+            AppBottomNavigationBar(navController)
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) },
-    ) {
+    ) { paddingValues ->
         PullToRefreshBox(
             isRefreshing = uiState.isLoadingLatestCars,
             onRefresh = { viewModel.onRefreshTriggered() },
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
         ) {
             Column(
                 modifier = Modifier
@@ -97,8 +103,7 @@ fun HomeScreen(
                             Screen.SearchVehicle.createRoute(filters = currentFiltersFromHome)
                         navController.navigate(route)
                     },
-                    onClearBrandModel = { viewModel.clearBrandModelFilter() }
-                )
+                    onClearBrandModel = { viewModel.clearBrandModelFilter() })
 
                 // Mostrar resultados de búsqueda si existen, sino los últimos coches
                 val carsToShow = if (uiState.searchedCars.isNotEmpty() || uiState.noSearchResults) {
@@ -160,8 +165,7 @@ fun HomeScreen(
                 modelLoadError = uiState.modelLoadError,
                 onBrandSelected = { viewModel.onBrandSelectedInDialog(it) },
                 onModelSelected = { viewModel.onModelSelectedInDialog(it) },
-                onDismiss = { viewModel.closeBrandModelDialog() }
-            )
+                onDismiss = { viewModel.closeBrandModelDialog() })
         }
     }
 }

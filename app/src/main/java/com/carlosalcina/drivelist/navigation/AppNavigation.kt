@@ -1,10 +1,6 @@
 package com.carlosalcina.drivelist.navigation
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
@@ -13,6 +9,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.carlosalcina.drivelist.ui.view.screens.CarDetailScreen
+import com.carlosalcina.drivelist.ui.view.screens.ChatDetailScreen
+import com.carlosalcina.drivelist.ui.view.screens.ChatListScreen
 import com.carlosalcina.drivelist.ui.view.screens.FavoritesScreen
 import com.carlosalcina.drivelist.ui.view.screens.HomeScreen
 import com.carlosalcina.drivelist.ui.view.screens.LoginScreen
@@ -78,6 +76,7 @@ fun AppNavigation(
             arguments = listOf(navArgument(NavigationArgs.PROFILE_USER_ID_ARG) { type = NavType.StringType })
         ) {
             ProfileScreen(
+                navController = navController,
                 onCarClicked = {
                     navController.navigate(Screen.CarDetail.createRoute(it))
                 }
@@ -94,9 +93,8 @@ fun AppNavigation(
 
         composable(route = Screen.UploadCar.route) {
             UploadCarScreen(
-                onBack = { navController.popBackStack() },
+                navController = navController,
                 onUploadSuccess = { navController.popBackStack() },
-                onSettings = { navController.navigate("settings") }
             )
         }
 
@@ -123,6 +121,7 @@ fun AppNavigation(
             arguments = listOf(navArgument(NavigationArgs.CAR_ID_ARG) { type = NavType.StringType })
         ) { backStackEntry ->
             CarDetailScreen(
+                navController = navController,
                 onContactSeller = { sellerId, carId ->
                     navController.navigate(Screen.ChatDetail.createRoute(sellerId, carId))
                 },
@@ -141,10 +140,13 @@ fun AppNavigation(
         ) { backStackEntry ->
             val sellerId = backStackEntry.arguments?.getString("sellerId")
             val carIdArg = backStackEntry.arguments?.getString("carId")
-            // ChatDetailScreen(sellerId = sellerId, carId = carIdArg, onNavigateBack = { navController.popBackStack() })
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Pantalla de Chat (Pendiente)\nSeller: $sellerId\nCar: $carIdArg")
-            }
+
+            ChatDetailScreen(navController)
+        }
+        composable(route = Screen.ChatList.route) {
+            ChatListScreen(
+                navController = navController
+            )
         }
 
         composable(Screen.Favorites.route) {

@@ -105,7 +105,7 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    // --- Edición de Foto de Perfil ---
+    // Edición de Foto de Perfil
     fun onProfilePhotoEditClicked() {
         _uiState.update { it.copy(showPhotoOptionsDialog = true) }
     }
@@ -192,7 +192,7 @@ class ProfileViewModel @Inject constructor(
     }
 
 
-    // --- Edición de Campos Individuales ---
+    // Edición de Campos Individuales
     fun onEditField(field: EditableField) {
         val userData = _uiState.value.userData ?: return
         val currentValue = when (field) {

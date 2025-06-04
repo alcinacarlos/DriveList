@@ -7,9 +7,12 @@ import com.carlosalcina.drivelist.data.datasource.FirestoreCarRemoteDataSource
 import com.carlosalcina.drivelist.data.datasource.ImageStorageDataSource
 import com.carlosalcina.drivelist.data.repository.CarListRepositoryImpl
 import com.carlosalcina.drivelist.data.repository.CarUploadRepositoryImpl
+import com.carlosalcina.drivelist.data.repository.ChatRepositoryImpl
 import com.carlosalcina.drivelist.data.repository.UserFavoriteRepositoryImpl
+import com.carlosalcina.drivelist.domain.repository.AuthRepository
 import com.carlosalcina.drivelist.domain.repository.CarListRepository
 import com.carlosalcina.drivelist.domain.repository.CarUploadRepository
+import com.carlosalcina.drivelist.domain.repository.ChatRepository
 import com.carlosalcina.drivelist.domain.repository.UserFavoriteRepository
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
@@ -64,5 +67,14 @@ object RepositoryModule {
         userFavoriteRepository: UserFavoriteRepository
     ): CarListRepository {
         return CarListRepositoryImpl(firestore, userFavoriteRepository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideChatRepository(
+        firestore: FirebaseFirestore,
+        authRepository: AuthRepository
+    ): ChatRepository {
+        return ChatRepositoryImpl(firestore, authRepository)
     }
 }

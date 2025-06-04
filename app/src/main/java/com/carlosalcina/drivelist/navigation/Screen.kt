@@ -62,10 +62,11 @@ sealed class Screen(
         fun createRoute(carId: String): String = "car_detail_screen/$carId"
     }
 
-    object ChatDetail : Screen("chat_detail_screen/{sellerId}/{carId}", R.string.screen_title_chat_detail, showBackArrow = true, showBottomBar = false) {
+    object Favorites : Screen("favorites_screen", R.string.screen_title_favorites, Icons.Filled.Favorite)
+
+    object ChatDetail : Screen("chat_detail_screen/{sellerId}/{carId}", R.string.screen_title_chat_detail, showTopBar = false, showBottomBar = false) {
         fun createRoute(sellerId: String, carId: String): String = "chat_detail_screen/$sellerId/$carId"
     }
-    object Favorites : Screen("favorites_screen", R.string.screen_title_favorites, Icons.Filled.Favorite)
     object ChatList : Screen("chat_list_screen", R.string.screen_title_chat, Icons.AutoMirrored.Filled.Chat)
 
     companion object {

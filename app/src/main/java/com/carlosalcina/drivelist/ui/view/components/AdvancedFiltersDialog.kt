@@ -42,11 +42,11 @@ import androidx.compose.ui.window.DialogProperties
 import com.carlosalcina.drivelist.domain.model.CarSearchFilters
 import java.util.Calendar
 
-// --- DIÁLOGO DE FILTROS AVANZADOS ---
+// DIÁLOGO DE FILTROS AVANZADOS
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdvancedFiltersDialog(
-    initialFilters: CarSearchFilters, // Para poblar los campos del diálogo
+    initialFilters: CarSearchFilters,
     brands: List<String>,
     models: List<String>,
     selectedBrandInDialog: String?,

@@ -1,6 +1,5 @@
 package com.carlosalcina.drivelist.ui.view.screens
 
-import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -50,13 +49,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.carlosalcina.drivelist.R
 import com.carlosalcina.drivelist.domain.model.QuickFilter
 import com.carlosalcina.drivelist.navigation.Screen
 import com.carlosalcina.drivelist.ui.view.components.AdvancedFiltersDialog
+import com.carlosalcina.drivelist.ui.view.components.AppBottomNavigationBar
 import com.carlosalcina.drivelist.ui.view.components.SearchResultsList
+import com.carlosalcina.drivelist.ui.view.components.TopBar
 import com.carlosalcina.drivelist.ui.viewmodel.SearchVehicleScreenViewModel
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchVehicleScreen(
@@ -80,12 +81,19 @@ fun SearchVehicleScreen(
     }
 
     Scaffold(
+        topBar = {
+            TopBar(navController, stringResource = R.string.screen_title_search)
+        },
+        bottomBar = {
+            AppBottomNavigationBar(navController)
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) },
-    ) {
+    ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
+                .padding(paddingValues)
         ) {
 
             SearchBarWithFilterButton(
@@ -159,7 +167,7 @@ fun SearchVehicleScreen(
     }
 }
 
-// --- BARRA DE BÚSQUEDA CON BOTÓN DE FILTRO ---
+// BARRA DE BÚSQUEDA CON BOTÓN DE FILTRO
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchBarWithFilterButton(
@@ -235,7 +243,7 @@ fun SearchBarWithFilterButton(
     }
 }
 
-// --- FILA DE FILTROS RÁPIDOS ---
+// FILA DE FILTROS RÁPIDOS
 @Composable
 fun QuickFiltersRow(
     quickFilters: List<QuickFilter>,

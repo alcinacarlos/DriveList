@@ -239,7 +239,7 @@ class SearchVehicleScreenViewModel @Inject constructor(
         }
     }
 
-    // --- Lógica para Filtros Avanzados (Marca/Modelo/Año/Ubicación) ---
+    // Lógica para Filtros Avanzados (Marca/Modelo/Año/Ubicación)
     fun openAdvancedFiltersDialog() {
         if (_uiState.value.brandsForDialog.isEmpty() && !_uiState.value.isLoadingBrandsForDialog) {
             fetchBrandsForDialog()

@@ -87,7 +87,7 @@ import com.carlosalcina.drivelist.domain.model.CarColor
 import com.carlosalcina.drivelist.ui.states.EditCarScreenState
 import com.carlosalcina.drivelist.ui.viewmodel.EditCarViewModel
 
-// --- PANTALLA DE EDICIÓN DE COCHE ---
+// PANTALLA DE EDICIÓN DE COCHE
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditCarScreen(
@@ -196,7 +196,7 @@ fun EditCarFormContent(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // --- Sección de Imágenes ---
+        // Sección de Imágenes
         Text("Imágenes del Vehículo (máx. ${EditCarViewModel.MAX_IMAGES_ALLOWED})", style = MaterialTheme.typography.titleMedium)
 
         // Mostrar imágenes existentes
@@ -249,7 +249,7 @@ fun EditCarFormContent(
         }
 
 
-        // --- Campos del Formulario (similares a UploadCarScreen) ---
+        // Campos del Formulario
         // Marca
         var brandMenuExpanded by remember { mutableStateOf(false) }
         Text("Marca*", style = MaterialTheme.typography.labelLarge)
@@ -344,7 +344,7 @@ fun EditCarFormContent(
         OutlinedTextField(value = uiState.description, onValueChange = viewModel::onDescriptionChanged, label = { Text("Descripción*") }, modifier = Modifier.fillMaxWidth().heightIn(min = 120.dp), maxLines = 8)
 
 
-        // --- Sección de Localización (reutilizar o adaptar de UploadCarScreen) ---
+        // Sección de Localización
         Text("Ubicación del Vehículo*", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp, bottom = 4.dp))
         OutlinedTextField(
             value = uiState.manualLocationInput,
@@ -472,7 +472,6 @@ fun NewImageItem(uri: Uri, onRemove: () -> Unit) {
     }
 }
 
-// --- Helpers para Desplegables (puedes reutilizar los de UploadCarScreen o crear unos genéricos) ---
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExposedDropdownRow(

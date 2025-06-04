@@ -70,19 +70,21 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.carlosalcina.drivelist.R
+import com.carlosalcina.drivelist.ui.view.components.AppBottomNavigationBar
 import com.carlosalcina.drivelist.ui.view.components.DropdownSelector
+import com.carlosalcina.drivelist.ui.view.components.TopBar
 import com.carlosalcina.drivelist.ui.viewmodel.UploadCarViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UploadCarScreen(
     viewModel: UploadCarViewModel = hiltViewModel(),
-    onBack: () -> Unit,
     onUploadSuccess: () -> Unit,
-    onSettings: () -> Unit,
+    navController: NavController
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val scrollState = rememberScrollState()
@@ -143,16 +145,24 @@ fun UploadCarScreen(
     )
 
     Scaffold(
+        topBar = {
+            TopBar(navController, stringResource = R.string.screen_title_sell)
+        },
+        bottomBar = {
+            AppBottomNavigationBar(navController)
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         Column(
             modifier = Modifier
+                .verticalScroll(scrollState)
                 .padding(paddingValues)
                 .padding(horizontal = 18.dp)
-                .verticalScroll(scrollState),
+            ,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // --- Sección de Selección de Imágenes ---
+            //Sección de Selección de Imágenes
+            Spacer(modifier = Modifier.height(10.dp))
             Text("Imágenes del Vehículo", style = MaterialTheme.typography.titleMedium)
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -383,7 +393,7 @@ fun UploadCarScreen(
                 enabled = !uiState.formUploadInProgress
             )
 
-            // --- Sección de Localización ---
+            // Sección de Localización
             Text(
                 "Ubicación del Vehículo",
                 style = MaterialTheme.typography.titleMedium,
@@ -458,7 +468,7 @@ fun UploadCarScreen(
 
             }
 
-            // --- Fin Sección de Localización ---
+            // Fin Sección de Localización
 
             OutlinedTextField(
                 value = uiState.description,
