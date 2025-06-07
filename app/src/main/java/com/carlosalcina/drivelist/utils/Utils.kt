@@ -65,7 +65,7 @@ object Utils {
             "Diésel" -> "Disel"
             "Híbrido" -> "Hbrido"
             "Híbrido enchufable" -> "Hbridoenchufable"
-            else -> {"Gasolina"}
+            else -> { fuel }
         }
     }
     fun matchDestination(currentRoute: String?, screenRoute: String): Boolean {

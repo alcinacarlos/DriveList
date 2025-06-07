@@ -2,6 +2,7 @@ package com.carlosalcina.drivelist.ui.viewmodel
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.carlosalcina.drivelist.data.datasource.ImageStorageDataSource
@@ -159,8 +160,10 @@ class UploadCarViewModel @Inject constructor(
             )
         }
         viewModelScope.launch {
-            when (val result = uploadRepository.getFuelTypes(currentBrand, currentModel, bodyType)) {
+            val result = uploadRepository.getFuelTypes(currentBrand, currentModel, bodyType)
+            when (result) {
                 is Result.Success -> _uiState.update {
+                    Log.d("UploadCarViewModel", "getFuelTypes result: ${result.data}")
                     it.copy(isLoadingFuelTypes = false, fuelTypes = result.data)
                 }
 

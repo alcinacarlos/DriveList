@@ -105,12 +105,13 @@ fun ChatListScreen(
                         modifier = Modifier.size(64.dp),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
                     Text(
-                        "No tienes conversaciones activas.",
+                        "No tienes conversaciones",
                         style = MaterialTheme.typography.headlineSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    Spacer(modifier = Modifier.height(30.dp))
                     Text(
                         "Inicia un chat con un vendedor para verlo aquí.",
                         style = MaterialTheme.typography.bodyMedium,

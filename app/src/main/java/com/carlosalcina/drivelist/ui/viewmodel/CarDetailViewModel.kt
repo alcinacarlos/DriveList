@@ -59,8 +59,13 @@ class CarDetailViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(carDataState = CarDataState.Success(car))
                     }
+                    if (car.userId == firebaseAuth.currentUser?.uid) {
+                        _uiState.value.isBuyer = false
+                    }
+
                     loadSellerInfo(car.userId)
                 }
+
                 is Result.Error -> {
                     val errorMessage = handleCarLoadError(result.error)
                     _uiState.update {
@@ -86,6 +91,7 @@ class CarDetailViewModel @Inject constructor(
                         it.copy(sellerUiState = SellerUiState.Success(result.data))
                     }
                 }
+
                 is Result.Error -> {
                     val errorMessage = handleFirestoreError(result.error)
                     _uiState.update {
@@ -107,9 +113,14 @@ class CarDetailViewModel @Inject constructor(
     private fun handleFirestoreError(error: FirestoreError): String {
         return when (error) {
             is FirestoreError.NotFound -> error.message ?: "Información del vendedor no encontrada."
-            is FirestoreError.PermissionDenied -> error.message ?: "No tienes permiso para ver esta información."
-            is FirestoreError.OperationFailed -> error.message ?: "Falló la operación al obtener datos del vendedor."
-            is FirestoreError.Unknown -> error.message ?: "Error desconocido al obtener datos del vendedor."
+            is FirestoreError.PermissionDenied -> error.message
+                ?: "No tienes permiso para ver esta información."
+
+            is FirestoreError.OperationFailed -> error.message
+                ?: "Falló la operación al obtener datos del vendedor."
+
+            is FirestoreError.Unknown -> error.message
+                ?: "Error desconocido al obtener datos del vendedor."
         }
     }
 

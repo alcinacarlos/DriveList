@@ -27,6 +27,7 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.LocalGasStation
 import androidx.compose.material.icons.filled.LocationCity
 import androidx.compose.material.icons.filled.Palette
@@ -102,13 +103,24 @@ fun CarDetailScreen(
         floatingActionButton = {
 
             if (carState is CarDataState.Success && sellerState is SellerUiState.Success) {
-                ExtendedFloatingActionButton(
-                    onClick = { onContactSeller(carState.car.userId, carState.car.id) },
-                    icon = { Icon(Icons.AutoMirrored.Filled.Chat, contentDescription = "Contactar") },
-                    text = { Text("Contactar al Vendedor") },
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                )
+                if (uiState.isBuyer){
+                    ExtendedFloatingActionButton(
+                        onClick = { onContactSeller(carState.car.userId, carState.car.id) },
+                        icon = { Icon(Icons.AutoMirrored.Filled.Chat, contentDescription = "Contactar") },
+                        text = { Text("Contactar al Vendedor") },
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                }else{
+                    ExtendedFloatingActionButton(
+                        onClick = { onContactSeller(carState.car.userId, carState.car.id) },
+                        icon = { Icon(Icons.Filled.Edit, contentDescription = "Contactar") },
+                        text = { Text("Editar") },
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
+
             }
         },
         floatingActionButtonPosition = FabPosition.Center,

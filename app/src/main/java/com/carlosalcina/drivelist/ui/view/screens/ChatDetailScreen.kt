@@ -8,11 +8,13 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -56,6 +58,7 @@ import com.carlosalcina.drivelist.R
 import com.carlosalcina.drivelist.domain.model.ChatMessage
 import com.carlosalcina.drivelist.ui.viewmodel.ChatDetailViewModel
 import com.carlosalcina.drivelist.utils.Utils.formatTimestampForChatMessage
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -69,10 +72,21 @@ fun ChatDetailScreen(
     val coroutineScope = rememberCoroutineScope()
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    // Scroll al último mensaje cuando la lista de mensajes cambia o al inicio
     LaunchedEffect(uiState.messages.size) {
         if (uiState.messages.isNotEmpty()) {
             coroutineScope.launch {
+                delay(50)
+                listState.animateScrollToItem(uiState.messages.size - 1)
+            }
+        }
+    }
+
+    val isKeyboardOpen = WindowInsets.isImeVisible
+
+    LaunchedEffect(isKeyboardOpen) {
+        if (isKeyboardOpen && uiState.messages.isNotEmpty()) {
+            coroutineScope.launch {
+                //delay(200)
                 listState.animateScrollToItem(uiState.messages.size - 1)
             }
         }

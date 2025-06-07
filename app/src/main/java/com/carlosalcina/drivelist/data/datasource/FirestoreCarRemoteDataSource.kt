@@ -6,6 +6,7 @@ import com.carlosalcina.drivelist.utils.Utils
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.tasks.await
+import java.text.Normalizer
 import javax.inject.Inject
 
 class FirestoreCarRemoteDataSource @Inject constructor(
@@ -27,7 +28,7 @@ class FirestoreCarRemoteDataSource @Inject constructor(
 
     override suspend fun fetchModels(brandDisplayName: String): Result<List<String>, Exception> {
         return try {
-            val brandId = brandDisplayName
+            val brandId = getDocumentIdFromName(brandDisplayName)
 
             val snapshot = brandsCollection.document(brandId)
                 .collection("modelos").orderBy("nombre").get().await()
@@ -43,7 +44,7 @@ class FirestoreCarRemoteDataSource @Inject constructor(
         modelDisplayName: String
     ): Result<List<String>, Exception> {
         return try {
-            val brandId = brandDisplayName
+            val brandId = getDocumentIdFromName(brandDisplayName)
             val modelId = getDocumentIdFromName(modelDisplayName) // "Serie 3" -> "Serie3"
 
             val snapshot = brandsCollection.document(brandId)
@@ -61,17 +62,16 @@ class FirestoreCarRemoteDataSource @Inject constructor(
         brandDisplayName: String, modelDisplayName: String, bodyTypeDisplayName: String
     ): Result<List<String>, Exception> {
         return try {
-            val brandId = brandDisplayName
+            val brandId = getDocumentIdFromName(brandDisplayName)
             val modelId = getDocumentIdFromName(modelDisplayName)
-            val bodyTypeId =
-                getDocumentIdFromName(bodyTypeDisplayName) // "Berlina 4 puertas" -> "Berlina4puertas"
+            val bodyTypeId = getDocumentIdFromName(bodyTypeDisplayName)
 
             val snapshot = brandsCollection.document(brandId)
                 .collection("modelos").document(modelId)
-                .collection("carrocerias").document(bodyTypeId) // USA EL ID
+                .collection("carrocerias").document(bodyTypeId)
                 .collection("combustibles").orderBy("tipo").get().await()
             val fuelTypes =
-                snapshot.documents.mapNotNull { it.getString("tipo") } // Nombres visibles
+                snapshot.documents.mapNotNull { it.getString("tipo") }
             Result.Success(fuelTypes)
         } catch (e: Exception) {
             Result.Error(e)
@@ -85,10 +85,10 @@ class FirestoreCarRemoteDataSource @Inject constructor(
         fuelTypeDisplayName: String
     ): Result<List<String>, Exception> {
         return try {
-            val brandId = brandDisplayName
+            val brandId = getDocumentIdFromName(brandDisplayName)
             val modelId = getDocumentIdFromName(modelDisplayName)
             val bodyTypeId = getDocumentIdFromName(bodyTypeDisplayName)
-            val fuelTypeId = Utils.parseFuel(getDocumentIdFromName(fuelTypeDisplayName))
+            val fuelTypeId = Utils.parseFuel(fuelTypeDisplayName)
 
             val snapshot = brandsCollection.document(brandId)
                 .collection("modelos").document(modelId)
@@ -115,10 +115,10 @@ class FirestoreCarRemoteDataSource @Inject constructor(
         yearDisplayName: String
     ): Result<List<String>, Exception> {
         try {
-            val brandId = brandDisplayName
+            val brandId = getDocumentIdFromName(brandDisplayName)
             val modelId = getDocumentIdFromName(modelDisplayName)
             val bodyTypeId = getDocumentIdFromName(bodyTypeDisplayName)
-            val fuelTypeId = Utils.parseFuel(getDocumentIdFromName(fuelTypeDisplayName))
+            val fuelTypeId = Utils.parseFuel(fuelTypeDisplayName)
 
             val docPath = "marcas/$brandId/modelos/$modelId/carrocerias/$bodyTypeId/combustibles/$fuelTypeId/anios/$yearDisplayName"
 
@@ -170,8 +170,47 @@ class FirestoreCarRemoteDataSource @Inject constructor(
         }
     }
 
-    private fun getDocumentIdFromName(name: String): String {
-        val generatedId = name.replace(" ", "")
-        return generatedId
+    private fun getDocumentIdFromName(nombreId: String): String {
+
+        var saneado = nombreId
+
+        // 1. Detectar patrones tipo "Coupé 3 puertas" o "Cabrio 2 puertas"
+        saneado = saneado.replace(
+            Regex("""([A-Za-zñÑáéíóúÁÉÍÓÚüÜ]+?)\s*(\d)\s*puertas""", RegexOption.IGNORE_CASE)
+        ) { match ->
+            var prefijo = match.groupValues[1]
+            val numero = match.groupValues[2]
+
+            // Eliminar última letra solo si es vocal acentuada
+            prefijo.lastOrNull()?.let {
+                if (it in "áéíóúÁÉÍÓÚ") {
+                    prefijo = prefijo.dropLast(1)
+                }
+            }
+
+            "${prefijo}${numero}puertas"
+        }
+
+        // 2. Eliminar acentos
+        saneado = Normalizer.normalize(saneado, Normalizer.Form.NFD)
+            .replace(Regex("\\p{InCombiningDiacriticalMarks}+"), "")
+
+        // 3. Reemplazar '/' por '-'
+        saneado = saneado.replace("/", "-")
+
+        // 4. Eliminar caracteres no válidos
+        saneado = saneado.replace(Regex("[^a-zA-Z0-9_.-]"), "")
+
+        // 5. Evitar IDs reservados "__...__"
+        if (saneado.startsWith("__") && saneado.endsWith("__") && saneado.length > 4) {
+            saneado = saneado.removePrefix("__").removeSuffix("__")
+        }
+        if (Regex("""^__.*__$""").matches(saneado)) {
+            saneado = "val_$saneado"
+        }
+
+
+        return saneado
     }
+
 }

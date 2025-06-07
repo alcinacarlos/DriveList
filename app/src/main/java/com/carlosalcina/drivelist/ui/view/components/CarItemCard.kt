@@ -94,10 +94,8 @@ fun CarItemCard(
 
 
             preloadCandidates.distinct().forEach { imageUrlToPreload ->
-                val request = ImageRequest.Builder(context)
-                    .data(imageUrlToPreload)
-                    .diskCachePolicy(CachePolicy.ENABLED)
-                    .memoryCachePolicy(CachePolicy.ENABLED)
+                val request = ImageRequest.Builder(context).data(imageUrlToPreload)
+                    .diskCachePolicy(CachePolicy.ENABLED).memoryCachePolicy(CachePolicy.ENABLED)
                     .build()
                 imageLoader.enqueue(request)
             }
@@ -107,177 +105,173 @@ fun CarItemCard(
     Card(
         modifier = modifier
             .width(240.dp)
+            .height(285.dp)
             .clickable(onClick = onClick),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
-        Column {
-            Box(
-                modifier = Modifier
-                    .height(160.dp)
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-            ) {
-                if (car.imageUrls.isNotEmpty()) {
-                    HorizontalPager(
-                        state = pagerState,
-                        modifier = Modifier.fillMaxSize()
-                    ) { page ->
-                        Image(
-                            painter = rememberAsyncImagePainter(
-                                ImageRequest.Builder(context)
-                                    .data(car.imageUrls[page])
-                                    .crossfade(true)
-                                    .error(R.drawable.no_photo)
-                                    .placeholder(R.drawable.no_photo)
-                                    .build()
-                            ),
-                            contentDescription = "Imagen de ${car.brand} ${car.model}",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    }
-                } else {
+        Box(
+            modifier = Modifier
+                .height(160.dp)
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+        ) {
+            if (car.imageUrls.isNotEmpty()) {
+                HorizontalPager(
+                    state = pagerState, modifier = Modifier.fillMaxSize()
+                ) { page ->
                     Image(
-                        painter = painterResource(id = R.drawable.no_photo),
-                        contentDescription = "No hay imagen",
-                        contentScale = ContentScale.Fit,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp)
+                        painter = rememberAsyncImagePainter(
+                            ImageRequest.Builder(context).data(car.imageUrls[page]).crossfade(true)
+                                .error(R.drawable.no_photo).placeholder(R.drawable.no_photo).build()
+                        ),
+                        contentDescription = "Imagen de ${car.brand} ${car.model}",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
                     )
                 }
+            } else {
+                Image(
+                    painter = painterResource(id = R.drawable.no_photo),
+                    contentDescription = "No hay imagen",
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp)
+                )
+            }
 
-                // Botones de navegación para el Pager
-                if (car.imageUrls.size > 1) {
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .align(Alignment.Center)
-                            .padding(horizontal = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        val enabledBack = pagerState.currentPage > 0
-                        IconButton(
-                            enabled = enabledBack,
-                            onClick = {
-                                coroutineScope.launch {
-                                    pagerState.animateScrollToPage((pagerState.currentPage - 1 + car.imageUrls.size) % car.imageUrls.size)
-                                }
+            // Botones de navegación para el Pager
+            if (car.imageUrls.size > 1) {
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.Center)
+                        .padding(horizontal = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val enabledBack = pagerState.currentPage > 0
+                    IconButton(
+                        enabled = enabledBack, onClick = {
+                            coroutineScope.launch {
+                                pagerState.animateScrollToPage((pagerState.currentPage - 1 + car.imageUrls.size) % car.imageUrls.size)
                             }
-                        ) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                                "Anterior",
-                                tint = if (enabledBack) Color.White else Color.Transparent,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                        IconButton(
-                            onClick = {
-                                coroutineScope.launch {
-                                    pagerState.animateScrollToPage((pagerState.currentPage + 1) % car.imageUrls.size)
-                                }
-                            }
-                        ) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                "Siguiente",
-                                tint = Color.White,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
+                        }) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                            "Anterior",
+                            tint = if (enabledBack) Color.White else Color.Transparent,
+                            modifier = Modifier.size(18.dp)
+                        )
                     }
-                    // Indicador de página
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .padding(bottom = 6.dp)
-                            .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(6.dp))
-                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                    ) {
-                        Text(
-                            "${pagerState.currentPage + 1}/${car.imageUrls.size}",
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontSize = 10.sp,
-                                color = Color.White
-                            )
+                    IconButton(
+                        onClick = {
+                            coroutineScope.launch {
+                                pagerState.animateScrollToPage((pagerState.currentPage + 1) % car.imageUrls.size)
+                            }
+                        }) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            "Siguiente",
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 }
-
-
-                // Botón de Favorito
-                if (isUserAuthenticated) {
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(4.dp)
-                    ) {
-                        IconButton(
-                            onClick = onToggleFavorite,
-                            modifier = Modifier
-                                .size(32.dp)
-                                .background(
-                                    MaterialTheme.colorScheme.surface.copy(alpha = 0.6f),
-                                    CircleShape
-                                )
-                        ) {
-
-                            Icon(
-                                imageVector = if (car.isFavoriteByCurrentUser) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                                contentDescription = "Favorito",
-                                tint = if (car.isFavoriteByCurrentUser) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                    }
+                // Indicador de página
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 6.dp)
+                        .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(6.dp))
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                ) {
+                    Text(
+                        "${pagerState.currentPage + 1}/${car.imageUrls.size}",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontSize = 10.sp, color = Color.White
+                        )
+                    )
                 }
             }
 
 
-            // DETALLES DEL COCHE
-            Column(
-                modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(3.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+            // Botón de Favorito
+            if (isUserAuthenticated) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(4.dp)
                 ) {
-                    Text(
-                        text = "${car.brand} ${car.model}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                    IconButton(
+                        onClick = onToggleFavorite, modifier = Modifier
+                            .size(32.dp)
+                            .background(
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.6f), CircleShape
+                            )
+                    ) {
 
-                    Text(
-                        text = "${String.format("%,.0f", car.price).replace(",", ".")} €",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary,
-                        maxLines = 1
-                    )
-
+                        Icon(
+                            imageVector = if (car.isFavoriteByCurrentUser) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                            contentDescription = "Favorito",
+                            tint = if (car.isFavoriteByCurrentUser) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
                 }
+            }
+        }
 
-                if (car.version.isNotBlank()) {
-                    Text(
-                        text = car.version,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
 
-                Spacer(Modifier.height(2.dp))
+        // DETALLES DEL COCHE
+        Column(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(3.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(
+                    text = "${car.brand} ${car.model}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false)
+                )
 
-                // Info chips: Año, KM, Combustible
+                Text(
+                    text = "${String.format("%,.0f", car.price).replace(",", ".")} €",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                    maxLines = 1
+                )
+
+            }
+
+            if (car.version.isNotBlank()) {
+                Text(
+                    text = car.version,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+        Box(
+            modifier = Modifier.fillMaxSize().padding(bottom = 10.dp),
+            contentAlignment = Alignment.BottomStart
+        ){
+            Column(
+                modifier = Modifier.padding(horizontal = 10.dp),
+                verticalArrangement = Arrangement.spacedBy(3.dp)
+            ){
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -287,8 +281,6 @@ fun CarItemCard(
                     InfoChipSmall(text = "${car.mileage} km")
                     InfoChipSmall(text = car.fuelType)
                 }
-                Spacer(Modifier.height(2.dp))
-
                 // Ciudad y tiempo de publicación
                 Row(
                     modifier = Modifier
