@@ -128,9 +128,6 @@ fun ChatListScreen(
                             conversation = uiState.conversations[conversation],
                             currentUserId = uiState.currentUserId ?: "",
                             onConversationClick = { conv ->
-                                // El ID del vendedor es siempre `conv.sellerId`.
-                                // El `carId` es `conv.carId`.
-                                // El `ChatDetailViewModel` determinará quién es el "otro" basado en el `currentUserId`.
                                 if (conv.carId != null) {
                                     navController.navigate(
                                         Screen.ChatDetail.createRoute(

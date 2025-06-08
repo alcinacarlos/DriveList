@@ -88,7 +88,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun CarDetailScreen(
     viewModel: CarDetailViewModel = hiltViewModel(),
-    onContactSeller: (sellerId: String, carId: String, buyerId: String) -> Unit,
+    onContactSeller: (carId: String, sellerId: String, buyerId: String) -> Unit,
     onSeeProfile: (sellerId: String) -> Unit,
     navController: NavController
 ) {

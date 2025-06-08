@@ -22,8 +22,8 @@ class ChatRepositoryImpl @Inject constructor(
 ) : ChatRepository {
 
     companion object {
-        private const val CONVERSATIONS_COLLECTION = "conversations"
-        private const val MESSAGES_SUBCOLLECTION = "messages"
+        private const val CONVERSATIONS_COLLECTION = "conversaciones"
+        private const val MESSAGES_SUBCOLLECTION = "mensajes"
     }
 
     override suspend fun createOrGetConversation(
@@ -98,32 +98,40 @@ class ChatRepositoryImpl @Inject constructor(
         awaitClose { listenerRegistration.remove() }
     }
 
-    override suspend fun getConversationSellerBuyer(
-        currentUserId: String,
-        sellerId: String,
-        carId: String
-    ): Result<ChatConversation, ChatError> {
-        return try {
-            val participantUids = listOf(currentUserId, sellerId).sorted()
-            val conversationId = "${participantUids[0]}_${participantUids[1]}_$carId"
+    override suspend fun markAllMessagesAsReadInConversation(
+        conversationId: String,
+        readerId: String
+    ): Result<Unit, ChatError> {
+        if (conversationId.isEmpty() || readerId.isEmpty()) {
+            return Result.Error(ChatError.OperationFailed("IDs inválidos para marcar mensajes como leídos."))
+        }
 
-            val conversationSnapshot = firestore.collection(CONVERSATIONS_COLLECTION)
-                .document(conversationId)
+        val messagesRef = firestore.collection(CONVERSATIONS_COLLECTION)
+            .document(conversationId)
+            .collection(MESSAGES_SUBCOLLECTION)
+
+        return try {
+            // 1. Encontrar todos los mensajes no leídos que fueron enviados a este usuario
+            val unreadMessagesQuery = messagesRef
+                .whereEqualTo("receiverId", readerId)
+                .whereEqualTo("messageReaded", false)
                 .get()
                 .await()
 
-            if (conversationSnapshot.exists()) {
-                val conversation = conversationSnapshot.toObject(ChatConversation::class.java)
-                if (conversation != null) {
-                    Result.Success(conversation)
-                } else {
-                    Result.Error<ChatError>(ChatError.OperationFailed("Conversación mal formada."))
-                }
-            } else {
-                Result.Error<ChatError>(ChatError.ConversationNotFound("Conversación no encontrada."))
+            if (unreadMessagesQuery.isEmpty) {
+                return Result.Success(Unit)
             }
+
+            val batch = firestore.batch()
+            for (document in unreadMessagesQuery.documents) {
+                batch.update(document.reference, "messageReaded", true)
+            }
+
+            batch.commit().await()
+            Result.Success(Unit)
+
         } catch (e: Exception) {
-            Result.Error<ChatError>(ChatError.OperationFailed("Error al obtener la conversación: ${e.message}"))
+            Result.Error(ChatError.OperationFailed("No se pudieron actualizar los mensajes como leídos: ${e.message}"))
         }
     }
 
@@ -137,8 +145,8 @@ class ChatRepositoryImpl @Inject constructor(
 
         val query = firestore.collection(CONVERSATIONS_COLLECTION).document(conversationId)
             .collection(MESSAGES_SUBCOLLECTION)
-            .orderBy("timestamp", Query.Direction.ASCENDING) // Mensajes más antiguos primero
-            .limit(50) // Opcional: limita el número de mensajes iniciales (implementar paginación si es necesario)
+            .orderBy("timestamp", Query.Direction.ASCENDING)
+            .limit(50)
 
         val listenerRegistration = query.addSnapshotListener { snapshots, error ->
             if (error != null) {
@@ -184,7 +192,7 @@ class ChatRepositoryImpl @Inject constructor(
             receiverId = receiverId,
             text = text,
             timestamp = null, // Firestore asignará esto con @ServerTimestamp en el modelo
-            isRead = false, // El mensaje es nuevo, por lo tanto no leído
+            messageReaded = false, // El mensaje es nuevo, por lo tanto no leído
             imageUrl = imageUrl
         )
 

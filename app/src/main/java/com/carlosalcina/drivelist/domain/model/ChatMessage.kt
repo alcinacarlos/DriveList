@@ -14,9 +14,6 @@ data class ChatMessage(
     val text: String = "",
     @ServerTimestamp
     val timestamp: Timestamp? = null,
-    val isRead: Boolean = false,
+    val messageReaded: Boolean = false,
     val imageUrl: String? = null
-) {
-    // Constructor sin argumentos necesario para la deserialización de Firestore
-    constructor() : this("", "", "", null, null, "", "", null, false, null)
-}
+)

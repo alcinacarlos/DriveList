@@ -36,13 +36,17 @@ interface ChatRepository {
     fun getChatConversations(userId: String): Flow<Result<List<ChatConversation>, ChatError>>
 
     /**
-     * Obtiene un Flow con la lista de todas las conversaciones de chat para un usuario específico.
-     * La lista se actualiza en tiempo real.
+     * Marca todos los mensajes NO LEÍDOS de una conversación como LEÍDOS para un usuario específico.
+     * Esta función es para implementar los "doble ticks".
      *
-     * @param userId El ID del usuario para el cual obtener las conversaciones.
-     * @return Un Flow que emite Result<List<ChatConversation>, ChatError>.
+     * @param conversationId El ID de la conversación.
+     * @param readerId El ID del usuario que está leyendo los mensajes.
+     * @return Un Result que indica éxito (Unit) o un ChatError.
      */
-    suspend fun getConversationSellerBuyer(currentUserId: String, sellerId: String, carId: String): Result<ChatConversation, ChatError>
+    suspend fun markAllMessagesAsReadInConversation(
+        conversationId: String,
+        readerId: String
+    ): Result<Unit, ChatError>
 
     /**
      * Obtiene un Flow con la lista de mensajes para una conversación específica.

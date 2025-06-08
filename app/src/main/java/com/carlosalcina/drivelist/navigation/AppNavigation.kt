@@ -123,7 +123,7 @@ fun AppNavigation(
             CarDetailScreen(
                 navController = navController,
                 onContactSeller = { sellerId, carId, buyerId ->
-                    navController.navigate(Screen.ChatDetail.createRoute(sellerId, carId, buyerId))
+                    navController.navigate(Screen.ChatDetail.createRoute(carId, sellerId, buyerId))
                 },
                 onSeeProfile = { sellerId ->
                     navController.navigate(Screen.Profile.createRoute(sellerId))
