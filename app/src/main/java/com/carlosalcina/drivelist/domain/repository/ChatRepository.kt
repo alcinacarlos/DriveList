@@ -36,6 +36,15 @@ interface ChatRepository {
     fun getChatConversations(userId: String): Flow<Result<List<ChatConversation>, ChatError>>
 
     /**
+     * Obtiene un Flow con la lista de todas las conversaciones de chat para un usuario específico.
+     * La lista se actualiza en tiempo real.
+     *
+     * @param userId El ID del usuario para el cual obtener las conversaciones.
+     * @return Un Flow que emite Result<List<ChatConversation>, ChatError>.
+     */
+    suspend fun getConversationSellerBuyer(currentUserId: String, sellerId: String, carId: String): Result<ChatConversation, ChatError>
+
+    /**
      * Obtiene un Flow con la lista de mensajes para una conversación específica.
      * La lista se actualiza en tiempo real y los mensajes se ordenan por timestamp.
      *

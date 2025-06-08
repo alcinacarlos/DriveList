@@ -122,8 +122,8 @@ fun AppNavigation(
         ) { backStackEntry ->
             CarDetailScreen(
                 navController = navController,
-                onContactSeller = { sellerId, carId ->
-                    navController.navigate(Screen.ChatDetail.createRoute(sellerId, carId))
+                onContactSeller = { sellerId, carId, buyerId ->
+                    navController.navigate(Screen.ChatDetail.createRoute(sellerId, carId, buyerId))
                 },
                 onSeeProfile = { sellerId ->
                     navController.navigate(Screen.Profile.createRoute(sellerId))
@@ -132,17 +132,16 @@ fun AppNavigation(
         }
 
         composable(
-            route = "chat_detail_screen/{sellerId}/{carId}",
+            route = Screen.ChatDetail.route,
             arguments = listOf(
-                navArgument("sellerId") { type = NavType.StringType },
-                navArgument("carId") { type = NavType.StringType }
+                navArgument(NavigationArgs.CAR_ID_ARG) { type = NavType.StringType },
+                navArgument(NavigationArgs.SELLER_ID_ARG) { type = NavType.StringType },
+                navArgument(NavigationArgs.BUYER_ID_ARG) { type = NavType.StringType }
             )
         ) { backStackEntry ->
-            val sellerId = backStackEntry.arguments?.getString("sellerId")
-            val carIdArg = backStackEntry.arguments?.getString("carId")
-
-            ChatDetailScreen(navController)
+            ChatDetailScreen(navController = navController)
         }
+
         composable(route = Screen.ChatList.route) {
             ChatListScreen(
                 navController = navController

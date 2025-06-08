@@ -19,7 +19,6 @@ import javax.inject.Inject
 
 class ChatRepositoryImpl @Inject constructor(
     private val firestore: FirebaseFirestore,
-    private val authRepository: com.carlosalcina.drivelist.domain.repository.AuthRepository // Para obtener datos del usuario actual si es necesario
 ) : ChatRepository {
 
     companion object {
@@ -98,6 +97,36 @@ class ChatRepositoryImpl @Inject constructor(
         }
         awaitClose { listenerRegistration.remove() }
     }
+
+    override suspend fun getConversationSellerBuyer(
+        currentUserId: String,
+        sellerId: String,
+        carId: String
+    ): Result<ChatConversation, ChatError> {
+        return try {
+            val participantUids = listOf(currentUserId, sellerId).sorted()
+            val conversationId = "${participantUids[0]}_${participantUids[1]}_$carId"
+
+            val conversationSnapshot = firestore.collection(CONVERSATIONS_COLLECTION)
+                .document(conversationId)
+                .get()
+                .await()
+
+            if (conversationSnapshot.exists()) {
+                val conversation = conversationSnapshot.toObject(ChatConversation::class.java)
+                if (conversation != null) {
+                    Result.Success(conversation)
+                } else {
+                    Result.Error<ChatError>(ChatError.OperationFailed("Conversación mal formada."))
+                }
+            } else {
+                Result.Error<ChatError>(ChatError.ConversationNotFound("Conversación no encontrada."))
+            }
+        } catch (e: Exception) {
+            Result.Error<ChatError>(ChatError.OperationFailed("Error al obtener la conversación: ${e.message}"))
+        }
+    }
+
 
     override fun getMessages(conversationId: String): Flow<Result<List<ChatMessage>, ChatError>> = callbackFlow {
         if (conversationId.isEmpty()) {

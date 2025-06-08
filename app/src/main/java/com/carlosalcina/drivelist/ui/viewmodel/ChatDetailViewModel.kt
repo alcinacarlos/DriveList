@@ -29,8 +29,9 @@ class ChatDetailViewModel @Inject constructor(
     val uiState: StateFlow<ChatDetailUiState> = _uiState.asStateFlow()
 
     // Argumentos de navegación
-    private val sellerIdArg: String? = savedStateHandle["sellerId"]
     private val carIdArg: String? = savedStateHandle["carId"]
+    private val sellerIdArg: String? = savedStateHandle["sellerId"]
+    private val buyerIdArg: String? = savedStateHandle["buyerId"]
 
     init {
         initializeChat()
@@ -40,12 +41,16 @@ class ChatDetailViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoadingInitialData = true, error = null)
 
-            if (sellerIdArg == null || carIdArg == null) {
-                _uiState.value = _uiState.value.copy(isLoadingInitialData = false, error = "Faltan datos para iniciar el chat (vendedor o coche).")
+            // ANTES
+            // if (sellerIdArg == null || carIdArg == null) { /* ... error */ }
+
+            // DESPUÉS (verifica los 3 argumentos)
+            if (sellerIdArg == null || carIdArg == null || buyerIdArg == null) {
+                _uiState.value = _uiState.value.copy(isLoadingInitialData = false, error = "Faltan datos para iniciar el chat.")
                 return@launch
             }
 
-            // 1. Obtener usuario actual
+            // 1. Obtener usuario actual (sin cambios)
             val currentUserResult = authRepository.getCurrentUserData()
             val currentUserId = authRepository.getCurrentFirebaseUser()?.uid
             if (currentUserResult !is Result.Success || currentUserId == null) {
@@ -55,18 +60,22 @@ class ChatDetailViewModel @Inject constructor(
             val currentUserData = currentUserResult.data
             _uiState.value = _uiState.value.copy(currentUserId = currentUserId, currentUserData = currentUserData)
 
-            // 2. Obtener datos del vendedor (otherUser)
-            val sellerDataResult = authRepository.getUserData(sellerIdArg)
-            if (sellerDataResult !is Result.Success) {
-                _uiState.value = _uiState.value.copy(isLoadingInitialData = false, error = "No se pudo obtener la información del vendedor.")
+
+            // 2. Determinar quién es el otro participante y obtener sus datos
+            // ¡¡ESTA ES LA LÓGICA CLAVE!!
+            val otherParticipantId = if (currentUserId == sellerIdArg) buyerIdArg else sellerIdArg
+
+            val otherParticipantResult = authRepository.getUserData(otherParticipantId)
+            if (otherParticipantResult !is Result.Success) {
+                _uiState.value = _uiState.value.copy(isLoadingInitialData = false, error = "No se pudo obtener la información del otro participante.")
                 return@launch
             }
-            val sellerData = sellerDataResult.data
-            _uiState.value = _uiState.value.copy(otherParticipant = sellerData)
+            val otherParticipantData = otherParticipantResult.data
+            _uiState.value = _uiState.value.copy(otherParticipant = otherParticipantData)
 
 
-            // 3. Obtener datos del coche
-            val carResult = carListRepository.getCarById(carIdArg, currentUserId) // currentUserId para isFavoriteByCurrentUser
+            // 3. Obtener datos del coche (sin cambios)
+            val carResult = carListRepository.getCarById(carIdArg, currentUserId)
             if (carResult !is Result.Success) {
                 _uiState.value = _uiState.value.copy(isLoadingInitialData = false, error = "No se pudo obtener la información del coche.")
                 return@launch
@@ -74,29 +83,23 @@ class ChatDetailViewModel @Inject constructor(
             val carData = carResult.data
             _uiState.value = _uiState.value.copy(carDetails = carData)
 
-            // Determinar quién es el comprador y quién el vendedor para la llamada a createOrGetConversation
-            // El `sellerIdArg` es el ID del dueño del coche (vendedor)
-            // `currentUserData` es el usuario que está usando la app (podría ser el comprador o el mismo vendedor viendo su chat)
-
-            val effectiveCurrentUserForChat = currentUserData
-            val effectiveOtherUserForChat = sellerData // sellerIdArg es el ID del otro participante principal (el dueño del coche)
-
-            // 4. Crear u obtener la conversación
+            // 4. Crear u obtener la conversación (¡AHORA FUNCIONARÁ SIEMPRE!)
+            // La llamada no cambia, pero los datos que le pasamos ahora son siempre los correctos.
             val conversationResult = chatRepository.createOrGetConversation(
-                currentUser = effectiveCurrentUserForChat, // Usuario actual de la app
-                otherUser = effectiveOtherUserForChat,   // El otro usuario de la conversación
+                currentUser = currentUserData,
+                otherUser = otherParticipantData,
                 car = carData
             )
 
+            // ... el resto de la función `initializeChat` sigue igual
             when (conversationResult) {
                 is Result.Success -> {
                     val convId = conversationResult.data
                     _uiState.value = _uiState.value.copy(
                         conversationId = convId,
                         isLoadingInitialData = false,
-                        canSendMessage = true // Ahora podemos enviar mensajes
+                        canSendMessage = true
                     )
-                    // 5. Cargar mensajes y marcar como leídos
                     loadMessages(convId, currentUserId)
                     markConversationAsRead(convId, currentUserId)
                 }
@@ -114,15 +117,13 @@ class ChatDetailViewModel @Inject constructor(
                 when (result) {
                     is Result.Success -> {
                         _uiState.value = _uiState.value.copy(
-                            messages = result.data,
-                            isLoadingMessages = false,
-                            error = null
+                            messages = result.data, isLoadingMessages = false, error = null
                         )
                     }
+
                     is Result.Error -> {
                         _uiState.value = _uiState.value.copy(
-                            isLoadingMessages = false,
-                            error = mapChatErrorToString(result.error)
+                            isLoadingMessages = false, error = mapChatErrorToString(result.error)
                         )
                     }
                 }
@@ -162,6 +163,7 @@ class ChatDetailViewModel @Inject constructor(
                 is Result.Success -> {
                     _uiState.value = state.copy(currentMessageText = "") // Limpiar campo de texto
                 }
+
                 is Result.Error -> {
                     _uiState.value = state.copy(error = mapChatErrorToString(result.error))
                 }
@@ -174,6 +176,7 @@ class ChatDetailViewModel @Inject constructor(
             chatRepository.markConversationAsRead(conversationId, userId)
         }
     }
+
     private fun mapChatErrorToString(error: ChatError): String {
         return when (error) {
             is ChatError.NetworkError -> error.message

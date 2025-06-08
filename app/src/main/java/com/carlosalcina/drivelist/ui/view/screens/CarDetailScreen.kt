@@ -88,7 +88,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun CarDetailScreen(
     viewModel: CarDetailViewModel = hiltViewModel(),
-    onContactSeller: (sellerId: String, carId: String) -> Unit,
+    onContactSeller: (sellerId: String, carId: String, buyerId: String) -> Unit,
     onSeeProfile: (sellerId: String) -> Unit,
     navController: NavController
 ) {
@@ -105,7 +105,7 @@ fun CarDetailScreen(
             if (carState is CarDataState.Success && sellerState is SellerUiState.Success) {
                 if (uiState.isBuyer){
                     ExtendedFloatingActionButton(
-                        onClick = { onContactSeller(carState.car.userId, carState.car.id) },
+                        onClick = { onContactSeller(carState.car.userId, carState.car.id, uiState.currentUserId) },
                         icon = { Icon(Icons.AutoMirrored.Filled.Chat, contentDescription = "Contactar") },
                         text = { Text("Contactar al Vendedor") },
                         containerColor = MaterialTheme.colorScheme.primary,
@@ -113,7 +113,7 @@ fun CarDetailScreen(
                     )
                 }else{
                     ExtendedFloatingActionButton(
-                        onClick = { onContactSeller(carState.car.userId, carState.car.id) },
+                        onClick = {  },
                         icon = { Icon(Icons.Filled.Edit, contentDescription = "Contactar") },
                         text = { Text("Editar") },
                         containerColor = MaterialTheme.colorScheme.primary,

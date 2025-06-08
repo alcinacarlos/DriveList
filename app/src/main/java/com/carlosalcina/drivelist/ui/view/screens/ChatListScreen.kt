@@ -134,7 +134,9 @@ fun ChatListScreen(
                                 if (conv.carId != null) {
                                     navController.navigate(
                                         Screen.ChatDetail.createRoute(
-                                            sellerId = conv.sellerId, carId = conv.carId
+                                            carId = conv.carId,
+                                            sellerId = conv.sellerId,
+                                            buyerId = conv.buyerId
                                         )
                                     )
                                 }

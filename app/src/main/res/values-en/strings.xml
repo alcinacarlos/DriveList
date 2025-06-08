@@ -27,6 +27,7 @@
     <string name="screen_title_register">Register</string>
     <string name="screen_title_welcome">Welcome</string>
     <string name="screen_title_home">Home</string>
+    <string name="screen_title_edit">Editar vehiculo</string>
     <string name="screen_title_search">Search</string>
     <string name="screen_title_sell">Sell</string>
     <string name="screen_title_favorites">Favorites</string>

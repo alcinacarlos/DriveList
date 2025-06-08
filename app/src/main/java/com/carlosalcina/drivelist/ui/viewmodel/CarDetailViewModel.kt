@@ -53,6 +53,7 @@ class CarDetailViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(carDataState = CarDataState.Loading) }
             val currentUserId = firebaseAuth.currentUser?.uid
+            _uiState.update { it.copy(currentUserId = currentUserId ?: "") }
             when (val result = carListRepository.getCarById(carId, currentUserId)) {
                 is Result.Success -> {
                     val car = result.data
