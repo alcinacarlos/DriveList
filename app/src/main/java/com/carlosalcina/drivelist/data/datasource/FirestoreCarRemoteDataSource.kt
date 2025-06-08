@@ -170,6 +170,15 @@ class FirestoreCarRemoteDataSource @Inject constructor(
         }
     }
 
+    override suspend fun deleteCarFromFirestore(car: CarForSale): Result<Unit, Exception> {
+        return try {
+            carsForSaleCollection.document(car.id).delete().await()
+            Result.Success(Unit)
+        } catch (e: Exception) {
+            Result.Error(e)
+        }
+    }
+
     private fun getDocumentIdFromName(nombreId: String): String {
 
         var saneado = nombreId

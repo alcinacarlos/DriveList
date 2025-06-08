@@ -1,6 +1,7 @@
 package com.carlosalcina.drivelist.ui.view.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -64,6 +65,7 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.carlosalcina.drivelist.R
 import com.carlosalcina.drivelist.domain.model.ChatMessage
+import com.carlosalcina.drivelist.navigation.Screen
 import com.carlosalcina.drivelist.ui.viewmodel.ChatDetailViewModel
 import com.carlosalcina.drivelist.utils.Utils.formatTimestampForChatMessage
 import kotlinx.coroutines.delay
@@ -120,7 +122,8 @@ fun ChatDetailScreen(
             ChatDetailTopAppBar(
                 navController = navController,
                 otherParticipantName = uiState.otherParticipant?.displayName,
-                otherParticipantPhotoUrl = uiState.otherParticipant?.photoURL,
+                otherParticipantPhotoUrl = uiState.carDetails?.imageUrls?.first(),
+                otherParticipantId = uiState.otherParticipant?.uid,
                 carName = uiState.carDetails?.let { "${it.brand} ${it.model}" }
             )
         },
@@ -185,12 +188,13 @@ fun ChatDetailScreen(
 fun ChatDetailTopAppBar(
     navController: NavController,
     otherParticipantName: String?,
+    otherParticipantId: String?,
     otherParticipantPhotoUrl: String?,
     carName: String?
 ) {
     TopAppBar(
         title = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable{ otherParticipantId?.let { navController.navigate(Screen.Profile.createRoute(it)) } }) {
                 AsyncImage(
                     model = otherParticipantPhotoUrl,
                     contentDescription = "Avatar de $otherParticipantName",

@@ -52,10 +52,8 @@ class ChatRepositoryImpl @Inject constructor(
                     carName = "${car.brand} ${car.model}", // O una representación más detallada
                     buyerId = if (currentUser.uid == car.userId) otherUser.uid else currentUser.uid, // Asumiendo que el dueño del coche es el vendedor
                     buyerName = if (currentUser.uid == car.userId) otherUser.displayName else currentUser.displayName,
-                    buyerPhotoUrl = if (currentUser.uid == car.userId) otherUser.photoURL else currentUser.photoURL,
                     sellerId = if (currentUser.uid == car.userId) currentUser.uid else otherUser.uid,
                     sellerName = if (currentUser.uid == car.userId) currentUser.displayName else otherUser.displayName,
-                    sellerPhotoUrl = if (currentUser.uid == car.userId) currentUser.photoURL else otherUser.photoURL,
                     participantIds = participantUids,
                     lastMessageText = null,
                     lastMessageTimestamp = null, // Se actualizará con el primer mensaje
@@ -187,26 +185,24 @@ class ChatRepositoryImpl @Inject constructor(
             id = messageRef.id,
             conversationId = conversationId,
             senderId = senderId,
-            senderName = senderName,
-            senderPhotoUrl = senderPhotoUrl,
             receiverId = receiverId,
             text = text,
-            timestamp = null, // Firestore asignará esto con @ServerTimestamp en el modelo
-            messageReaded = false, // El mensaje es nuevo, por lo tanto no leído
+            timestamp = null,
+            messageReaded = false,
             imageUrl = imageUrl
         )
 
         return try {
             firestore.runBatch { batch ->
-                // 1. Añadir el nuevo mensaje
+                //Añadir el nuevo mensaje
                 batch.set(messageRef, newMessage)
 
-                // 2. Actualizar la conversación con el último mensaje y el contador de no leídos
+                // Actualizar la conversación con el último mensaje y el contador de no leídos
                 val conversationUpdateData = hashMapOf(
                     "lastMessageText" to if (imageUrl != null && text.isBlank()) "Imagen" else text,
                     "lastMessageTimestamp" to FieldValue.serverTimestamp(),
                     "lastMessageSenderId" to senderId,
-                    "unreadCount.$receiverId" to FieldValue.increment(1) // Incrementar contador para el receptor
+                    "unreadCount.$receiverId" to FieldValue.increment(1)
                 )
                 batch.update(conversationRef, conversationUpdateData)
             }.await()
@@ -228,8 +224,6 @@ class ChatRepositoryImpl @Inject constructor(
 
         return try {
             // Actualizar el contador de no leídos para el usuario actual a 0
-            // Usamos SetOptions.merge() si el campo puede no existir aún, aunque lo inicializamos.
-            // O directamente actualizamos el campo específico.
             val updateData = mapOf("unreadCount.$userId" to 0)
             conversationRef.update(updateData).await()
             Result.Success(Unit)

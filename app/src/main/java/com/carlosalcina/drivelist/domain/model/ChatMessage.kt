@@ -8,8 +8,6 @@ data class ChatMessage(
     val id: String = UUID.randomUUID().toString(),
     val conversationId: String = "",
     val senderId: String = "",
-    val senderName: String? = null,
-    val senderPhotoUrl: String? = null,
     val receiverId: String = "",
     val text: String = "",
     @ServerTimestamp

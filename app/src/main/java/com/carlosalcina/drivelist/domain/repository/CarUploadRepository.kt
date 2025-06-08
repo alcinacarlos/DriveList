@@ -40,4 +40,6 @@ interface CarUploadRepository {
      * Obtiene las versiones para una marca, modelo, tipo de cuerpo, tipo de combustible y año específicos.
      */
     suspend fun getVersions(brandName: String, modelName: String, bodyTypeName: String, fuelTypeName: String, yearName: String): Result<List<String>, Exception>
+
+    suspend fun deleteCarFromFirestore(car: CarForSale): Result<Unit, Exception>
 }

@@ -18,6 +18,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChatBubbleOutline
+import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -33,6 +35,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -127,6 +130,9 @@ fun ChatListScreen(
                         ChatConversationItem(
                             conversation = uiState.conversations[conversation],
                             currentUserId = uiState.currentUserId ?: "",
+                            onCarClick = {
+                                navController.navigate(Screen.CarDetail.createRoute(uiState.conversations[conversation].carId!!))
+                            },
                             onConversationClick = { conv ->
                                 if (conv.carId != null) {
                                     navController.navigate(
@@ -153,18 +159,19 @@ fun ChatListScreen(
 fun ChatConversationItem(
     conversation: ChatConversation,
     currentUserId: String,
-    onConversationClick: (ChatConversation) -> Unit
+    onConversationClick: (ChatConversation) -> Unit,
+    onCarClick: () -> Unit
 ) {
     // Determinar quién es el otro participante para mostrar su info
     val otherParticipantName: String?
-    val otherParticipantPhotoUrl: String?
+    val otherId: String?
 
     if (currentUserId == conversation.buyerId) {
         otherParticipantName = conversation.sellerName
-        otherParticipantPhotoUrl = conversation.sellerPhotoUrl
+        otherId = conversation.sellerId
     } else {
         otherParticipantName = conversation.buyerName
-        otherParticipantPhotoUrl = conversation.buyerPhotoUrl
+        otherId = conversation.buyerId
     }
 
     val unreadCount = conversation.unreadCount[currentUserId] ?: 0
@@ -176,12 +183,12 @@ fun ChatConversationItem(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically) {
         AsyncImage(
-            model = otherParticipantPhotoUrl
-                ?: conversation.carImageUrl, // Prioriza foto del otro usuario, sino del coche
+            model =  conversation.carImageUrl,
             contentDescription = "Avatar de $otherParticipantName",
             modifier = Modifier
                 .size(56.dp)
-                .clip(CircleShape),
+                .clip(CircleShape)
+                .clickable{ onCarClick() },
             contentScale = ContentScale.Crop,
             error = painterResource(id = R.drawable.ic_avatar_placeholder),
         )
@@ -199,15 +206,31 @@ fun ChatConversationItem(
                 overflow = TextOverflow.Ellipsis
             )
             Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = conversation.lastMessageText ?: "No hay mensajes aún.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (unreadCount > 0) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = if (unreadCount > 0) FontWeight.SemiBold else FontWeight.Normal,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            if (conversation.carName != null && otherParticipantName != conversation.carName) { // Mostrar nombre del coche si no es el título principal
+            Row(
+                modifier = Modifier.align(Alignment.Start),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = conversation.lastMessageText ?: "No hay mensajes aún.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (unreadCount > 0) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = if (unreadCount > 0) FontWeight.SemiBold else FontWeight.Normal,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                if (conversation.lastMessageSenderId == currentUserId) {
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Icon(
+                        imageVector = if (conversation.unreadCount[otherId] == 0) Icons.Default.DoneAll else Icons.Default.Done,
+                        contentDescription = if (conversation.unreadCount[otherId] == 0) "Leído" else "Enviado",
+                        tint = if (conversation.unreadCount[otherId] == 0) Color.Blue else Color.Gray,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
+
+            if (conversation.carName != null && otherParticipantName != conversation.carName) {
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = "Sobre: ${conversation.carName}",

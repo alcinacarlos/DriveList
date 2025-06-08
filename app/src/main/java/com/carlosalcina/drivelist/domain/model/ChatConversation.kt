@@ -11,11 +11,9 @@ data class ChatConversation(
 
     val buyerId: String = "",
     val buyerName: String? = null,
-    val buyerPhotoUrl: String? = null,
 
     val sellerId: String = "",
     val sellerName: String? = null,
-    val sellerPhotoUrl: String? = null,
 
     val participantIds: List<String> = emptyList(),
 

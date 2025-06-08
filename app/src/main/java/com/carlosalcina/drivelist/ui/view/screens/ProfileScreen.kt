@@ -1,6 +1,5 @@
 package com.carlosalcina.drivelist.ui.view.screens
 
-import android.annotation.SuppressLint
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -49,7 +48,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -75,7 +76,6 @@ import com.carlosalcina.drivelist.ui.view.components.TopBar
 import com.carlosalcina.drivelist.ui.viewmodel.ProfileViewModel
 import com.carlosalcina.drivelist.utils.Utils.formatUserSinceDetail
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
@@ -111,47 +111,57 @@ fun ProfileScreen(
 
     Scaffold(
         topBar = {
-            TopBar(navController, stringResource = R.string.screen_title_profile, showBackArrow = true)
+            TopBar(
+                navController,
+                stringResource = R.string.screen_title_profile,
+                showBackArrow = true
+            )
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) }) {
-        if (uiState.isLoading) {
-            CircularProgressIndicator()
-        } else if (uiState.errorMessage != null) {
-            Text(
-                text = uiState.errorMessage ?: "Ocurrió un error desconocido.",
-                color = MaterialTheme.colorScheme.error,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp)
-            )
-        } else if (uiState.authUser == null || uiState.userData == null) {
-            Text(
-                "Datos de usuario no disponibles.",
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp)
-            )
-        } else {
-            ProfileContent(
-                uiState = uiState, viewModel = viewModel, onCarClicked = onCarClicked
-            )
-        }
+        snackbarHost = { SnackbarHost(snackbarHostState) }) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            if (uiState.isLoading) {
+                CircularProgressIndicator()
+            } else if (uiState.errorMessage != null) {
+                Text(
+                    text = uiState.errorMessage ?: "Ocurrió un error desconocido.",
+                    color = MaterialTheme.colorScheme.error,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp)
+                )
+            } else if (uiState.authUser == null || uiState.userData == null) {
+                Text(
+                    "Datos de usuario no disponibles.",
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp)
+                )
+            } else {
+                ProfileContent(
+                    uiState = uiState, viewModel = viewModel, onCarClicked = onCarClicked
+                )
+            }
 
-        // Diálogo para editar un campo individual
-        if (uiState.editingField != null) {
-            SingleFieldEditDialog(
-                uiState = uiState,
-                onDismiss = { viewModel.onDismissEditFieldDialog() },
-                onSave = { viewModel.saveFieldChange() },
-                onValueChange = { viewModel.onEditableFieldValueChanged(it) })
-        }
+            // Diálogo para editar un campo individual
+            if (uiState.editingField != null) {
+                SingleFieldEditDialog(
+                    uiState = uiState,
+                    onDismiss = { viewModel.onDismissEditFieldDialog() },
+                    onSave = { viewModel.saveFieldChange() },
+                    onValueChange = { viewModel.onEditableFieldValueChanged(it) })
+            }
 
-        // Diálogo de opciones para la foto de perfil
-        if (uiState.showPhotoOptionsDialog) {
-            PhotoOptionsDialog(
-                viewModel = viewModel, onDismiss = { viewModel.onDismissPhotoOptionsDialog() })
+            // Diálogo de opciones para la foto de perfil
+            if (uiState.showPhotoOptionsDialog) {
+                PhotoOptionsDialog(
+                    viewModel = viewModel, onDismiss = { viewModel.onDismissPhotoOptionsDialog() })
+            }
         }
 
     }
@@ -240,17 +250,22 @@ fun ProfileHeader(
         Box(
             modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center
         ) {
+            var showFullImage by remember { mutableStateOf(false) }
+
             Box {
                 Image(
                     painter = rememberAsyncImagePainter(model = userData?.photoURL.takeIf { !it.isNullOrBlank() }
-                    ?: R.drawable.no_photo,
-                    error = painterResource(id = R.drawable.no_photo)),
+                        ?: R.drawable.no_photo,
+                        error = painterResource(id = R.drawable.no_photo)),
                     contentDescription = "Foto de Perfil",
                     modifier = Modifier
                         .size(120.dp)
                         .clip(CircleShape)
-                        .border(2.dp, MaterialTheme.colorScheme.primaryContainer, CircleShape),
-                    contentScale = ContentScale.Crop)
+                        .border(2.dp, MaterialTheme.colorScheme.primaryContainer, CircleShape)
+                        .clickable { showFullImage = true }, // click para mostrar imagen grande
+                    contentScale = ContentScale.Crop
+                )
+
                 if (isUploadingPhoto) {
                     CircularProgressIndicator(
                         modifier = Modifier
@@ -259,7 +274,7 @@ fun ProfileHeader(
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
-                if (editable){
+                if (editable) {
                     IconButton(
                         onClick = onEditPhotoClicked,
                         modifier = Modifier
@@ -275,6 +290,12 @@ fun ProfileHeader(
                             modifier = Modifier.size(20.dp)
                         )
                     }
+                }
+                if (showFullImage) {
+                    ProfilePhotoDialog(
+                        imageUrl = userData?.photoURL,
+                        onDismiss = { showFullImage = false }
+                    )
                 }
 
             }
@@ -306,7 +327,11 @@ fun ProfileHeader(
             editable = editable
         )
         Spacer(modifier = Modifier.height(12.dp))
-        Text(formatUserSinceDetail(userData?.createdAt), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(
+            formatUserSinceDetail(userData?.createdAt),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
 
     }
 }
@@ -339,7 +364,7 @@ fun EditableProfileField(
                 overflow = TextOverflow.Ellipsis,
             )
         }
-        if (editable){
+        if (editable) {
             IconButton(onClick = onEditClicked) {
                 Icon(
                     Icons.Filled.Edit,
@@ -463,3 +488,26 @@ fun PhotoOptionItem(
         Text(text, color = contentColor, style = MaterialTheme.typography.bodyLarge)
     }
 }
+
+@Composable
+fun ProfilePhotoDialog(
+    imageUrl: String?,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(10.dp)
+        ) {
+            Image(
+                painter = rememberAsyncImagePainter(model = imageUrl ?: R.drawable.no_photo),
+                contentDescription = "Foto de Perfil Ampliada",
+                modifier = Modifier
+                    .fillMaxWidth(),
+                contentScale = ContentScale.Fit
+            )
+        }
+    }
+}
+

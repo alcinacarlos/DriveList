@@ -356,9 +356,7 @@ private fun CarAttributesSectionDetail(car: CarForSale) {
         car.year.takeIf { it.isNotBlank() }?.let { AttributeItemUIData(Icons.Filled.CalendarToday, "Año", it) },
         car.bodyType.takeIf { it.isNotBlank() }?.let { AttributeItemUIData(Icons.Filled.DirectionsCar, "Carrocería", it) },
         car.carColor.takeIf { it.isNotBlank() }?.let { AttributeItemUIData(Icons.Filled.Palette, "Color", stringResource(id = CarColor.fromName(it)!!.displayNameResId )) },
-        listOfNotNull(car.ciudad, car.comunidadAutonoma).joinToString(", ").takeIf { it.isNotBlank() }?.let {
-            AttributeItemUIData(Icons.Filled.LocationCity, "Ubicación", it)
-        }
+        car.ciudad.takeIf { it?.isNotBlank() == true }?.let { AttributeItemUIData(Icons.Filled.LocationCity, "Ubicación", it) }
     )
 
     if (attributes.isNotEmpty()) {

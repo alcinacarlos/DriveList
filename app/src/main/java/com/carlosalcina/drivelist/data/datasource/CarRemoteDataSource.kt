@@ -12,5 +12,6 @@ interface CarRemoteDataSource {
     suspend fun fetchVersions(brandName: String, modelName: String, bodyTypeName: String, fuelTypeName: String, yearName: String): Result<List<String>, Exception>
 
     suspend fun saveCarToFirestore(car: CarForSale): Result<Unit, Exception>
+    suspend fun deleteCarFromFirestore(car: CarForSale): Result<Unit, Exception>
     suspend fun editCarFromFirestore(car: CarForSale): Result<Unit, Exception>
 }
