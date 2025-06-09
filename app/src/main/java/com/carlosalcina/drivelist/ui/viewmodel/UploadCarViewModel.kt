@@ -213,12 +213,11 @@ class UploadCarViewModel @Inject constructor(
 
     fun onYearSelected(year: String) {
         val state = _uiState.value
-        val (currentBrand, currentModel, currentBodyType, currentFuelType) = Quadruple(
-            state.selectedBrand,
-            state.selectedModel,
-            state.selectedBodyType,
-            state.selectedFuelType
-        )
+        val currentBrand = state.selectedBrand
+        val currentModel = state.selectedModel
+        val currentBodyType = state.selectedBodyType
+        val currentFuelType = state.selectedFuelType
+
         if (currentBrand == null || currentModel == null || currentBodyType == null || currentFuelType == null) return
 
         _uiState.update {
@@ -249,15 +248,6 @@ class UploadCarViewModel @Inject constructor(
             }
         }
     }
-
-    // Helper data class para el ViewModel
-    private data class Quadruple<A, B, C, D>(
-        val first: A,
-        val second: B,
-        val third: C,
-        val fourth: D
-    )
-
 
     fun onVersionSelected(version: String) {
         _uiState.update { it.copy(selectedVersion = version, generalErrorMessage = null) }

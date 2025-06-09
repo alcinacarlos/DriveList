@@ -89,8 +89,8 @@ sealed class Screen(
             "chat_detail_screen/$carId/$sellerId/$buyerId"
     }
 
-    object EditVehicle : Screen("edit_vehicle_screen/{carId}", R.string.screen_title_edit) {
-        fun createRoute(carId: String): String = "chat_detail_screen/$carId"
+    object EditVehicle : Screen("edit_vehicle_screen/{${NavigationArgs.CAR_ID_ARG}}", R.string.screen_title_edit) {
+        fun createRoute(carId: String): String = "edit_vehicle_screen/$carId"
     }
 
     object ChatList :

@@ -2,8 +2,6 @@ package com.carlosalcina.drivelist.ui.viewmodel
 
 import android.content.Context
 import android.net.Uri
-import android.util.Log
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.carlosalcina.drivelist.data.datasource.ImageStorageDataSource
@@ -12,13 +10,11 @@ import com.carlosalcina.drivelist.domain.model.CarForSale
 import com.carlosalcina.drivelist.domain.repository.CarListRepository
 import com.carlosalcina.drivelist.domain.repository.CarUploadRepository
 import com.carlosalcina.drivelist.domain.repository.LocationRepository
-import com.carlosalcina.drivelist.navigation.NavigationArgs
 import com.carlosalcina.drivelist.ui.states.EditCarScreenState
 import com.carlosalcina.drivelist.utils.KeywordGenerator
 import com.carlosalcina.drivelist.utils.NetworkUtils
 import com.carlosalcina.drivelist.utils.Result
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.storage.FirebaseStorage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.async
@@ -28,342 +24,679 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 @HiltViewModel
 class EditCarViewModel @Inject constructor(
     @ApplicationContext private val applicationContext: Context,
-    private val savedStateHandle: SavedStateHandle,
-    private val carListRepository: CarListRepository,
-    private val carUploadRepository: CarUploadRepository,
-    private val imageStorageDataSource: ImageStorageDataSource, // Inyectado para operaciones de Storage
-    private val firebaseStorage: FirebaseStorage, // Para obtener referencia de Storage desde URL
-    private val locationRepository: LocationRepository,
-    private val firebaseAuth: FirebaseAuth
+    private val carRepository: CarListRepository,
+    private val uploadRepository: CarUploadRepository,
+    private val firebaseAuth: FirebaseAuth,
+    private val imageStorageDataSource: ImageStorageDataSource,
+    private val locationRepository: LocationRepository
 ) : ViewModel() {
+
+    companion object {
+        const val MAX_IMAGES = 10
+    }
 
     private val _uiState = MutableStateFlow(EditCarScreenState())
     val uiState: StateFlow<EditCarScreenState> = _uiState.asStateFlow()
+    val curentUser = firebaseAuth.currentUser
 
-    private val carIdToEdit: String? = savedStateHandle[NavigationArgs.CAR_ID_ARG]
-
-    companion object {
-        private const val TAG = "EditCarVM"
-        internal const val MAX_IMAGES_ALLOWED = 10
-    }
-
-    init {
-        val currentUserId = firebaseAuth.currentUser?.uid
-        if (carIdToEdit != null && currentUserId != null) {
-            _uiState.update { it.copy(carIdToEdit = carIdToEdit) }
-            loadInitialCarData(carIdToEdit, currentUserId)
-            fetchBrandsForDropdown()
-        } else {
-            _uiState.update { it.copy(isLoadingInitialData = false, initialDataLoadError = "Error: No se pudo identificar el coche o el usuario.") }
-            Log.e(TAG, "Car ID o User ID es nulo. CarID: $carIdToEdit, UserID: $currentUserId")
+    fun loadCarDetails(carId: String) {
+        if (carId.isBlank()) {
+            _uiState.update { it.copy(generalErrorMessage = "ID de coche no válido.") }
+            return
         }
-    }
+        _uiState.update { it.copy(isLoadingCarDetails = true, carId = carId) }
 
-    private fun loadInitialCarData(carId: String, currentAuthUserId: String) {
-        _uiState.update { it.copy(isLoadingInitialData = true, initialDataLoadError = null) }
         viewModelScope.launch {
-            when (val result = carListRepository.getCarById(carId, currentAuthUserId)) {
+            val carDetailsJob = async { carRepository.getCarById(carId, curentUser?.uid) }
+            val brandsJob = async { uploadRepository.getBrands() }
+
+            val carResult = carDetailsJob.await()
+            val brandsResult = brandsJob.await()
+
+            if (brandsResult is Result.Success) {
+                _uiState.update { it.copy(brands = brandsResult.data) }
+            } else if (brandsResult is Result.Error) {
+                _uiState.update {
+                    it.copy(
+                        isLoadingCarDetails = false,
+                        generalErrorMessage = "Error cargando marcas: ${brandsResult.error.message}"
+                    )
+                }
+                return@launch
+            }
+
+            when (carResult) {
                 is Result.Success -> {
-                    val car = result.data
-                    if (car.userId != currentAuthUserId) {
-                        _uiState.update { it.copy(isLoadingInitialData = false, canEditCar = false, initialDataLoadError = "No tienes permiso para editar este anuncio.") }
-                        Log.w(TAG, "Permiso denegado: Usuario $currentAuthUserId intentando editar coche ${car.id} del usuario ${car.userId}")
-                        return@launch
-                    }
+                    val car = carResult.data
+                    populateStateWithCarData(car)
+                }
+
+                is Result.Error -> {
                     _uiState.update {
                         it.copy(
-                            isLoadingInitialData = false,
-                            canEditCar = true,
-                            initialCarData = car,
-                            brand = car.brand,
-                            model = car.model,
-                            bodyType = car.bodyType,
-                            fuelType = car.fuelType,
-                            year = car.year,
-                            version = car.version,
-                            selectedCarColor = CarColor.fromName(car.carColor),
-                            price = car.price.toInt().toString(),
-                            mileage = car.mileage.toString(),
-                            description = car.description,
-                            existingImageUrls = car.imageUrls,
-                            finalComunidadAutonoma = car.comunidadAutonoma,
-                            finalCiudad = car.ciudad,
-                            finalPostalCode = car.postalCode,
-                            manualLocationInput = car.ciudad ?: car.postalCode ?: car.comunidadAutonoma ?: ""
+                            isLoadingCarDetails = false,
+                            generalErrorMessage = "Error cargando los detalles del coche: ${carResult.error.message}"
                         )
                     }
-                    Log.d(TAG, "Datos iniciales del coche cargados: ${car.brand} ${car.model}")
-                    if (car.brand.isNotBlank()) {
-                        fetchModelsForDropdown(car.brand)
-                    }
-                }
-                is Result.Error -> {
-                    _uiState.update { it.copy(isLoadingInitialData = false, initialDataLoadError = result.error.message ?: "Error al cargar datos del coche.") }
-                    Log.e(TAG, "Error cargando datos iniciales: ${result.error.message}")
                 }
             }
         }
     }
 
-    // Actualizadores de campos del formulario
-    fun onBrandSelected(brand: String?) {
-        _uiState.update { it.copy(brand = brand, model = null, availableModels = emptyList()) }
-        brand?.let { fetchModelsForDropdown(it) }
-    }
-    fun onModelSelected(model: String?) { _uiState.update { it.copy(model = model) } } // Permitir null
-    fun onBodyTypeChanged(bodyType: String) { _uiState.update { it.copy(bodyType = bodyType) } }
-    fun onFuelTypeSelected(fuelType: String?) { _uiState.update { it.copy(fuelType = fuelType) } } // Permitir null
-    fun onYearSelected(year: String) { _uiState.update { it.copy(year = year) } }
-    fun onVersionChanged(version: String) { _uiState.update { it.copy(version = version) } }
-    fun onCarColorSelected(color: CarColor?) { _uiState.update { it.copy(selectedCarColor = color) } } // Permitir null
-    fun onPriceChanged(price: String) { _uiState.update { it.copy(price = price.filter { it.isDigit() }) } }
-    fun onMileageChanged(mileage: String) { _uiState.update { it.copy(mileage = mileage.filter { it.isDigit() }) } }
-    fun onDescriptionChanged(description: String) { _uiState.update { it.copy(description = description) } }
-
-    // Lógica de Imágenes
-    fun onNewImagesSelected(uris: List<Uri>) {
+    private fun populateStateWithCarData(car: CarForSale) {
         _uiState.update {
-            val currentTotalImages = it.existingImageUrls.size - it.imagesToDelete.size + it.selectedImageUris.size
-            val canAddCount = (MAX_IMAGES_ALLOWED - currentTotalImages).coerceAtLeast(0)
-            val newUrisToAdd = uris.take(canAddCount)
-            it.copy(selectedImageUris = it.selectedImageUris + newUrisToAdd)
+            it.copy(
+                price = car.price.toString(),
+                mileage = car.mileage.toString(),
+                description = car.description,
+                existingImageUrls = car.imageUrls,
+                selectedCarColor = CarColor.fromName(car.carColor),
+                manualLocationInput = "${car.ciudad ?: ""}, ${car.postalCode ?: ""}".trim(',', ' ')
+                    .trim(),
+                finalCiudad = car.ciudad,
+                finalComunidadAutonoma = car.comunidadAutonoma,
+                finalPostalCode = car.postalCode,
+                selectedBrand = car.brand,
+                selectedModel = car.model,
+                selectedBodyType = car.bodyType,
+                selectedFuelType = car.fuelType,
+                selectedYear = car.year,
+                selectedVersion = car.version,
+                isLoadingCarDetails = false
+            )
         }
-    }
-    fun removeSelectedNewImage(uri: Uri) {
-        _uiState.update { it.copy(selectedImageUris = it.selectedImageUris - uri) }
-    }
-    fun toggleImageForDeletion(imageUrl: String) {
-        _uiState.update {
-            val currentToDelete = it.imagesToDelete.toMutableSet()
-            if (currentToDelete.contains(imageUrl)) currentToDelete.remove(imageUrl)
-            else currentToDelete.add(imageUrl)
-            it.copy(imagesToDelete = currentToDelete)
-        }
+        loadDependentDropdowns(car)
     }
 
-    // Lógica de Localización
-    fun onManualLocationInputChanged(input: String) { _uiState.update { it.copy(manualLocationInput = input, isManualLocationValid = true, locationValidationMessage = null) } }
-    fun triggerLocationPermissionRequest() { /* ... (similar a UploadCarVM) ... */ }
-    fun onLocationPermissionGranted() { fetchCurrentLocationAndPopulateInput() }
-    fun onLocationPermissionDenied() { _uiState.update { it.copy(locationGeneralErrorMessage = "Permiso denegado.") } }
-
-    private fun fetchCurrentLocationAndPopulateInput() {
-        if (!NetworkUtils.isInternetAvailable(applicationContext)) {
-            _uiState.update { it.copy(locationGeneralErrorMessage = "Sin conexión a internet.") }
-            return
-        }
-        _uiState.update { it.copy(isFetchingLocationDetails = true, locationGeneralErrorMessage = null) }
+    private fun loadDependentDropdowns(car: CarForSale) {
         viewModelScope.launch {
-            when (val locResult = locationRepository.getCurrentDeviceLocation()) {
+            _uiState.update { it.copy(isLoadingModels = true) }
+            uploadRepository.getModels(car.brand).let { result ->
+                if (result is Result.Success) _uiState.update {
+                    it.copy(
+                        models = result.data, isLoadingModels = false
+                    )
+                }
+            }
+
+            _uiState.update { it.copy(isLoadingBodyTypes = true) }
+            uploadRepository.getBodyTypes(car.brand, car.model).let { result ->
+                if (result is Result.Success) _uiState.update {
+                    it.copy(
+                        bodyTypes = result.data, isLoadingBodyTypes = false
+                    )
+                }
+            }
+
+            _uiState.update { it.copy(isLoadingFuelTypes = true) }
+            uploadRepository.getFuelTypes(car.brand, car.model, car.bodyType).let { result ->
+                if (result is Result.Success) _uiState.update {
+                    it.copy(
+                        fuelTypes = result.data, isLoadingFuelTypes = false
+                    )
+                }
+            }
+
+            _uiState.update { it.copy(isLoadingYears = true) }
+            uploadRepository.getYears(car.brand, car.model, car.bodyType, car.fuelType)
+                .let { result ->
+                    if (result is Result.Success) _uiState.update {
+                        it.copy(
+                            years = result.data, isLoadingYears = false
+                        )
+                    }
+                }
+
+            _uiState.update { it.copy(isLoadingVersions = true) }
+            uploadRepository.getVersions(car.brand, car.model, car.bodyType, car.fuelType, car.year)
+                .let { result ->
+                    if (result is Result.Success) _uiState.update {
+                        it.copy(
+                            versions = result.data, isLoadingVersions = false
+                        )
+                    }
+                }
+        }
+    }
+
+    fun onImagesSelected(uris: List<Uri>) {
+        _uiState.update {
+            val currentCount = it.existingImageUrls.size + it.newSelectedImageUris.size
+            val remainingSlots = MAX_IMAGES - currentCount
+            val newUris = uris.take(remainingSlots)
+            it.copy(
+                newSelectedImageUris = it.newSelectedImageUris + newUris,
+                imageUploadErrorMessage = null
+            )
+        }
+    }
+
+    fun removeNewSelectedImage(uri: Uri) {
+        _uiState.update {
+            it.copy(newSelectedImageUris = it.newSelectedImageUris.filterNot { item -> item == uri })
+        }
+    }
+
+    fun removeExistingImage(url: String) {
+        _uiState.update {
+            it.copy(existingImageUrls = it.existingImageUrls.filterNot { item -> item == url })
+        }
+    }
+
+    fun onCarColorSelected(colorOption: CarColor) {
+        _uiState.update { it.copy(selectedCarColor = colorOption, generalErrorMessage = null) }
+    }
+
+    fun onBrandSelected(brand: String) {
+        _uiState.update {
+            it.copy(
+                selectedBrand = brand,
+                models = emptyList(),
+                selectedModel = null,
+                bodyTypes = emptyList(),
+                selectedBodyType = null,
+                fuelTypes = emptyList(),
+                selectedFuelType = null,
+                years = emptyList(),
+                selectedYear = null,
+                versions = emptyList(),
+                selectedVersion = null,
+                isLoadingModels = true,
+                generalErrorMessage = null
+            )
+        }
+        viewModelScope.launch {
+            when (val result = uploadRepository.getModels(brand)) {
+                is Result.Success -> _uiState.update {
+                    it.copy(
+                        isLoadingModels = false, models = result.data
+                    )
+                }
+
+                is Result.Error -> _uiState.update {
+                    it.copy(
+                        isLoadingModels = false,
+                        generalErrorMessage = "Error cargando modelos: ${result.error.message}"
+                    )
+                }
+            }
+        }
+    }
+
+    fun onModelSelected(model: String) {
+        val currentBrand = _uiState.value.selectedBrand ?: return
+        _uiState.update {
+            it.copy(
+                selectedModel = model,
+                bodyTypes = emptyList(),
+                selectedBodyType = null,
+                fuelTypes = emptyList(),
+                selectedFuelType = null,
+                years = emptyList(),
+                selectedYear = null,
+                versions = emptyList(),
+                selectedVersion = null,
+                isLoadingBodyTypes = true,
+                generalErrorMessage = null
+            )
+        }
+        viewModelScope.launch {
+            when (val result = uploadRepository.getBodyTypes(currentBrand, model)) {
+                is Result.Success -> _uiState.update {
+                    it.copy(
+                        isLoadingBodyTypes = false, bodyTypes = result.data
+                    )
+                }
+
+                is Result.Error -> _uiState.update {
+                    it.copy(
+                        isLoadingBodyTypes = false,
+                        generalErrorMessage = "Error cargando carrocerías: ${result.error.message}"
+                    )
+                }
+            }
+        }
+    }
+
+    fun onBodyTypeSelected(bodyType: String) {
+        val state = _uiState.value
+        val (currentBrand, currentModel) = state.selectedBrand to state.selectedModel
+        if (currentBrand == null || currentModel == null) return
+
+        _uiState.update {
+            it.copy(
+                selectedBodyType = bodyType,
+                fuelTypes = emptyList(),
+                selectedFuelType = null,
+                years = emptyList(),
+                selectedYear = null,
+                versions = emptyList(),
+                selectedVersion = null,
+                isLoadingFuelTypes = true,
+                generalErrorMessage = null
+            )
+        }
+        viewModelScope.launch {
+            when (val result =
+                uploadRepository.getFuelTypes(currentBrand, currentModel, bodyType)) {
+                is Result.Success -> _uiState.update {
+                    it.copy(
+                        isLoadingFuelTypes = false, fuelTypes = result.data
+                    )
+                }
+
+                is Result.Error -> _uiState.update {
+                    it.copy(
+                        isLoadingFuelTypes = false,
+                        generalErrorMessage = "Error cargando combustibles: ${result.error.message}"
+                    )
+                }
+            }
+        }
+    }
+
+    fun onFuelTypeSelected(fuelType: String) {
+        val state = _uiState.value
+        val (currentBrand, currentModel, currentBodyType) = Triple(
+            state.selectedBrand, state.selectedModel, state.selectedBodyType
+        )
+        if (currentBrand == null || currentModel == null || currentBodyType == null) return
+
+        _uiState.update {
+            it.copy(
+                selectedFuelType = fuelType,
+                years = emptyList(),
+                selectedYear = null,
+                versions = emptyList(),
+                selectedVersion = null,
+                isLoadingYears = true,
+                generalErrorMessage = null
+            )
+        }
+        viewModelScope.launch {
+            when (val result =
+                uploadRepository.getYears(currentBrand, currentModel, currentBodyType, fuelType)) {
+                is Result.Success -> _uiState.update {
+                    it.copy(
+                        isLoadingYears = false, years = result.data
+                    )
+                }
+
+                is Result.Error -> _uiState.update {
+                    it.copy(
+                        isLoadingYears = false,
+                        generalErrorMessage = "Error cargando años: ${result.error.message}"
+                    )
+                }
+            }
+        }
+    }
+
+    fun onYearSelected(year: String) {
+        val state = _uiState.value
+
+        val currentBrand = state.selectedBrand
+        val currentModel = state.selectedModel
+        val currentBodyType = state.selectedBodyType
+        val currentFuelType = state.selectedFuelType
+
+        if (currentBrand == null || currentModel == null || currentBodyType == null || currentFuelType == null) return
+
+        _uiState.update {
+            it.copy(
+                selectedYear = year,
+                versions = emptyList(),
+                selectedVersion = null,
+                isLoadingVersions = true,
+                generalErrorMessage = null
+            )
+        }
+        viewModelScope.launch {
+            when (val result = uploadRepository.getVersions(
+                currentBrand, currentModel, currentBodyType, currentFuelType, year
+            )) {
+                is Result.Success -> _uiState.update {
+                    it.copy(
+                        isLoadingVersions = false, versions = result.data
+                    )
+                }
+
+                is Result.Error -> _uiState.update {
+                    it.copy(
+                        isLoadingVersions = false,
+                        generalErrorMessage = "Error cargando versiones: ${result.error.message}"
+                    )
+                }
+            }
+        }
+    }
+
+    fun onVersionSelected(version: String) {
+        _uiState.update { it.copy(selectedVersion = version, generalErrorMessage = null) }
+    }
+
+    fun onPriceChanged(price: String) {
+        _uiState.update { it.copy(price = price) }
+    }
+
+    fun onMileageChanged(mileage: String) {
+        _uiState.update { it.copy(mileage = mileage) }
+    }
+
+    fun onDescriptionChanged(description: String) {
+        _uiState.update { it.copy(description = description) }
+    }
+
+    fun onManualLocationInputChanged(input: String) {
+        _uiState.update {
+            it.copy(
+                manualLocationInput = input,
+                isManualLocationValid = true,
+                locationValidationMessage = null
+            )
+        }
+    }
+
+    fun triggerLocationPermissionRequest() {
+        _uiState.update {
+            it.copy(
+                isRequestingLocationPermission = true, locationGeneralErrorMessage = null
+            )
+        }
+    }
+
+    fun onLocationPermissionGranted() {
+        _uiState.update { it.copy(isRequestingLocationPermission = false) }
+        fetchCurrentLocationAndPopulateInput()
+    }
+
+    fun onLocationPermissionDenied() {
+        _uiState.update {
+            it.copy(
+                isRequestingLocationPermission = false,
+                locationGeneralErrorMessage = "Permiso denegado. Introduce la ubicación manualmente."
+            )
+        }
+    }
+
+    fun fetchCurrentLocationAndPopulateInput() {
+        _uiState.update {
+            it.copy(
+                isFetchingLocationDetails = true,
+                locationGeneralErrorMessage = null,
+                isManualLocationValid = true,
+                locationValidationMessage = null
+            )
+        }
+        viewModelScope.launch {
+            when (val locationResult = locationRepository.getCurrentDeviceLocation()) {
                 is Result.Success -> {
-                    when (val addResult = locationRepository.getAddressFromCoordinates(locResult.data.first, locResult.data.second)) {
+                    val (lat, lon) = locationResult.data
+                    when (val addressResult =
+                        locationRepository.getAddressFromCoordinates(lat, lon)) {
                         is Result.Success -> {
-                            val address = addResult.data
-                            _uiState.update { s ->
-                                s.copy(
+                            val address = addressResult.data
+                            _uiState.update {
+                                it.copy(
                                     isFetchingLocationDetails = false,
                                     finalCiudad = address.ciudad,
                                     finalComunidadAutonoma = address.comunidadAutonoma,
                                     finalPostalCode = address.postalCode,
-                                    manualLocationInput = "${address.ciudad ?: ""}${if(address.ciudad !=null && address.comunidadAutonoma !=null) ", " else ""}${address.comunidadAutonoma ?: ""}".ifBlank { s.manualLocationInput },
-                                    isManualLocationValid = true
+                                    manualLocationInput = "${address.ciudad ?: ""}${if (address.ciudad != null && address.comunidadAutonoma != null) ", " else ""}${address.comunidadAutonoma ?: ""}".trim(
+                                        ',', ' '
+                                    ),
+                                    isManualLocationValid = true,
+                                    locationValidationMessage = null
                                 )
                             }
                         }
-                        is Result.Error -> _uiState.update { it.copy(isFetchingLocationDetails = false, locationValidationMessage = "No se pudo obtener la dirección.") }
+
+                        is Result.Error -> {
+                            _uiState.update {
+                                it.copy(
+                                    isFetchingLocationDetails = false,
+                                    locationGeneralErrorMessage = "No se pudo obtener la dirección desde las coordenadas."
+                                )
+                            }
+                        }
                     }
                 }
-                is Result.Error -> _uiState.update { it.copy(isFetchingLocationDetails = false, locationGeneralErrorMessage = "No se pudo obtener la ubicación.") }
+
+                is Result.Error -> {
+                    _uiState.update {
+                        it.copy(
+                            isFetchingLocationDetails = false,
+                            locationGeneralErrorMessage = "No se pudo obtener la localización actual: ${locationResult.error.message}"
+                        )
+                    }
+                }
             }
         }
     }
+
     fun searchManualLocation() {
         val query = _uiState.value.manualLocationInput.trim()
         if (query.isBlank()) {
-            _uiState.update { it.copy(isManualLocationValid = false, locationValidationMessage = "Introduce un CP o ciudad.") }
+            _uiState.update {
+                it.copy(
+                    isManualLocationValid = false,
+                    locationValidationMessage = "El campo no puede estar vacío."
+                )
+            }
             return
         }
-        if (!NetworkUtils.isInternetAvailable(applicationContext)) {
-            _uiState.update { it.copy(locationGeneralErrorMessage = "Sin conexión a internet.") }
-            return
+
+        _uiState.update {
+            it.copy(
+                isFetchingLocationDetails = true,
+                locationGeneralErrorMessage = null,
+                isManualLocationValid = true,
+                locationValidationMessage = null
+            )
         }
-        _uiState.update { it.copy(isFetchingLocationDetails = true, locationGeneralErrorMessage = null) }
         viewModelScope.launch {
-            when (val addResult = locationRepository.getAddressFromQuery(query)) {
+            when (val addressResult = locationRepository.getAddressFromQuery(query)) {
                 is Result.Success -> {
-                    val address = addResult.data
+                    val address = addressResult.data
                     if (address.ciudad != null || address.comunidadAutonoma != null || address.postalCode != null) {
-                        _uiState.update { s ->
-                            s.copy(
+                        _uiState.update {
+                            it.copy(
                                 isFetchingLocationDetails = false,
                                 finalCiudad = address.ciudad,
                                 finalComunidadAutonoma = address.comunidadAutonoma,
                                 finalPostalCode = address.postalCode,
-                                manualLocationInput = "${address.ciudad ?: ""}${if(address.ciudad !=null && address.comunidadAutonoma !=null) ", " else ""}${address.comunidadAutonoma ?: ""}".ifBlank { query },
-                                isManualLocationValid = true
+                                manualLocationInput = "${address.ciudad ?: ""}${if (address.ciudad != null && address.comunidadAutonoma != null) ", " else ""}${address.comunidadAutonoma ?: ""}".ifBlank { query },
+                                isManualLocationValid = true,
+                                locationValidationMessage = null
                             )
                         }
                     } else {
-                        _uiState.update { it.copy(isFetchingLocationDetails = false, isManualLocationValid = false, locationValidationMessage = "Ubicación no encontrada.") }
+                        _uiState.update {
+                            it.copy(
+                                isFetchingLocationDetails = false,
+                                finalCiudad = null,
+                                finalComunidadAutonoma = null,
+                                finalPostalCode = null,
+                                isManualLocationValid = false,
+                                locationValidationMessage = "Ubicación no encontrada para '$query'."
+                            )
+                        }
                     }
                 }
-                is Result.Error -> _uiState.update { it.copy(isFetchingLocationDetails = false, isManualLocationValid = false, locationValidationMessage = "Error buscando ubicación.") }
+
+                is Result.Error -> {
+                    _uiState.update {
+                        it.copy(
+                            isFetchingLocationDetails = false,
+                            finalCiudad = null,
+                            finalComunidadAutonoma = null,
+                            finalPostalCode = null,
+                            isManualLocationValid = false,
+                            locationValidationMessage = "Error al buscar '$query': Inténtalo de nuevo."
+                        )
+                    }
+                }
             }
         }
     }
 
-
-    // Carga de Desplegables
-    private fun fetchBrandsForDropdown() {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoadingBrands = true, brandLoadError = null) }
-            when(val result = carUploadRepository.getBrands()) {
-                is Result.Success -> _uiState.update { it.copy(isLoadingBrands = false, availableBrands = result.data) }
-                is Result.Error -> _uiState.update { it.copy(isLoadingBrands = false, brandLoadError = result.error.message ?: "Error cargando marcas") }
-            }
-        }
-    }
-    private fun fetchModelsForDropdown(brandName: String) {
-        if (brandName.isBlank()) {
-            _uiState.update { it.copy(availableModels = emptyList()) }
-            return
-        }
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoadingModels = true, modelLoadError = null) }
-            when(val result = carUploadRepository.getModels(brandName)) {
-                is Result.Success -> _uiState.update { it.copy(isLoadingModels = false, availableModels = result.data) }
-                is Result.Error -> _uiState.update { it.copy(isLoadingModels = false, modelLoadError = result.error.message ?: "Error cargando modelos") }
-            }
-        }
-    }
-
-    // Guardar Cambios
-    fun saveCarChanges() {
+    fun prepareAndUpdateCar() {
         val state = _uiState.value
-        val carId = state.carIdToEdit ?: run {
-            _uiState.update { it.copy(saveCarError = "Error: ID de coche no disponible.") }
-            return
-        }
-        val currentAuthUserId = firebaseAuth.currentUser?.uid ?: run {
-            _uiState.update { it.copy(saveCarError = "Error: Usuario no autenticado.") }
-            return
-        }
-        if (state.initialCarData?.userId != currentAuthUserId) {
-            _uiState.update { it.copy(saveCarError = "Error: No tienes permiso para editar este coche.") }
+        val userId = firebaseAuth.currentUser?.uid
+        val carId = state.carId
+
+        if (!NetworkUtils.isInternetAvailable(applicationContext)) {
+            _uiState.update { it.copy(generalErrorMessage = "No hay conexión a internet.") }
             return
         }
 
-        // Validaciones
-        if (state.brand.isNullOrBlank() || state.model.isNullOrBlank() || state.selectedCarColor == null ||
-            state.price.isBlank() || state.mileage.isBlank() || state.description.isBlank() ||
-            state.year.isBlank() || state.version.isBlank() || state.bodyType.isBlank() || state.fuelType.isNullOrBlank() ||
-            (state.finalCiudad.isNullOrBlank() && state.finalComunidadAutonoma.isNullOrBlank() && state.finalPostalCode.isNullOrBlank()) ) {
-            _uiState.update { it.copy(saveCarError = "Completa todos los campos obligatorios.") }
+        if (userId == null || carId == null) {
+            _uiState.update { it.copy(generalErrorMessage = "Error: Usuario no autenticado o ID de coche no encontrado.") }
+            return
+        }
+
+        if (state.selectedBrand == null || state.selectedModel == null || state.selectedBodyType == null || state.selectedFuelType == null || state.selectedYear == null || state.selectedVersion == null || state.selectedCarColor == null || state.price.isBlank() || state.mileage.isBlank() || state.description.isBlank()) {
+            _uiState.update { it.copy(generalErrorMessage = "Por favor, completa todos los campos del formulario.") }
             return
         }
         val priceDouble = state.price.toDoubleOrNull()
         val mileageInt = state.mileage.toIntOrNull()
-        if (priceDouble == null || priceDouble <= 0 || mileageInt == null || mileageInt < 0) {
-            _uiState.update { it.copy(saveCarError = "Precio o kilometraje no válidos.") }
+
+        if (priceDouble == null || priceDouble <= 0) {
+            _uiState.update { it.copy(generalErrorMessage = "El precio no es válido.") }
+            return
+        }
+        if (mileageInt == null || mileageInt < 0) {
+            _uiState.update { it.copy(generalErrorMessage = "El kilometraje no es válido.") }
             return
         }
 
-        _uiState.update { it.copy(isSavingCar = true, saveCarError = null) }
+        if (state.finalCiudad.isNullOrBlank() && state.finalComunidadAutonoma.isNullOrBlank()) {
+            if (state.manualLocationInput.isNotBlank() && !state.isManualLocationValid && !state.isFetchingLocationDetails) {
+                _uiState.update { it.copy(generalErrorMessage = "La ubicación introducida no es válida. Por favor, corrígela o usa la detección automática.") }
+                return
+            } else if (state.manualLocationInput.isBlank()) {
+                _uiState.update { it.copy(generalErrorMessage = "Por favor, proporciona una ubicación para el vehículo.") }
+                return
+            }
+        }
+
+
+        _uiState.update {
+            it.copy(
+                isUploadingImages = true,
+                formUploadInProgress = true,
+                imageUploadErrorMessage = null,
+                generalErrorMessage = null
+            )
+        }
 
         viewModelScope.launch {
             val finalImageUrls = state.existingImageUrls.toMutableList()
-            finalImageUrls.removeAll(state.imagesToDelete) // Eliminar las marcadas
 
-            // 1. Eliminar imágenes de Storage
-            if (state.imagesToDelete.isNotEmpty()) {
-                _uiState.update { it.copy(imageProcessingMessage = "Eliminando imágenes antiguas...") }
-                val deletionJobs = state.imagesToDelete.map { imageUrl ->
+            if (state.newSelectedImageUris.isNotEmpty()) {
+                val uploadJobs = state.newSelectedImageUris.map { uri ->
                     async {
-                        try {
-                            val storageRef = firebaseStorage.getReferenceFromUrl(imageUrl)
-                            storageRef.delete().await()
-                            Log.d(TAG, "Imagen eliminada de Storage: $imageUrl")
-                            Result.Success(Unit)
-                        } catch (e: Exception) {
-                            Log.e(TAG, "Error eliminando imagen de Storage: $imageUrl", e)
-                            Result.Error(e) // No bloquear si una eliminación falla, pero loggear
-                        }
-                    }
-                }
-                deletionJobs.awaitAll() // Esperar a que todas las eliminaciones terminen (o fallen)
-            }
-
-            // 2. Subir nuevas imágenes
-            if (state.selectedImageUris.isNotEmpty()) {
-                _uiState.update { it.copy(isUploadingImages = true, imageProcessingMessage = "Subiendo nuevas imágenes...") }
-                val uploadJobs = state.selectedImageUris.mapIndexed { index, uri ->
-                    async {
-                        val imageName = "image_edited_${index}_${System.currentTimeMillis()}.jpg"
-                        val storagePath = "car_images/$carId/$imageName" // Usar el ID del coche existente
+                        val imageName = "image_${System.currentTimeMillis()}.jpg"
+                        val storagePath = "car_images/$carId/$imageName"
                         imageStorageDataSource.uploadImage(uri, storagePath)
                     }
                 }
-                val uploadResults = uploadJobs.awaitAll()
-                var newUploadFailed = false
-                uploadResults.forEach { result ->
+
+                val results = uploadJobs.awaitAll()
+                val newUrls = mutableListOf<String>()
+                var uploadFailed = false
+
+                results.forEach { result ->
                     when (result) {
-                        is Result.Success -> finalImageUrls.add(result.data)
-                        is Result.Error -> newUploadFailed = true
+                        is Result.Success -> newUrls.add(result.data)
+                        is Result.Error -> uploadFailed = true
                     }
                 }
-                if (newUploadFailed) {
-                    _uiState.update { it.copy(isSavingCar = false, isUploadingImages = false, imageProcessingMessage = null, saveCarError = "Error al subir una o más imágenes nuevas.") }
+
+                if (uploadFailed) {
+                    _uiState.update {
+                        it.copy(
+                            isUploadingImages = false,
+                            formUploadInProgress = false,
+                            imageUploadErrorMessage = "Error al subir una o más imágenes nuevas."
+                        )
+                    }
                     return@launch
                 }
+                finalImageUrls.addAll(newUrls)
             }
-            _uiState.update { it.copy(isUploadingImages = false, imageProcessingMessage = null) }
+            _uiState.update { it.copy(isUploadingImages = false) }
 
-
-            // 3. Preparar y actualizar el coche
             val keywords = KeywordGenerator.generateKeywords(
-                brand = state.brand!!, model = state.model!!, version = state.version,
-                carColorName = state.selectedCarColor!!.name, fuelType = state.fuelType, year = state.year,
-                ciudad = state.finalCiudad, comunidadAutonoma = state.finalComunidadAutonoma
+                brand = state.selectedBrand,
+                model = state.selectedModel,
+                version = state.selectedVersion,
+                carColorName = state.selectedCarColor.name,
+                fuelType = state.selectedFuelType,
+                year = state.selectedYear,
+                ciudad = state.finalCiudad,
+                comunidadAutonoma = state.finalComunidadAutonoma,
             )
 
-            val updatedCar = CarForSale(
+            val carToUpdate = CarForSale(
                 id = carId,
-                userId = currentAuthUserId,
-                brand = state.brand!!,
-                model = state.model!!,
-                bodyType = state.bodyType,
-                fuelType = state.fuelType!!,
-                year = state.year,
-                version = state.version,
-                carColor = state.selectedCarColor!!.name,
+                userId = userId,
+                brand = state.selectedBrand,
+                model = state.selectedModel,
+                bodyType = state.selectedBodyType,
+                fuelType = state.selectedFuelType,
+                year = state.selectedYear,
+                version = state.selectedVersion,
+                carColor = state.selectedCarColor.name,
                 price = priceDouble,
                 mileage = mileageInt,
                 description = state.description.trim(),
-                imageUrls = finalImageUrls.distinct(),
-                timestamp = state.initialCarData.timestamp,
+                imageUrls = finalImageUrls,
                 comunidadAutonoma = state.finalComunidadAutonoma?.takeIf { it.isNotBlank() },
                 ciudad = state.finalCiudad?.takeIf { it.isNotBlank() },
                 postalCode = state.finalPostalCode?.takeIf { it.isNotBlank() },
-                searchableKeywords = keywords,
-                isFavoriteByCurrentUser = state.initialCarData.isFavoriteByCurrentUser
+                searchableKeywords = keywords
             )
 
-            when (val result = carUploadRepository.updateCar(updatedCar)) {
+            when (val updateResult = uploadRepository.updateCar(carToUpdate)) {
                 is Result.Success -> {
-                    _uiState.update { it.copy(isSavingCar = false, saveCarSuccess = true) }
-                    Log.d(TAG, "Coche actualizado con éxito: $carId")
+                    _uiState.update {
+                        it.copy(
+                            formUploadInProgress = false,
+                            formUploadSuccess = true,
+                            generalErrorMessage = null
+                        )
+                    }
                 }
+
                 is Result.Error -> {
-                    _uiState.update { it.copy(isSavingCar = false, saveCarError = result.error.message ?: "Error al guardar los cambios.") }
-                    Log.e(TAG, "Error actualizando coche: ${result.error.message}")
+                    _uiState.update {
+                        it.copy(
+                            formUploadInProgress = false,
+                            formUploadSuccess = false,
+                            generalErrorMessage = "Error al actualizar los datos: ${updateResult.error.message}"
+                        )
+                    }
                 }
             }
+        }
+    }
+
+    fun resetFormUploadStatus() {
+        _uiState.update {
+            it.copy(
+                formUploadSuccess = false,
+                generalErrorMessage = null,
+                formUploadInProgress = false,
+                imageUploadErrorMessage = null,
+                isUploadingImages = false
+            )
         }
     }
 }

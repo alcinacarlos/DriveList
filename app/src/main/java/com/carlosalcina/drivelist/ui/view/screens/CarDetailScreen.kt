@@ -90,6 +90,7 @@ fun CarDetailScreen(
     viewModel: CarDetailViewModel = hiltViewModel(),
     onContactSeller: (carId: String, sellerId: String, buyerId: String) -> Unit,
     onSeeProfile: (sellerId: String) -> Unit,
+    onEditCar: (carId: String) -> Unit,
     navController: NavController
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -113,8 +114,8 @@ fun CarDetailScreen(
                     )
                 }else{
                     ExtendedFloatingActionButton(
-                        onClick = {  },
-                        icon = { Icon(Icons.Filled.Edit, contentDescription = "Contactar") },
+                        onClick = { onEditCar(carState.car.id) },
+                        icon = { Icon(Icons.Filled.Edit, contentDescription = "Editar") },
                         text = { Text("Editar") },
                         containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = MaterialTheme.colorScheme.onPrimary

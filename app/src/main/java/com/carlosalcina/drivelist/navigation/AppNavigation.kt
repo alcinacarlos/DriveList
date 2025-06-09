@@ -11,6 +11,7 @@ import androidx.navigation.navArgument
 import com.carlosalcina.drivelist.ui.view.screens.CarDetailScreen
 import com.carlosalcina.drivelist.ui.view.screens.ChatDetailScreen
 import com.carlosalcina.drivelist.ui.view.screens.ChatListScreen
+import com.carlosalcina.drivelist.ui.view.screens.EditCarScreen
 import com.carlosalcina.drivelist.ui.view.screens.FavoritesScreen
 import com.carlosalcina.drivelist.ui.view.screens.HomeScreen
 import com.carlosalcina.drivelist.ui.view.screens.LoginScreen
@@ -127,6 +128,9 @@ fun AppNavigation(
                 },
                 onSeeProfile = { sellerId ->
                     navController.navigate(Screen.Profile.createRoute(sellerId))
+                },
+                onEditCar = { carId ->
+                    navController.navigate(Screen.EditVehicle.createRoute(carId))
                 }
             )
         }
@@ -145,6 +149,16 @@ fun AppNavigation(
         composable(route = Screen.ChatList.route) {
             ChatListScreen(
                 navController = navController
+            )
+        }
+        composable(
+            route = Screen.EditVehicle.route,
+            arguments = listOf(navArgument(NavigationArgs.CAR_ID_ARG) { type = NavType.StringType })
+        ) {
+            EditCarScreen(
+                navController = navController,
+                onUpdateSuccess = {},
+                carId = it.arguments?.getString(NavigationArgs.CAR_ID_ARG) ?: ""
             )
         }
 
