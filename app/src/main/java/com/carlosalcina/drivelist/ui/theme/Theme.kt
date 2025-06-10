@@ -19,7 +19,7 @@ private val DarkColorScheme = darkColorScheme(
     onPrimary = Color.White,
     onSecondary = OnSecondary,
     onBackground = Color.White,
-    onSurface = Color.White,
+    onSurface = OnSurface,
     error = Error,
     primaryContainer = Color(0xFF1B2537),
     inverseSurface = Color(0xFF112C55),
@@ -29,13 +29,12 @@ private val DarkColorScheme = darkColorScheme(
 
 private val LightColorScheme = lightColorScheme(
     primary = Primary,
-    secondary = Secondary,
     background = Background,
     surface = Surface,
     onPrimary = Color.White,
     onSecondary = OnSecondary,
     onBackground = OnBackground,
-    onSurface = OnSurface,
+    onSurface = Color(0xFF98CBD9),
     error = Error,
     primaryContainer = Color.White,
     inverseSurface = Primary,
@@ -47,9 +46,10 @@ private val LightColorScheme = lightColorScheme(
 @Composable
 fun DriveListTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
+    appTheme: ThemeOption,
     // Dynamic color is available on Android 12+
     dynamicColor: Boolean = true,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
@@ -61,9 +61,15 @@ fun DriveListTheme(
         else -> LightColorScheme
     }
 
+    val scheme = when (appTheme) {
+        ThemeOption.LIGHT -> LightColorScheme
+        ThemeOption.DARK -> DarkColorScheme
+        ThemeOption.SYSTEM_DEFAULT -> if (!darkTheme) DarkColorScheme else LightColorScheme
+    }
+
     MaterialTheme(
-        colorScheme = colorScheme,
-        typography = typographyCustom(),
+        colorScheme = scheme,
+        typography = typographyCustom(appTheme),
         content = content
     )
 }

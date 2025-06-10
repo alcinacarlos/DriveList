@@ -1,4 +1,4 @@
-package com.carlosalcina.drivelist.ui.view.screens.settings
+package com.carlosalcina.drivelist.localization
 
 import androidx.annotation.StringRes
 import com.carlosalcina.drivelist.R

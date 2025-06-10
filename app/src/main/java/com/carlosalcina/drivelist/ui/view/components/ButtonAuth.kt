@@ -7,9 +7,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.carlosalcina.drivelist.ui.theme.DriveListTheme
 
 @Composable
 fun ButtonAuth(
@@ -27,13 +25,5 @@ fun ButtonAuth(
         enabled = enabled
     ){
         content()
-    }
-}
-
-@Preview
-@Composable
-fun ButtonPreview() {
-    DriveListTheme(dynamicColor = false) {
-        ButtonAuth(content = {}, onClick = {}, enabled = true)
     }
 }

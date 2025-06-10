@@ -1,7 +1,5 @@
 package com.carlosalcina.drivelist.ui.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
@@ -27,8 +25,14 @@ val Poppins = FontFamily(
 
 
 @Composable
-fun typographyCustom():Typography {
-    val textColor = if(isSystemInDarkTheme()) Color.White else Color.Black
+fun typographyCustom(
+    appTheme: ThemeOption
+):Typography {
+    val textColor = when (appTheme) {
+        ThemeOption.LIGHT -> Color.Black
+        ThemeOption.DARK -> Color.White
+        ThemeOption.SYSTEM_DEFAULT -> Color.White
+    }
 
     return Typography(
         displayLarge = TextStyle(

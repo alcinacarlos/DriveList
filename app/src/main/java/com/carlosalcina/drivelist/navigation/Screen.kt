@@ -17,6 +17,7 @@ sealed class Screen(
     val route: String, @StringRes val resourceId: Int, val icon: ImageVector? = null
 ) {
     object Welcome : Screen("welcome_screen", R.string.screen_title_welcome)
+    object About : Screen("about_screen", R.string.screen_about)
     object Login : Screen("login_screen", R.string.screen_title_login)
     object Register : Screen("register_screen", R.string.screen_title_register)
     object Profile : Screen(

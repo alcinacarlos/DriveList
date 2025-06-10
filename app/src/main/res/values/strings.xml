@@ -33,6 +33,16 @@
     <string name="screen_title_favorites">Favoritos</string>
     <string name="screen_title_edit">Editar vehiculo</string>
     <string name="screen_title_chat">Chat</string>
+    <string name="screen_about">Acerca de nosotros</string>
     <string name="screen_title_car_detail">Detalles del Coche</string>
     <string name="screen_title_chat_detail">Conversaciones</string>
+    <string name="theme_light">Claro</string>
+    <string name="theme_dark">Oscuro</string>
+    <string name="theme_system">Sistema</string>
+    <string name="settings_section_appearance">Apariencia</string>
+    <string name="settings_section_language">Idioma</string>
+    <string name="settings_section_account">Cuenta y Seguridad</string>
+    <string name="settings_change_password">Cambiar Contraseña</string>
+    <string name="settings_change_password_description">Recibirás un correo electrónico para restablecer tu contraseña</string>
+
 </resources>
