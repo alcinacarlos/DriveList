@@ -1,4 +1,4 @@
-package com.carlosalcina.drivelist.navigation
+package com.carlosalcina.drivelist.ui.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier

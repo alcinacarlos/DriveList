@@ -83,7 +83,7 @@ fun AdvancedFiltersDialog(
                     title = { Text("Filtros Avanzados") },
                     navigationIcon = {
                         IconButton(onClick = onDismiss) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, "Cerrar")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, "Cerrar", tint = MaterialTheme.colorScheme.inverseOnSurface)
                         }
                     },
                     actions = {

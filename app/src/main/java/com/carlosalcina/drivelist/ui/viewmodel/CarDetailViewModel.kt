@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.carlosalcina.drivelist.domain.error.FirestoreError
 import com.carlosalcina.drivelist.domain.repository.AuthRepository
 import com.carlosalcina.drivelist.domain.repository.CarListRepository
-import com.carlosalcina.drivelist.navigation.NavigationArgs
+import com.carlosalcina.drivelist.ui.navigation.NavigationArgs
 import com.carlosalcina.drivelist.ui.states.CarDataState
 import com.carlosalcina.drivelist.ui.states.CarDetailUiState
 import com.carlosalcina.drivelist.ui.states.SellerUiState

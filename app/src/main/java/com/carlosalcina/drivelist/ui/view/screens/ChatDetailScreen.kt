@@ -65,7 +65,7 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.carlosalcina.drivelist.R
 import com.carlosalcina.drivelist.domain.model.ChatMessage
-import com.carlosalcina.drivelist.navigation.Screen
+import com.carlosalcina.drivelist.ui.navigation.Screen
 import com.carlosalcina.drivelist.ui.viewmodel.ChatDetailViewModel
 import com.carlosalcina.drivelist.utils.Utils.formatTimestampForChatMessage
 import kotlinx.coroutines.delay
@@ -226,7 +226,7 @@ fun ChatDetailTopAppBar(
         },
         navigationIcon = {
             IconButton(onClick = { navController.popBackStack() }) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás")
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás", tint = MaterialTheme.colorScheme.inverseOnSurface)
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(

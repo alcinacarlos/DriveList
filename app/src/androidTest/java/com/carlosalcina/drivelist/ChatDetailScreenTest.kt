@@ -15,7 +15,7 @@ import androidx.navigation.NavController
 import com.carlosalcina.drivelist.domain.model.CarForSale
 import com.carlosalcina.drivelist.domain.model.ChatMessage
 import com.carlosalcina.drivelist.domain.model.UserData
-import com.carlosalcina.drivelist.navigation.Screen
+import com.carlosalcina.drivelist.ui.navigation.Screen
 import com.carlosalcina.drivelist.ui.states.ChatDetailUiState
 import com.carlosalcina.drivelist.ui.theme.DriveListTheme
 import com.carlosalcina.drivelist.ui.theme.ThemeOption

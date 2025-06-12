@@ -1,4 +1,4 @@
-package com.carlosalcina.drivelist.navigation
+package com.carlosalcina.drivelist.ui.navigation
 
 import android.net.Uri
 import android.util.Log
@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.carlosalcina.drivelist.R
 import com.carlosalcina.drivelist.domain.model.CarSearchFilters
+import com.google.gson.Gson
 
 sealed class Screen(
     val route: String, @StringRes val resourceId: Int, val icon: ImageVector? = null
@@ -39,7 +40,7 @@ sealed class Screen(
         }
 
         fun createRoute(filters: CarSearchFilters? = null, searchTerm: String? = null): String {
-            val gson = com.google.gson.Gson()
+            val gson = Gson()
             var path = route
             val queryParams = mutableListOf<String>()
             filters?.let {

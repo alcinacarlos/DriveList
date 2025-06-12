@@ -1,4 +1,4 @@
-package com.carlosalcina.drivelist.navigation
+package com.carlosalcina.drivelist.ui.navigation
 
 object NavigationArgs {
     const val CAR_ID_ARG = "carId"

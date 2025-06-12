@@ -7,7 +7,7 @@ import com.carlosalcina.drivelist.domain.model.CarForSale
 import com.carlosalcina.drivelist.domain.model.UserData
 import com.carlosalcina.drivelist.domain.repository.AuthRepository
 import com.carlosalcina.drivelist.domain.repository.CarListRepository
-import com.carlosalcina.drivelist.navigation.NavigationArgs
+import com.carlosalcina.drivelist.ui.navigation.NavigationArgs
 import com.carlosalcina.drivelist.ui.states.CarDataState
 import com.carlosalcina.drivelist.ui.states.SellerUiState
 import com.carlosalcina.drivelist.ui.viewmodel.CarDetailViewModel

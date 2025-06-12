@@ -11,7 +11,7 @@ import com.carlosalcina.drivelist.domain.repository.CarListRepository
 import com.carlosalcina.drivelist.domain.repository.CarUploadRepository
 import com.carlosalcina.drivelist.domain.repository.UserFavoriteRepository
 import com.carlosalcina.drivelist.domain.usecase.ToggleFavoriteCarUseCase
-import com.carlosalcina.drivelist.navigation.NavigationArgs
+import com.carlosalcina.drivelist.ui.navigation.NavigationArgs
 import com.carlosalcina.drivelist.ui.states.SearchVehicleScreenState
 import com.carlosalcina.drivelist.utils.Result
 import com.google.firebase.auth.FirebaseAuth

@@ -7,7 +7,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.navigation.NavController
-import com.carlosalcina.drivelist.navigation.Screen
+import com.carlosalcina.drivelist.ui.navigation.Screen
 import com.carlosalcina.drivelist.ui.theme.DriveListTheme
 import com.carlosalcina.drivelist.ui.theme.ThemeOption
 import com.carlosalcina.drivelist.ui.view.components.TopBar

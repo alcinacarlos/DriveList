@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.carlosalcina.drivelist.R
-import com.carlosalcina.drivelist.navigation.Screen
+import com.carlosalcina.drivelist.ui.navigation.Screen
 import com.carlosalcina.drivelist.ui.view.components.AppBottomNavigationBar
 import com.carlosalcina.drivelist.ui.view.components.BrandModelFilterDialog
 import com.carlosalcina.drivelist.ui.view.components.LatestCarsSection

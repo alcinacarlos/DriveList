@@ -64,7 +64,6 @@ fun SettingsScreen(
     navController: NavController,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
-    // ... (El resto del código del Composable se mantiene igual) ...
     val currentLanguageCode by LanguageRepository.language.collectAsState(initial = LanguageRepository.DEFAULT_LANGUAGE)
     var languageMenuExpanded by remember { mutableStateOf(false) }
     val currentSelectedLanguage = availableLanguages.find { it.code == currentLanguageCode }
@@ -100,27 +99,21 @@ fun SettingsScreen(
             SettingsSection(title = stringResource(R.string.settings_section_appearance)) {
                 SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                     ThemeOption.entries.forEachIndexed { index, themeOption ->
-                        // --- INICIO DE LA CORRECCIÓN ---
-                        // Calculamos la forma manualmente basándonos en la posición del botón
-                        val cornerRadius = 50 // Porcentaje de redondeo
+                        val cornerRadius = 50
                         val shape = when (index) {
-                            // Primer botón: redondear esquinas izquierdas
                             0 -> RoundedCornerShape(
                                 topStartPercent = cornerRadius,
                                 bottomStartPercent = cornerRadius
                             )
-                            // Último botón: redondear esquinas derechas
                             ThemeOption.entries.size - 1 -> RoundedCornerShape(
                                 topEndPercent = cornerRadius,
                                 bottomEndPercent = cornerRadius
                             )
-                            // Botones intermedios: sin redondeo (rectangulares)
                             else -> RectangleShape
                         }
-                        // --- FIN DE LA CORRECCIÓN ---
 
                         SegmentedButton(
-                            shape = shape, // Usamos la forma calculada manualmente
+                            shape = shape,
                             onClick = { viewModel.onThemeChange(themeOption) },
                             selected = currentTheme == themeOption,
                             icon = {
@@ -131,6 +124,7 @@ fun SettingsScreen(
                                             ThemeOption.DARK -> Icons.Default.DarkMode
                                             ThemeOption.SYSTEM_DEFAULT -> Icons.Default.Tonality
                                         },
+                                        tint = MaterialTheme.colorScheme.inverseOnSurface,
                                         contentDescription = stringResource(id = themeOption.displayNameResId)
                                     )
                                 }
@@ -145,7 +139,6 @@ fun SettingsScreen(
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
 
-            // ... (El resto de las secciones: Idioma y Cuenta y Seguridad se mantienen igual que antes) ...
             SettingsSection(title = stringResource(R.string.settings_section_language)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),

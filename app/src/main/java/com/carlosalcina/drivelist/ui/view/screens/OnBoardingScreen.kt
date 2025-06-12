@@ -44,7 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.carlosalcina.drivelist.R
-import com.carlosalcina.drivelist.navigation.Screen
+import com.carlosalcina.drivelist.ui.navigation.Screen
 import kotlinx.coroutines.launch
 
 

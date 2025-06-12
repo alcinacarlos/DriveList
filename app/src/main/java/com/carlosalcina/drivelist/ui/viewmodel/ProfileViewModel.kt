@@ -8,7 +8,7 @@ import com.carlosalcina.drivelist.data.datasource.ImageStorageDataSource
 import com.carlosalcina.drivelist.domain.model.CarSearchFilters
 import com.carlosalcina.drivelist.domain.repository.AuthRepository
 import com.carlosalcina.drivelist.domain.repository.CarListRepository
-import com.carlosalcina.drivelist.navigation.NavigationArgs
+import com.carlosalcina.drivelist.ui.navigation.NavigationArgs
 import com.carlosalcina.drivelist.ui.states.EditableField
 import com.carlosalcina.drivelist.ui.states.ProfileScreenUiState
 import com.carlosalcina.drivelist.utils.Result

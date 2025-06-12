@@ -32,7 +32,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.carlosalcina.drivelist.navigation.Screen
+import com.carlosalcina.drivelist.ui.navigation.Screen
+import com.carlosalcina.drivelist.utils.FirebaseUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -109,7 +110,10 @@ fun TopBar(
                         },
                         onClick = {
                             expanded = false
-                            //
+                            FirebaseUtils.getInstance().signOut()
+                            navController.navigate(Screen.Welcome.route) {
+                                popUpTo(Screen.Home.route) { inclusive = true }
+                            }
                         }
                     )
                 }

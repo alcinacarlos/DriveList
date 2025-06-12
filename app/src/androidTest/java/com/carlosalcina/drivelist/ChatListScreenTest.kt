@@ -9,7 +9,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.navigation.NavController
 import com.carlosalcina.drivelist.domain.model.ChatConversation
-import com.carlosalcina.drivelist.navigation.Screen
+import com.carlosalcina.drivelist.ui.navigation.Screen
 import com.carlosalcina.drivelist.ui.states.ChatListUiState
 import com.carlosalcina.drivelist.ui.theme.DriveListTheme
 import com.carlosalcina.drivelist.ui.theme.ThemeOption

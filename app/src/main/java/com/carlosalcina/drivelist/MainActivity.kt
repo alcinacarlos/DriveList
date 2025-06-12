@@ -13,7 +13,7 @@ import androidx.navigation.compose.rememberNavController
 import com.carlosalcina.drivelist.data.preferences.LanguageRepository
 import com.carlosalcina.drivelist.data.preferences.ThemeRepository
 import com.carlosalcina.drivelist.localization.LocaleHelper
-import com.carlosalcina.drivelist.navigation.AppNavigation
+import com.carlosalcina.drivelist.ui.navigation.AppNavigation
 import com.carlosalcina.drivelist.ui.theme.DriveListTheme
 import com.carlosalcina.drivelist.ui.theme.ThemeOption
 import dagger.hilt.android.AndroidEntryPoint

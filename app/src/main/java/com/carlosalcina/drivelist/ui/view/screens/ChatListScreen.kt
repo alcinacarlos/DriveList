@@ -49,7 +49,7 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.carlosalcina.drivelist.R
 import com.carlosalcina.drivelist.domain.model.ChatConversation
-import com.carlosalcina.drivelist.navigation.Screen
+import com.carlosalcina.drivelist.ui.navigation.Screen
 import com.carlosalcina.drivelist.ui.view.components.AppBottomNavigationBar
 import com.carlosalcina.drivelist.ui.view.components.TopBar
 import com.carlosalcina.drivelist.ui.viewmodel.ChatListViewModel
@@ -214,7 +214,7 @@ fun ChatConversationItem(
                 Text(
                     text = conversation.lastMessageText ?: "No hay mensajes aún.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = if (unreadCount > 0) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = if (unreadCount > 0) FontWeight.SemiBold else FontWeight.Normal,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis

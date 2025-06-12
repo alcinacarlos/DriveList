@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -211,7 +212,7 @@ fun BrandModelFilterDialog(
                                 ExposedDropdownMenuBox(
                                     expanded = modelMenuExpanded,
                                     onExpandedChange = { modelMenuExpanded = !modelMenuExpanded },
-                                    modifier = Modifier.fillMaxWidth()
+                                    modifier = Modifier.width(280.dp)
                                 ) {
                                     OutlinedTextField(
                                         value = "Seleccionar modelo...",
@@ -225,12 +226,12 @@ fun BrandModelFilterDialog(
                                         },
                                         modifier = Modifier
                                             .menuAnchor()
-                                            .fillMaxWidth()
+                                            .width(280.dp)
                                     )
                                     ExposedDropdownMenu(
                                         expanded = modelMenuExpanded,
                                         onDismissRequest = { modelMenuExpanded = false },
-                                        modifier = Modifier.fillMaxWidth()
+                                        modifier = Modifier.width(280.dp)
                                     ) {
                                         models.forEach { model ->
                                             DropdownMenuItem(

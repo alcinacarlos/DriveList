@@ -12,7 +12,7 @@ import androidx.navigation.NavController
 import com.carlosalcina.drivelist.domain.model.CarForSale
 import com.carlosalcina.drivelist.domain.model.QuickFilter
 import com.carlosalcina.drivelist.domain.model.QuickFilterType
-import com.carlosalcina.drivelist.navigation.Screen
+import com.carlosalcina.drivelist.ui.navigation.Screen
 import com.carlosalcina.drivelist.ui.states.SearchVehicleScreenState
 import com.carlosalcina.drivelist.ui.theme.DriveListTheme
 import com.carlosalcina.drivelist.ui.theme.ThemeOption
