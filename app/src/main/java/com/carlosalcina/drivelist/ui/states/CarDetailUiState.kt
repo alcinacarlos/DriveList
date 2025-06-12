@@ -5,5 +5,6 @@ data class CarDetailUiState(
     val sellerUiState: SellerUiState = SellerUiState.Loading,
     val imagePagerIndex: Int = 0,
     var isBuyer: Boolean = true,
-    var currentUserId: String = ""
+    var currentUserId: String = "",
+    val deleteStatus: DeleteStatus = DeleteStatus.Idle
 )

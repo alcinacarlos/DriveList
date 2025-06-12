@@ -26,13 +26,16 @@ import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.LocalGasStation
 import androidx.compose.material.icons.filled.LocationCity
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -42,13 +45,18 @@ import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -76,6 +84,7 @@ import com.carlosalcina.drivelist.R
 import com.carlosalcina.drivelist.domain.model.CarColor
 import com.carlosalcina.drivelist.domain.model.CarForSale
 import com.carlosalcina.drivelist.ui.states.CarDataState
+import com.carlosalcina.drivelist.ui.states.DeleteStatus
 import com.carlosalcina.drivelist.ui.states.SellerUiState
 import com.carlosalcina.drivelist.ui.view.components.TopBar
 import com.carlosalcina.drivelist.ui.viewmodel.CarDetailViewModel
@@ -97,15 +106,53 @@ fun CarDetailScreen(
     val uiState by viewModel.uiState.collectAsState()
     val carState = uiState.carDataState
     val sellerState = uiState.sellerUiState
+    val snackbarHostState = remember { SnackbarHostState() }
+    val showDeleteDialog = remember { mutableStateOf(false) }
+    // Efecto para manejar los resultados de la eliminación (navegación o mostrar error)
+    LaunchedEffect(uiState.deleteStatus) {
+        when (val status = uiState.deleteStatus) {
+            is DeleteStatus.Success -> {
+                navController.popBackStack()
+            }
+            is DeleteStatus.Error -> {
+                snackbarHostState.showSnackbar(status.message)
+                viewModel.resetDeleteStatus()
+            }
+            else -> {  }
+        }
+    }
+
+    // Diálogo de confirmación para eliminar
+    if (showDeleteDialog.value) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog.value = false },
+            title = { Text("Confirmar Eliminación") },
+            text = { Text("¿Estás seguro de que quieres eliminar este anuncio permanentemente?") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.deleteCar()
+                        showDeleteDialog.value = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) { Text("Eliminar") }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { showDeleteDialog.value = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopBar(navController,R.string.screen_title_car_detail , showBackArrow = true)
         },
         floatingActionButton = {
-
             if (carState is CarDataState.Success && sellerState is SellerUiState.Success) {
-                if (uiState.isBuyer){
+                if (uiState.isBuyer) {
                     ExtendedFloatingActionButton(
                         onClick = { onContactSeller(carState.car.userId, carState.car.id, uiState.currentUserId) },
                         icon = { Icon(Icons.AutoMirrored.Filled.Chat, contentDescription = "Contactar") },
@@ -113,16 +160,28 @@ fun CarDetailScreen(
                         containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = MaterialTheme.colorScheme.onPrimary
                     )
-                }else{
-                    ExtendedFloatingActionButton(
-                        onClick = { onEditCar(carState.car.id) },
-                        icon = { Icon(Icons.Filled.Edit, contentDescription = "Editar") },
-                        text = { Text("Editar") },
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    )
+                } else {
+                    // Botones para el propietario del anuncio
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        ExtendedFloatingActionButton(
+                            onClick = { onEditCar(carState.car.id) },
+                            icon = { Icon(Icons.Filled.Edit, contentDescription = "Editar") },
+                            text = { Text("Editar") },
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        )
+                        ExtendedFloatingActionButton(
+                            onClick = { showDeleteDialog.value = true },
+                            icon = { Icon(Icons.Filled.Delete, contentDescription = "Eliminar") },
+                            text = { Text("Eliminar") },
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                            contentColor = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                    }
                 }
-
             }
         },
         floatingActionButtonPosition = FabPosition.Center,
@@ -140,6 +199,17 @@ fun CarDetailScreen(
                 }
             }
         )
+        // Muestra un indicador de carga superpuesto durante la eliminación
+        if (uiState.deleteStatus is DeleteStatus.Loading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.3f)),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+        }
     }
 }
 

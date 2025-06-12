@@ -6,9 +6,11 @@ import androidx.lifecycle.viewModelScope
 import com.carlosalcina.drivelist.domain.error.FirestoreError
 import com.carlosalcina.drivelist.domain.repository.AuthRepository
 import com.carlosalcina.drivelist.domain.repository.CarListRepository
+import com.carlosalcina.drivelist.domain.repository.CarUploadRepository
 import com.carlosalcina.drivelist.ui.navigation.NavigationArgs
 import com.carlosalcina.drivelist.ui.states.CarDataState
 import com.carlosalcina.drivelist.ui.states.CarDetailUiState
+import com.carlosalcina.drivelist.ui.states.DeleteStatus
 import com.carlosalcina.drivelist.ui.states.SellerUiState
 import com.carlosalcina.drivelist.utils.Result
 import com.google.firebase.auth.FirebaseAuth
@@ -26,6 +28,7 @@ import javax.inject.Inject
 class CarDetailViewModel @Inject constructor(
     private val carListRepository: CarListRepository,
     private val authRepository: AuthRepository,
+    private val carUploadRepository: CarUploadRepository,
     private val firebaseAuth: FirebaseAuth,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
@@ -128,6 +131,30 @@ class CarDetailViewModel @Inject constructor(
     fun retryLoadCarDetails() {
         if (carId.isNotBlank()) {
             loadCarDetails()
+        }
+    }
+    fun resetDeleteStatus() {
+        _uiState.update { it.copy(deleteStatus = DeleteStatus.Idle) }
+    }
+
+    fun deleteCar() {
+        val carState = _uiState.value.carDataState
+        if (carState !is CarDataState.Success) {
+            _uiState.update { it.copy(deleteStatus = DeleteStatus.Error("No se puede eliminar, el coche no está cargado.")) }
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(deleteStatus = DeleteStatus.Loading) }
+            when (val result = carUploadRepository.deleteCarFromFirestore(carState.car)) {
+                is Result.Success -> {
+                    _uiState.update { it.copy(deleteStatus = DeleteStatus.Success) }
+                }
+                is Result.Error -> {
+                    val errorMessage = result.error.message ?: "Error al eliminar el coche."
+                    _uiState.update { it.copy(deleteStatus = DeleteStatus.Error(errorMessage)) }
+                }
+            }
         }
     }
 }
