@@ -4,8 +4,6 @@ on:
   push:
     tags:
       - 'v*.*.*'
-on:
-  workflow_dispatch:
 
 jobs:
   build:
@@ -27,7 +25,10 @@ jobs:
 
       - name: Decode and create google-services.json
         run: echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 --decode > app/google-services.json
+
+      - name: geonamos
         run: echo "${{ secrets.GEONAMES_USERNAME }}" > local.properties
+      - name: serverid
         run: echo "${{ secrets.GOOGLE_SERVER_CLIENT_ID }}" >> local.properties
         
       - name: Grant execute permission for gradlew
