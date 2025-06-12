@@ -32,7 +32,7 @@ jobs:
         run: echo "${{ secrets.GOOGLE_SERVER_CLIENT_ID }}" >> local.properties
 
       - name: Decode keystore
-        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > keystore.jks
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > app/keystore.jks
 
       - name: Create keystore.properties
         run: |
