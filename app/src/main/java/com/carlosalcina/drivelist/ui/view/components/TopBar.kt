@@ -49,7 +49,7 @@ fun TopBar(
         navigationIcon = {
             if (showBackArrow == true) {
                 IconButton(onClick = { navController.popBackStack() }) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = MaterialTheme.colorScheme.inverseOnSurface)
                 }
             }
 
@@ -62,7 +62,7 @@ fun TopBar(
                 IconButton(onClick = { expanded = true }) {
                     Icon(
                         imageVector = Icons.Default.MoreVert,
-                        contentDescription = "Menú",
+                        contentDescription = "Menu",
                         tint = MaterialTheme.colorScheme.primary
                     )
                 }

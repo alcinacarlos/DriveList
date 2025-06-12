@@ -3,17 +3,17 @@ package com.carlosalcina.drivelist.ui.viewmodel
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.carlosalcina.drivelist.BuildConfig
 import com.carlosalcina.drivelist.domain.repository.AuthRepository
 import com.carlosalcina.drivelist.domain.repository.GoogleSignInHandler
 import com.carlosalcina.drivelist.ui.states.LoginUiState
 import com.carlosalcina.drivelist.utils.Result
 import com.carlosalcina.drivelist.utils.Utils
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import com.carlosalcina.drivelist.BuildConfig
-import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
 @HiltViewModel
@@ -93,8 +93,6 @@ class LoginViewModel @Inject constructor(
         }
     }
 
-    // El `Context` se pasa como parámetro desde la UI (Activity/Composable), lo cual está bien.
-    // Hilt no necesita intervenir directamente aquí si el Context no es una dependencia del constructor.
     fun iniciarSesionConGoogle(context: Context) {
         _uiState.update { it.copy(isLoading = true, generalMessage = null, loginSuccess = false) }
 
@@ -142,10 +140,9 @@ class LoginViewModel @Inject constructor(
         _uiState.update {
             it.copy(
                 showForgotPasswordDialog = true,
-                // Opcional: Pre-rellenar el email del diálogo con el email del formulario principal
                 forgotPasswordEmailInput = it.email,
-                passwordResetFeedbackMessage = null, // Limpiar mensajes antiguos
-                isSendingPasswordReset = false // Asegurar que el estado de carga esté reseteado
+                passwordResetFeedbackMessage = null,
+                isSendingPasswordReset = false
             )
         }
     }
@@ -155,7 +152,6 @@ class LoginViewModel @Inject constructor(
         _uiState.update {
             it.copy(
                 showForgotPasswordDialog = false,
-                // Puedes decidir si limpiar forgotPasswordEmailInput y passwordResetFeedbackMessage aquí
             )
         }
     }
@@ -191,7 +187,7 @@ class LoginViewModel @Inject constructor(
         _uiState.update {
             it.copy(
                 isSendingPasswordReset = true,
-                passwordResetFeedbackMessage = null // Limpiar mensaje anterior
+                passwordResetFeedbackMessage = null
             )
         }
 
@@ -202,9 +198,6 @@ class LoginViewModel @Inject constructor(
                         it.copy(
                             isSendingPasswordReset = false,
                             passwordResetFeedbackMessage = "Se ha enviado un correo a $emailInDialog. Revisa tu bandeja de entrada."
-                            // Opcional: podrías querer cerrar el diálogo aquí o después de un delay
-                            // showForgotPasswordDialog = false,
-                            // forgotPasswordEmailInput = "" // Limpiar el campo
                         )
                     }
                 }

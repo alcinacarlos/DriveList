@@ -23,6 +23,12 @@ android {
     buildFeatures {
         buildConfig = true
     }
+    packagingOptions {
+        resources {
+            excludes.add("META-INF/LICENSE*")
+            excludes.add("META-INF/NOTICE*")
+        }
+    }
 
     defaultConfig {
         applicationId = "com.carlosalcina.drivelist"
@@ -83,11 +89,9 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-    implementation(libs.androidx.espresso.core)
     implementation(libs.androidx.material.icons.extended)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.googleid)
-    testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
@@ -114,7 +118,6 @@ dependencies {
 
     //Room
     implementation(libs.androidx.room.runtime)
-    annotationProcessor(libs.androidx.room.compiler)
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.room.ktx)
 
@@ -129,5 +132,15 @@ dependencies {
     implementation(libs.logging.interceptor)
 
     implementation(libs.play.services.location)
+
+    // Dependencias de tests
+    testImplementation(libs.junit)
+    testImplementation(libs.mockk) // Para mocking
+    testImplementation(libs.kotlinx.coroutines.test) // Para probar corrutinas
+    testImplementation(libs.androidx.core.testing) // Para probar Flows de forma sencilla
+    androidTestImplementation(libs.hilt.android.testing)
+    androidTestImplementation(libs.mockk.android)
+    testImplementation(libs.turbine)
+    testImplementation(kotlin("test"))
 
 }

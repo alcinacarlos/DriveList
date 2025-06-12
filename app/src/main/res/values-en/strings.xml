@@ -43,6 +43,6 @@
     <string name="settings_section_account">Account and Security</string>
     <string name="settings_change_password">Change Password</string>
     <string name="settings_change_password_description">You will receive an email to reset your password</string>
-
+    <string name="edit">Edit</string>
 
 </resources>

@@ -25,6 +25,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -35,24 +36,42 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 
-/*DIÁLOGO DE FILTRO MARCA/MODELO */
+/**
+ * Diálogo de filtro que permite al usuario seleccionar una marca,
+ * o una marca y un modelo.
+ *
+ * @param brands Lista de nombres de marcas a mostrar.
+ * @param models Lista de nombres de modelos para la marca seleccionada.
+ * @param initialSelectedBrand La marca que estaba seleccionada previamente, para mantener el estado.
+ * @param isLoadingBrands Indica si las marcas se están cargando.
+ * @param isLoadingModels Indica si los modelos se están cargando.
+ * @param brandLoadError Mensaje de error si falla la carga de marcas.
+ * @param modelLoadError Mensaje de error si falla la carga de modelos.
+ * @param onBrandSelectedForModelFetch Callback que se ejecuta al seleccionar una marca para
+ * que el ViewModel pueda cargar los modelos correspondientes.
+ * @param onFilterApplied Callback que se ejecuta cuando el usuario confirma su selección.
+ * Retorna la `brand` y el `model` (que puede ser null si solo se eligió la marca).
+ * @param onDismiss Callback para cerrar el diálogo sin aplicar cambios.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BrandModelFilterDialog(
     brands: List<String>,
     models: List<String>,
-    selectedBrand: String?,
+    initialSelectedBrand: String?,
     isLoadingBrands: Boolean,
     isLoadingModels: Boolean,
     brandLoadError: String?,
     modelLoadError: String?,
-    onBrandSelected: (String) -> Unit,
-    onModelSelected: (String) -> Unit,
+    onBrandSelectedForModelFetch: (String) -> Unit,
+    onFilterApplied: (brand: String, model: String?) -> Unit,
     onDismiss: () -> Unit
 ) {
+    var currentSelectedBrand by remember { mutableStateOf(initialSelectedBrand) }
     var modelMenuExpanded by remember { mutableStateOf(false) }
 
     Dialog(
@@ -65,133 +84,164 @@ fun BrandModelFilterDialog(
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("Seleccionar Marca y Modelo") },
+                    title = { Text("Filtrar por Marca / Modelo", fontSize = 20.sp) },
                     navigationIcon = {
                         IconButton(onClick = onDismiss) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, "Cerrar")
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                "Cerrar",
+                                tint = MaterialTheme.colorScheme.inverseOnSurface
+                            )
+                        }
+                    },
+                    actions = {
+                        TextButton(
+                            onClick = {
+                                currentSelectedBrand?.let {
+                                    onFilterApplied(it, null)
+                                }
+                            },
+                            enabled = currentSelectedBrand != null
+                        ) {
+                            Text("APLICAR")
                         }
                     }
                 )
             }
         ) { paddingValues ->
             Column(
-                modifier = Modifier.Companion
+                modifier = Modifier
                     .padding(paddingValues)
                     .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.surface) // Fondo del diálogo
+                    .background(MaterialTheme.colorScheme.surface)
             ) {
-                // Sección de Marcas
+                // --- Sección de Marcas ---
                 Text(
-                    "Selecciona una Marca",
+                    "1. Selecciona una Marca",
                     style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.Companion.padding(16.dp)
+                    modifier = Modifier.padding(16.dp)
                 )
-                if (isLoadingBrands) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.Companion
-                            .align(Alignment.Companion.CenterHorizontally)
-                            .padding(16.dp)
-                    )
-                } else if (brandLoadError != null) {
-                    Text(
-                        "Error cargando marcas: $brandLoadError",
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.Companion.padding(16.dp)
-                    )
-                } else if (brands.isEmpty()) {
-                    Text("No hay marcas disponibles.", modifier = Modifier.Companion.padding(16.dp))
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.Companion.weight(1f), // Ocupa espacio disponible para marcas
-                        contentPadding = PaddingValues(horizontal = 16.dp)
-                    ) {
-                        items(brands) { brand ->
-                            ListItem(
-                                headlineContent = { Text(brand) },
-                                modifier = Modifier.Companion
-                                    .fillMaxWidth()
-                                    .clickable { onBrandSelected(brand) }
-                                    .background(
-                                        if (brand == selectedBrand) MaterialTheme.colorScheme.primaryContainer
-                                        else Color.Companion.Transparent
-                                    )
-                                    .padding(vertical = 8.dp) // Padding vertical para cada item
-                            )
-                            HorizontalDivider()
+                when {
+                    isLoadingBrands -> {
+                        CircularProgressIndicator(
+                            modifier = Modifier
+                                .align(Alignment.CenterHorizontally)
+                                .padding(16.dp)
+                        )
+                    }
+
+                    brandLoadError != null -> {
+                        Text(
+                            "Error cargando marcas: $brandLoadError",
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
+
+                    brands.isEmpty() -> {
+                        Text("No hay marcas disponibles.", modifier = Modifier.padding(16.dp))
+                    }
+
+                    else -> {
+                        LazyColumn(
+                            modifier = Modifier.weight(1f), // Ocupa el espacio disponible
+                            contentPadding = PaddingValues(horizontal = 16.dp)
+                        ) {
+                            items(brands) { brand ->
+                                ListItem(
+                                    headlineContent = { Text(brand) },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            // Actualiza la marca seleccionada y pide los modelos
+                                            currentSelectedBrand = brand
+                                            onBrandSelectedForModelFetch(brand)
+                                        }
+                                        .background(
+                                            if (brand == currentSelectedBrand) MaterialTheme.colorScheme.primaryContainer
+                                            else Color.Transparent
+                                        )
+                                        .padding(vertical = 8.dp)
+                                )
+                                HorizontalDivider()
+                            }
                         }
                     }
                 }
 
-                // Sección de Modelos (si se ha seleccionado una marca)
-                if (selectedBrand != null) {
+                // --- Sección de Modelos (si se ha seleccionado una marca) ---
+                if (currentSelectedBrand != null) {
                     HorizontalDivider(
                         thickness = 4.dp,
-                        modifier = Modifier.Companion.padding(vertical = 8.dp)
+                        modifier = Modifier.padding(vertical = 8.dp)
                     )
                     Text(
-                        "Selecciona un Modelo para $selectedBrand",
+                        "2. Selecciona un Modelo (Opcional)",
                         style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.Companion.padding(16.dp)
+                        modifier = Modifier.padding(16.dp)
                     )
-                    if (isLoadingModels) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.Companion
-                                .align(Alignment.Companion.CenterHorizontally)
-                                .padding(16.dp)
-                        )
-                    } else if (modelLoadError != null) {
-                        Text(
-                            "Error cargando modelos: $modelLoadError",
-                            color = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.Companion.padding(16.dp)
-                        )
-                    } else if (models.isEmpty() && !isLoadingModels) { // Asegurar que no está cargando
-                        Text(
-                            "No hay modelos disponibles para $selectedBrand.",
-                            modifier = Modifier.Companion.padding(16.dp)
-                        )
-                    } else if (models.isNotEmpty()) {
-                        // Usar un Dropdown aquí puede ser un poco extraño en un diálogo de pantalla completa
-                        // Considera otra LazyColumn para modelos si la lista es larga.
-                        // Por ahora, mantendremos el ExposedDropdownMenuBox como lo pediste.
-                        Box(
-                            modifier = Modifier.Companion.padding(
-                                horizontal = 16.dp,
-                                vertical = 8.dp
+                    when {
+                        isLoadingModels -> {
+                            CircularProgressIndicator(
+                                modifier = Modifier
+                                    .align(Alignment.CenterHorizontally)
+                                    .padding(16.dp)
                             )
-                        ) {
-                            ExposedDropdownMenuBox(
-                                expanded = modelMenuExpanded,
-                                onExpandedChange = { modelMenuExpanded = !modelMenuExpanded },
-                                modifier = Modifier.Companion.fillMaxWidth()
+                        }
+
+                        modelLoadError != null -> {
+                            Text(
+                                "Error cargando modelos: $modelLoadError",
+                                color = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.padding(16.dp)
+                            )
+                        }
+
+                        models.isEmpty() && !isLoadingModels -> {
+                            Text(
+                                "No hay modelos disponibles para $currentSelectedBrand.",
+                                modifier = Modifier.padding(16.dp)
+                            )
+                        }
+
+                        models.isNotEmpty() -> {
+                            Box(
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                             ) {
-                                OutlinedTextField(
-                                    value = "Seleccionar modelo...", // Placeholder
-                                    onValueChange = {},
-                                    readOnly = true,
-                                    label = { Text("Modelo") },
-                                    trailingIcon = {
-                                        ExposedDropdownMenuDefaults.TrailingIcon(
-                                            expanded = modelMenuExpanded
-                                        )
-                                    },
-                                    modifier = Modifier.Companion
-                                        .menuAnchor()
-                                        .fillMaxWidth()
-                                )
-                                ExposedDropdownMenu(
+                                ExposedDropdownMenuBox(
                                     expanded = modelMenuExpanded,
-                                    onDismissRequest = { modelMenuExpanded = false },
-                                    modifier = Modifier.Companion.fillMaxWidth()
+                                    onExpandedChange = { modelMenuExpanded = !modelMenuExpanded },
+                                    modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    models.forEach { model ->
-                                        DropdownMenuItem(
-                                            text = { Text(model) },
-                                            onClick = {
-                                                onModelSelected(model)
-                                                modelMenuExpanded = false
-                                            }
-                                        )
+                                    OutlinedTextField(
+                                        value = "Seleccionar modelo...",
+                                        onValueChange = {},
+                                        readOnly = true,
+                                        label = { Text("Modelo para $currentSelectedBrand") },
+                                        trailingIcon = {
+                                            ExposedDropdownMenuDefaults.TrailingIcon(
+                                                expanded = modelMenuExpanded
+                                            )
+                                        },
+                                        modifier = Modifier
+                                            .menuAnchor()
+                                            .fillMaxWidth()
+                                    )
+                                    ExposedDropdownMenu(
+                                        expanded = modelMenuExpanded,
+                                        onDismissRequest = { modelMenuExpanded = false },
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        models.forEach { model ->
+                                            DropdownMenuItem(
+                                                text = { Text(model) },
+                                                onClick = {
+                                                    // Aplica filtro con marca y modelo
+                                                    onFilterApplied(currentSelectedBrand!!, model)
+                                                    modelMenuExpanded = false
+                                                }
+                                            )
+                                        }
                                     }
                                 }
                             }

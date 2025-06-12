@@ -86,11 +86,7 @@ class SearchVehicleScreenViewModel @Inject constructor(
         val initialFiltersJson: String? = savedStateHandle[NavigationArgs.SEARCH_FILTERS_JSON_ARG]
         var initialFilters = CarSearchFilters()
         if (initialFiltersJson != null) {
-            try {
-                initialFilters = Gson().fromJson(initialFiltersJson, CarSearchFilters::class.java)
-            } catch (e: Exception) {
-                Log.e(TAG, "Error deserializando filtros iniciales JSON", e)
-            }
+            initialFilters = Gson().fromJson(initialFiltersJson, CarSearchFilters::class.java)
         }
 
         val newActiveQuickFilterIds = mutableSetOf<String>()
@@ -110,14 +106,13 @@ class SearchVehicleScreenViewModel @Inject constructor(
                 appliedFilters = initialFilters,
                 currentSearchTerm = initialFilters.searchTerm ?: "",
                 activeQuickFilterIds = newActiveQuickFilterIds,
-                // Poblar campos del diálogo avanzado con los filtros iniciales
+                // filtros iniciales
                 tempAdvancedFilters = initialFilters,
                 advancedFilterMinYearInput = initialFilters.minYear?.toString() ?: "",
                 advancedFilterMaxPriceInput = initialFilters.maxPrice?.toInt()?.toString() ?: "", // Mostrar como Int si es posible
                 advancedFilterLocationInput = initialFilters.ciudad ?: initialFilters.comunidadAutonoma ?: ""
             )
         }
-        Log.d(TAG, "Filtros iniciales procesados: $initialFilters")
         performSearch(isNewSearch = true)
 
     }

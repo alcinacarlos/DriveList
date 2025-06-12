@@ -44,5 +44,6 @@
     <string name="settings_section_account">Cuenta y Seguridad</string>
     <string name="settings_change_password">Cambiar Contraseña</string>
     <string name="settings_change_password_description">Recibirás un correo electrónico para restablecer tu contraseña</string>
+    <string name="edit">Editar</string>
 
 </resources>

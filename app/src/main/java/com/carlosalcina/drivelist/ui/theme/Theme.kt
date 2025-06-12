@@ -64,7 +64,7 @@ fun DriveListTheme(
     val scheme = when (appTheme) {
         ThemeOption.LIGHT -> LightColorScheme
         ThemeOption.DARK -> DarkColorScheme
-        ThemeOption.SYSTEM_DEFAULT -> if (!darkTheme) DarkColorScheme else LightColorScheme
+        ThemeOption.SYSTEM_DEFAULT -> DarkColorScheme
     }
 
     MaterialTheme(

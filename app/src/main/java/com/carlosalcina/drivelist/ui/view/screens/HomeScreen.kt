@@ -158,14 +158,19 @@ fun HomeScreen(
             BrandModelFilterDialog(
                 brands = uiState.brands,
                 models = uiState.models,
-                selectedBrand = uiState.selectedBrandForDialog,
+                initialSelectedBrand = uiState.selectedBrandForDialog, // <-- Cambio de nombre
                 isLoadingBrands = uiState.isLoadingBrands,
                 isLoadingModels = uiState.isLoadingModels,
                 brandLoadError = uiState.brandLoadError,
                 modelLoadError = uiState.modelLoadError,
-                onBrandSelected = { viewModel.onBrandSelectedInDialog(it) },
-                onModelSelected = { viewModel.onModelSelectedInDialog(it) },
-                onDismiss = { viewModel.closeBrandModelDialog() })
+                onBrandSelectedForModelFetch = { brand -> // <-- Llama a la misma función de antes
+                    viewModel.onBrandSelectedInDialog(brand)
+                },
+                onFilterApplied = { brand, model -> // <-- Nuevo callback
+                    viewModel.applyBrandModelFilter(brand, model)
+                },
+                onDismiss = { viewModel.closeBrandModelDialog() }
+            )
         }
     }
 }
