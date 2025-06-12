@@ -30,6 +30,16 @@ jobs:
         run: echo "${{ secrets.GEONAMES_USERNAME }}" > local.properties
       - name: serverid
         run: echo "${{ secrets.GOOGLE_SERVER_CLIENT_ID }}" >> local.properties
+
+      - name: Decode keystore
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > keystore.jks
+
+      - name: Create keystore.properties
+        run: |
+          echo "storeFile=keystore.jks" > keystore.properties
+          echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" >> keystore.properties
+          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> keystore.properties
+          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> keystore.properties
         
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
